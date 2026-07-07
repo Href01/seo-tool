@@ -14,6 +14,18 @@ interface KeywordOverview {
   trend: { month: string; volume: number }[]
 }
 
+interface DifficultyResult {
+  keyword: string
+  difficulty: number
+  competitors: { position: number | null; domain: string; rank: number | null }[]
+}
+
+function kdLabel(score: number): { label: string; cls: string } {
+  if (score < 30) return { label: 'Facile', cls: 'text-green-600 dark:text-green-400' }
+  if (score < 60) return { label: 'Moyen', cls: 'text-amber-600 dark:text-amber-400' }
+  return { label: 'Difficile', cls: 'text-red-600 dark:text-red-400' }
+}
+
 function Tile({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-lg border border-neutral-200 px-4 py-3 dark:border-neutral-800">
@@ -26,10 +38,12 @@ function Tile({ label, value }: { label: string; value: string }) {
 export default function OverviewPage() {
   const [keyword, setKeyword] = useState('')
   const { loading, error, cached, data, run } = useSeoQuery<KeywordOverview>('/api/keyword-overview')
+  const kd = useSeoQuery<DifficultyResult>('/api/difficulty')
 
   function search(e: React.FormEvent) {
     e.preventDefault()
     if (!keyword.trim()) return
+    kd.reset()
     run({ keyword, location: 2504, language: 'fr' })
   }
 
@@ -104,6 +118,55 @@ export default function OverviewPage() {
                   />
                 ))}
               </div>
+            </div>
+          )}
+
+          {data.difficulty == null && (
+            <div className="mt-6">
+              {!kd.data || kd.data.keyword !== data.keyword ? (
+                <>
+                  <button
+                    onClick={() => kd.run({ keyword: data.keyword, location: 2504, language: 'fr' })}
+                    disabled={kd.loading}
+                    className="rounded-lg border border-neutral-300 px-4 py-2.5 text-sm font-medium hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-900"
+                  >
+                    {kd.loading ? 'Calcul en cours…' : 'Calculer la difficulté maison (SERP + autorité)'}
+                  </button>
+                  {kd.error && <p className="mt-2 text-sm text-red-600">{kd.error}</p>}
+                </>
+              ) : (
+                <>
+                  <div className="flex items-baseline gap-3">
+                    <span className={`text-3xl font-bold tabular-nums ${kdLabel(kd.data.difficulty).cls}`}>
+                      {kd.data.difficulty}
+                    </span>
+                    <span className="text-sm text-neutral-500">
+                      /100 · {kdLabel(kd.data.difficulty).label} · difficulté maison (estimée à partir
+                      de l&apos;autorité des sites qui rankent)
+                    </span>
+                  </div>
+                  <div className="mt-3 overflow-x-auto rounded-lg border border-neutral-200 dark:border-neutral-800">
+                    <table className="w-full text-sm">
+                      <thead className="bg-neutral-50 text-left text-xs uppercase text-neutral-500 dark:bg-neutral-900">
+                        <tr>
+                          <th className="px-4 py-2.5 font-medium">#</th>
+                          <th className="px-4 py-2.5 font-medium">Domaine qui ranke</th>
+                          <th className="px-4 py-2.5 text-right font-medium">Autorité /1000</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {kd.data.competitors.map((c, i) => (
+                          <tr key={i} className="border-t border-neutral-100 dark:border-neutral-800">
+                            <td className="px-4 py-2.5 tabular-nums text-neutral-400">{c.position ?? '—'}</td>
+                            <td className="px-4 py-2.5">{c.domain || '—'}</td>
+                            <td className="px-4 py-2.5 text-right tabular-nums">{c.rank ?? '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </>

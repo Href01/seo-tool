@@ -35,5 +35,12 @@ export function useSeoQuery<T>(endpoint: string) {
     }
   }
 
-  return { loading, error, cached, data, run }
+  function reset() {
+    setLoading(false)
+    setError('')
+    setData(null)
+    setCached(null)
+  }
+
+  return { loading, error, cached, data, run, reset }
 }

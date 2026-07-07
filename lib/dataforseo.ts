@@ -342,3 +342,56 @@ export async function instantPageAudit(url: string): Promise<PageAudit> {
     issues,
   }
 }
+
+// ── Custom keyword difficulty (computed from SERP + domain authority) ──────────
+
+export interface DifficultyResult {
+  keyword: string
+  difficulty: number // 0-100, our own estimate
+  competitors: { position: number | null; domain: string; rank: number | null }[]
+}
+
+/** Backlink authority rank (0-1000) for many domains in a single call. */
+async function bulkBacklinkRanks(domains: string[]): Promise<Record<string, number>> {
+  if (domains.length === 0) return {}
+  const data = await dfs<any>('/backlinks/bulk_ranks/live', [{ targets: domains }])
+  const items: any[] = data?.tasks?.[0]?.result?.[0]?.items ?? []
+  const map: Record<string, number> = {}
+  for (const it of items) {
+    if (it.target) map[it.target] = it.rank ?? 0
+  }
+  return map
+}
+
+/**
+ * Our own keyword difficulty (0-100), computed the way big SEO tools do it: pull
+ * the SERP, measure the backlink authority (rank 0-1000) of the domains that rank,
+ * and aggregate — weighted by position (#1 counts most). Works for ANY keyword,
+ * including niche ones the Labs database has no difficulty for.
+ */
+export async function computeKeywordDifficulty(
+  keyword: string,
+  opts: { location?: number; language?: string } = {}
+): Promise<DifficultyResult> {
+  const serp = await serpOrganic(keyword, { ...opts, depth: 10 })
+  const top = serp.slice(0, 10)
+  const domains = [...new Set(top.map((r) => r.domain).filter(Boolean))]
+  const ranks = await bulkBacklinkRanks(domains)
+
+  let weightedSum = 0
+  let weightTotal = 0
+  const competitors = top.map((r, i) => {
+    const rank = r.domain ? ranks[r.domain] ?? 0 : 0
+    const weight = top.length - i // earlier positions weigh more
+    weightedSum += weight * (rank / 10) // rank 0-1000 -> 0-100 scale
+    weightTotal += weight
+    return {
+      position: r.position,
+      domain: r.domain,
+      rank: r.domain ? ranks[r.domain] ?? null : null,
+    }
+  })
+
+  const difficulty = weightTotal > 0 ? Math.round(weightedSum / weightTotal) : 0
+  return { keyword, difficulty, competitors }
+}
