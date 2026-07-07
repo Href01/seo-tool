@@ -96,12 +96,14 @@ export function ready(): Promise<void> {
         );
         CREATE TABLE IF NOT EXISTS projects (
           id         text PRIMARY KEY,
-          user_id    text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          user_id    text NOT NULL,
           name       text NOT NULL,
           domain     text NOT NULL,
           created_at timestamptz NOT NULL DEFAULT now()
         );
-        ALTER TABLE rank_tracking ADD COLUMN IF NOT EXISTS project_id text REFERENCES projects(id) ON DELETE CASCADE;
+        ALTER TABLE rank_tracking ADD COLUMN IF NOT EXISTS project_id text;
+        ALTER TABLE projects DROP CONSTRAINT IF EXISTS projects_user_id_fkey;
+        ALTER TABLE rank_tracking DROP CONSTRAINT IF EXISTS rank_tracking_project_id_fkey;
       `)
       .then(() => undefined)
   }
