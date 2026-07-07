@@ -8,6 +8,8 @@ const links = [
   { href: '/serp', label: 'SERP' },
   { href: '/overview', label: 'Aperçu mot-clé' },
   { href: '/domain', label: 'Domaine' },
+  { href: '/backlinks', label: 'Backlinks' },
+  { href: '/audit', label: 'Audit' },
 ]
 
 export default function Nav() {
