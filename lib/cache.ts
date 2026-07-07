@@ -7,13 +7,24 @@
 
 import { Pool } from 'pg'
 
-let pool: Pool | null = null
-let ready: Promise<void> | null = null
+// Reuse one pool across invocations. On serverless (Vercel), a plain module-level
+// variable is reset between cold starts and can spawn many pools under load, which
+// exhausts Neon's connection limit. Stashing it on globalThis keeps a single pool
+// alive across hot invocations. Pair this with Neon's *pooled* connection string
+// (the `-pooler` host) in DATABASE_URL.
+const globalForPool = globalThis as unknown as {
+  seoPool?: Pool
+  seoReady?: Promise<void>
+}
+
+let pool: Pool | null = globalForPool.seoPool ?? null
+let ready: Promise<void> | null = globalForPool.seoReady ?? null
 
 function getPool(): Pool | null {
   if (!process.env.DATABASE_URL) return null
   if (!pool) {
     pool = new Pool({ connectionString: process.env.DATABASE_URL })
+    globalForPool.seoPool = pool
     ready = pool
       .query(
         `CREATE TABLE IF NOT EXISTS seo_cache (
@@ -23,6 +34,7 @@ function getPool(): Pool | null {
          )`
       )
       .then(() => undefined)
+    globalForPool.seoReady = ready
   }
   return pool
 }
