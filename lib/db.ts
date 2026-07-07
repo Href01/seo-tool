@@ -58,6 +58,50 @@ export function ready(): Promise<void> {
           last_seen      timestamptz NOT NULL DEFAULT now(),
           PRIMARY KEY (keyword, location, language)
         );
+        CREATE TABLE IF NOT EXISTS users (
+          id            text PRIMARY KEY,
+          name          text,
+          email         text UNIQUE,
+          email_verified timestamptz,
+          image         text,
+          role          text NOT NULL DEFAULT 'user',
+          created_at    timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE TABLE IF NOT EXISTS accounts (
+          id                text PRIMARY KEY,
+          user_id           text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          type              text NOT NULL,
+          provider          text NOT NULL,
+          provider_account_id text NOT NULL,
+          refresh_token     text,
+          access_token      text,
+          expires_at        integer,
+          token_type        text,
+          scope             text,
+          id_token          text,
+          session_state     text,
+          UNIQUE(provider, provider_account_id)
+        );
+        CREATE TABLE IF NOT EXISTS sessions (
+          id            text PRIMARY KEY,
+          session_token text UNIQUE NOT NULL,
+          user_id       text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          expires       timestamptz NOT NULL
+        );
+        CREATE TABLE IF NOT EXISTS verification_tokens (
+          identifier text NOT NULL,
+          token      text NOT NULL,
+          expires    timestamptz NOT NULL,
+          PRIMARY KEY (identifier, token)
+        );
+        CREATE TABLE IF NOT EXISTS projects (
+          id         text PRIMARY KEY,
+          user_id    text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          name       text NOT NULL,
+          domain     text NOT NULL,
+          created_at timestamptz NOT NULL DEFAULT now()
+        );
+        ALTER TABLE rank_tracking ADD COLUMN IF NOT EXISTS project_id text REFERENCES projects(id) ON DELETE CASCADE;
       `)
       .then(() => undefined)
   }
