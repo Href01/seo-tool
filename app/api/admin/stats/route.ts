@@ -1,17 +1,10 @@
 import { NextResponse } from 'next/server'
-import { auth } from '@/lib/auth'
 import { bankCount } from '@/lib/bank'
 import { getPool, ready } from '@/lib/db'
 
 export const runtime = 'nodejs'
 
 export async function GET() {
-  const session = await auth()
-  // @ts-ignore
-  if (!session?.user || session.user.role !== 'admin') {
-    return NextResponse.json({ error: 'Accès refusé' }, { status: 403 })
-  }
-
   try {
     const p = getPool()
     if (!p) {

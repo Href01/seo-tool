@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Outil SEO — Maroc",
-  description: "Recherche de mots-clés, SERP, aperçu mot-clé et analyse de domaine pour le marché marocain.",
+  title: "SEO·MENA — Premium Analytics for MENA & Gulf",
+  description: "Plateforme SEO premium pour l'Afrique du Nord et le Moyen-Orient. Recherche de mots-clés, analyse SERP, suivi de positions — Google Maroc, Algérie, Tunisie, Arabie, EAU.",
 };
 
 export default function RootLayout({

@@ -1,13 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 interface Project {
   id: string
   name: string
   domain: string
-  createdAt: string
 }
 
 export default function AppPage() {
@@ -15,20 +13,14 @@ export default function AppPage() {
   const [name, setName] = useState('')
   const [domain, setDomain] = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
 
   async function load() {
     try {
       const res = await fetch('/api/projects')
-      if (res.status === 401) {
-        router.push('/login')
-        return
-      }
       const data = await res.json()
       setProjects(data.projects || [])
-    } catch (e: any) {
-      setError(e.message || 'Erreur')
+    } catch (e) {
+      console.error(e)
     }
   }
 
@@ -40,105 +32,87 @@ export default function AppPage() {
     e.preventDefault()
     if (!name.trim() || !domain.trim()) return
     setLoading(true)
-    setError('')
     try {
-      const res = await fetch('/api/projects', {
+      await fetch('/api/projects', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, domain }),
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur')
       setName('')
       setDomain('')
       await load()
-    } catch (e: any) {
-      setError(e.message || 'Erreur')
     } finally {
       setLoading(false)
     }
   }
 
   async function remove(id: string) {
-    try {
-      const res = await fetch('/api/projects', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
-      })
-      if (!res.ok) throw new Error('Erreur')
-      await load()
-    } catch (e: any) {
-      setError(e.message || 'Erreur')
-    }
+    await fetch('/api/projects', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    })
+    await load()
   }
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Mes projets</h1>
-        <a
-          href="/api/auth/signout"
-          className="text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-        >
-          Déconnexion
-        </a>
+    <main className="mx-auto max-w-4xl px-6 py-16">
+      <div className="mb-8">
+        <h1 className="bg-gradient-to-r from-[#C9A961] to-[#D4AF37] bg-clip-text text-4xl font-bold text-transparent">
+          Mes Projets
+        </h1>
+        <p className="mt-2 text-sm text-neutral-400">
+          Tes sites suivis. Crée un projet par site web pour organiser ton suivi SEO.
+        </p>
       </div>
-      <p className="mt-2 text-sm text-neutral-500">Tes sites suivis. Crée un projet par site web.</p>
 
-      <form onSubmit={create} className="mt-8 flex flex-col gap-2 sm:flex-row">
+      <form onSubmit={create} className="mb-8 flex flex-col gap-3 rounded-xl border border-[#C9A961]/20 bg-[#1E293B]/40 p-6 backdrop-blur-sm sm:flex-row">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="nom du projet (ex : Ma Boutique)"
-          className="flex-1 rounded-lg border border-neutral-300 px-4 py-2.5 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900"
+          placeholder="Nom du projet (ex : Ma Boutique)"
+          className="flex-1 rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-3 text-neutral-100 placeholder-neutral-500 outline-none transition-all focus:border-[#C9A961] focus:ring-2 focus:ring-[#C9A961]/20"
         />
         <input
           value={domain}
           onChange={(e) => setDomain(e.target.value)}
-          placeholder="domaine (ex : monsite.ma)"
-          className="flex-1 rounded-lg border border-neutral-300 px-4 py-2.5 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900"
+          placeholder="Domaine (ex : monsite.ma)"
+          className="flex-1 rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-3 text-neutral-100 placeholder-neutral-500 outline-none transition-all focus:border-[#C9A961] focus:ring-2 focus:ring-[#C9A961]/20"
         />
         <button
           type="submit"
           disabled={loading}
-          className="rounded-lg bg-neutral-900 px-5 py-2.5 font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
+          className="rounded-lg bg-gradient-to-r from-[#C9A961] to-[#D4AF37] px-6 py-3 font-semibold text-[#0F172A] shadow-lg shadow-[#C9A961]/20 transition-all hover:shadow-xl hover:shadow-[#C9A961]/30 disabled:opacity-50"
         >
-          {loading ? '…' : 'Créer'}
+          {loading ? 'Création…' : 'Créer'}
         </button>
       </form>
 
-      {error && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+      {projects.length === 0 ? (
+        <div className="rounded-xl border border-[#C9A961]/10 bg-[#1E293B]/20 p-12 text-center backdrop-blur-sm">
+          <p className="text-neutral-400">Aucun projet. Crée-en un ci-dessus pour commencer.</p>
         </div>
-      )}
-
-      {projects.length === 0 && !error ? (
-        <p className="mt-10 text-center text-sm text-neutral-500">
-          Aucun projet. Crée-en un ci-dessus pour commencer à suivre tes positions.
-        </p>
       ) : (
-        <div className="mt-6 space-y-3">
+        <div className="grid gap-4 sm:grid-cols-2">
           {projects.map((p) => (
             <div
               key={p.id}
-              className="flex items-center justify-between rounded-lg border border-neutral-200 px-4 py-3 dark:border-neutral-800"
+              className="group rounded-xl border border-[#C9A961]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#C9A961]/40 hover:shadow-xl hover:shadow-[#C9A961]/10"
             >
-              <div>
-                <div className="font-medium">{p.name}</div>
-                <div className="text-xs text-neutral-500">{p.domain}</div>
+              <div className="mb-3">
+                <div className="text-lg font-semibold text-[#C9A961]">{p.name}</div>
+                <div className="text-sm text-neutral-500">{p.domain}</div>
               </div>
               <div className="flex gap-2">
                 <a
                   href={`/app/project/${p.id}`}
-                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-100 dark:border-neutral-700 dark:hover:bg-neutral-800"
+                  className="flex-1 rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-2 text-center text-sm font-medium text-[#C9A961] transition-all hover:bg-[#C9A961]/10"
                 >
                   Ouvrir
                 </a>
                 <button
                   onClick={() => remove(p.id)}
-                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 dark:border-neutral-700 dark:hover:bg-red-950/30"
+                  className="rounded-lg border border-red-500/30 bg-[#0F172A]/50 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-500/10"
                 >
                   Suppr.
                 </button>

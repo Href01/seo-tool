@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 interface Stats {
   bankCount: number
@@ -11,21 +10,14 @@ interface Stats {
 
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null)
-  const [error, setError] = useState('')
-  const router = useRouter()
 
   async function load() {
     try {
       const res = await fetch('/api/admin/stats')
-      if (res.status === 401 || res.status === 403) {
-        router.push('/login')
-        return
-      }
       const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erreur')
       setStats(data)
-    } catch (e: any) {
-      setError(e.message || 'Erreur')
+    } catch (e) {
+      console.error(e)
     }
   }
 
@@ -34,69 +26,60 @@ export default function AdminPage() {
   }, [])
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Admin · SEO·MA</h1>
-        <a
-          href="/api/auth/signout"
-          className="text-sm text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300"
-        >
-          Déconnexion
-        </a>
+    <main className="mx-auto max-w-6xl px-6 py-16">
+      <div className="mb-8">
+        <h1 className="bg-gradient-to-r from-[#C9A961] to-[#D4AF37] bg-clip-text text-4xl font-bold text-transparent">
+          Dashboard Admin
+        </h1>
+        <p className="mt-2 text-sm text-neutral-400">
+          Vue omnisciente · Tous les projets, stats, et données.
+        </p>
       </div>
-      <p className="mt-2 text-sm text-neutral-500">Vue omnisciente. Tous les projets, users, stats.</p>
-
-      {error && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
 
       {stats && (
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border border-neutral-200 px-4 py-3 dark:border-neutral-800">
-            <div className="text-xs uppercase text-neutral-500">Base de mots-clés</div>
-            <div className="mt-1 text-2xl font-semibold tabular-nums">
+          <div className="rounded-xl border border-[#C9A961]/20 bg-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm">
+            <div className="text-xs uppercase tracking-wider text-[#C9A961]/80">Base de mots-clés</div>
+            <div className="mt-2 text-3xl font-bold text-[#C9A961]">
               {stats.bankCount.toLocaleString('fr')}
             </div>
           </div>
-          <div className="rounded-lg border border-neutral-200 px-4 py-3 dark:border-neutral-800">
-            <div className="text-xs uppercase text-neutral-500">Utilisateurs</div>
-            <div className="mt-1 text-2xl font-semibold tabular-nums">
+          <div className="rounded-xl border border-[#059669]/20 bg-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm">
+            <div className="text-xs uppercase tracking-wider text-[#059669]/80">Utilisateurs</div>
+            <div className="mt-2 text-3xl font-bold text-[#059669]">
               {stats.usersCount.toLocaleString('fr')}
             </div>
           </div>
-          <div className="rounded-lg border border-neutral-200 px-4 py-3 dark:border-neutral-800">
-            <div className="text-xs uppercase text-neutral-500">Projets</div>
-            <div className="mt-1 text-2xl font-semibold tabular-nums">
+          <div className="rounded-xl border border-[#D4AF37]/20 bg-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm">
+            <div className="text-xs uppercase tracking-wider text-[#D4AF37]/80">Projets</div>
+            <div className="mt-2 text-3xl font-bold text-[#D4AF37]">
               {stats.projectsCount.toLocaleString('fr')}
             </div>
           </div>
         </div>
       )}
 
-      <div className="mt-6 space-y-2">
+      <div className="mt-8 grid gap-4 sm:grid-cols-2">
         <a
           href="/database"
-          className="block rounded-lg border border-neutral-200 px-4 py-3 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+          className="group rounded-xl border border-[#C9A961]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#C9A961]/40 hover:shadow-xl hover:shadow-[#C9A961]/10"
         >
-          <div className="font-medium">Base de mots-clés</div>
-          <div className="text-xs text-neutral-500">Voir tous les mots-clés accumulés</div>
-        </a>
-        <a
-          href="/admin/projects"
-          className="block rounded-lg border border-neutral-200 px-4 py-3 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
-        >
-          <div className="font-medium">Tous les projets</div>
-          <div className="text-xs text-neutral-500">Liste de tous les projets users</div>
+          <div className="text-lg font-semibold text-[#C9A961] group-hover:text-[#D4AF37]">
+            Base de mots-clés
+          </div>
+          <div className="mt-1 text-sm text-neutral-400">
+            Tous les mots-clés accumulés dans la base propriétaire
+          </div>
         </a>
         <a
           href="/"
-          className="block rounded-lg border border-neutral-200 px-4 py-3 hover:bg-neutral-50 dark:border-neutral-800 dark:hover:bg-neutral-900"
+          className="group rounded-xl border border-[#059669]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#059669]/40 hover:shadow-xl hover:shadow-[#059669]/10"
         >
-          <div className="font-medium">Outils SEO</div>
-          <div className="text-xs text-neutral-500">
-            Recherche de mots-clés, SERP, difficulté, etc.
+          <div className="text-lg font-semibold text-[#059669] group-hover:text-[#10B981]">
+            Outils SEO
+          </div>
+          <div className="mt-1 text-sm text-neutral-400">
+            Recherche, SERP, difficulté, domaine, backlinks, audit
           </div>
         </a>
       </div>
