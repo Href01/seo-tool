@@ -1,12 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --gold: #C9A961;
-  --gold-light: #D4AF37;
-  --navy: #0F172A;
-  --navy-light: #1E293B;
-  --emerald: #059669;
-  --emerald-light: #10B981;
+  /* Brand */
+  --crimson: #ec0b43;
+  --crimson-dark: #c50938;
+  --ink: #101012;
+
+  /* Surfaces */
+  --page: #f2f2f4;
+  --card: #ffffff;
+  --subtle: #f7f7f8;
+
+  /* Text */
+  --text: #18181b;
+  --text-2: #71717a;
+  --text-3: #a1a1aa;
+
+  /* Lines */
+  --line: #ececee;
+
+  /* States */
+  --up: #16a34a;
+  --up-bg: #dcfce7;
+  --down: #e11d48;
+  --down-bg: #ffe4e6;
 }
 
 @theme inline {
@@ -14,31 +31,36 @@
   --font-mono: var(--font-geist-mono);
 }
 
+html,
 body {
-  background: linear-gradient(135deg, #0A0E1A 0%, #0F172A 50%, #0A0E1A 100%);
-  background-attachment: fixed;
-  color: #F5F5F5;
-  font-family: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
-  position: relative;
-  min-height: 100vh;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
   height: 100%;
-  background-image:
-    radial-gradient(circle at 20% 50%, rgba(201, 169, 97, 0.04) 0%, transparent 50%),
-    radial-gradient(circle at 80% 80%, rgba(5, 150, 105, 0.04) 0%, transparent 50%);
-  opacity: 0.6;
-  pointer-events: none;
-  z-index: 0;
 }
 
-#__next {
-  position: relative;
-  z-index: 1;
+body {
+  background: var(--page);
+  color: var(--text);
+  font-family: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numeric alignment for metric-heavy tables */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Subtle custom scrollbars to match the clean SaaS look */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d4d4d8 transparent;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+  background: transparent;
 }

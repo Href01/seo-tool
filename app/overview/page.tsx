@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { LocationSelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
+import { Page, PageHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle, Pill } from '@/components/ui'
 
 interface KeywordOverview {
   keyword: string
@@ -22,19 +23,10 @@ interface DifficultyResult {
   competitors: { position: number | null; domain: string; rank: number | null; counted: boolean }[]
 }
 
-function getDifficultyLevel(score: number) {
-  if (score < 30) return { label: 'Facile', color: 'text-[#10B981]', bg: 'bg-[#10B981]/20', icon: '✅' }
-  if (score < 60) return { label: 'Moyen', color: 'text-[#D4AF37]', bg: 'bg-[#D4AF37]/20', icon: '⚠️' }
-  return { label: 'Difficile', color: 'text-red-400', bg: 'bg-red-400/20', icon: '🔥' }
-}
-
-function getIntentIcon(intent: string | null) {
-  if (!intent) return '❓'
-  const i = intent.toLowerCase()
-  if (i.includes('transact') || i.includes('commercial')) return '💰'
-  if (i.includes('info')) return '📚'
-  if (i.includes('navig')) return '🧭'
-  return '🔍'
+function diffCfg(score: number) {
+  if (score < 30) return { c: 'text-[var(--up)]', b: 'bg-[var(--up-bg)]', l: 'Facile' }
+  if (score < 60) return { c: 'text-amber-700', b: 'bg-amber-100', l: 'Moyen' }
+  return { c: 'text-[var(--down)]', b: 'bg-[var(--down-bg)]', l: 'Difficile' }
 }
 
 export default function OverviewPage() {
@@ -54,322 +46,176 @@ export default function OverviewPage() {
 
   const maxTrend = data ? Math.max(1, ...data.trend.map((t) => t.volume)) : 1
   const minTrend = data ? Math.min(...data.trend.map((t) => t.volume)) : 0
-  const avgTrend = data ? data.trend.reduce((sum, t) => sum + t.volume, 0) / data.trend.length : 0
+  const avgTrend = data ? data.trend.reduce((s, t) => s + t.volume, 0) / (data.trend.length || 1) : 0
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-16">
-      {/* Header */}
-      <div className="mb-12">
-        <h1 className="bg-gradient-to-r from-[#C9A961] to-[#D4AF37] bg-clip-text text-5xl font-bold text-transparent">
-          Aperçu Mot-Clé Complet
-        </h1>
-        <p className="mt-3 text-lg text-neutral-400">
-          Volume · Difficulté · Tendances · Intention · Concurrence SERP · Insights actionnables
-        </p>
-      </div>
+    <Page>
+      <PageHeader title="Aperçu mot-clé" subtitle="Volume, difficulté, tendance 12 mois, intention et concurrence SERP" />
 
-      {/* Search Form */}
-      <div className="mb-8 rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 shadow-2xl backdrop-blur-sm">
-        <form onSubmit={search} className="space-y-6">
+      <Card className="mb-6">
+        <form onSubmit={search} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#C9A961]/80">
-              Mot-clé à Analyser
-            </label>
+            <label className="mb-1.5 block text-xs font-medium text-[var(--text-2)]">Mot-clé à analyser</label>
             <input
               value={keyword}
               onChange={(e) => setKeyword(e.target.value)}
-              placeholder="ex : coloration cheveux, téléphone samsung..."
-              className="w-full rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-3 text-lg text-neutral-100 placeholder-neutral-500 outline-none transition-all focus:border-[#C9A961] focus:ring-2 focus:ring-[#C9A961]/20"
+              placeholder="ex : coloration cheveux"
+              className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10"
             />
           </div>
-
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-3 md:grid-cols-3">
             <LocationSelector value={location} onChange={setLocation} />
             <DeviceSelector value={device} onChange={setDevice} />
             <LanguageSelector value={language} onChange={setLanguage} />
           </div>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-gradient-to-r from-[#C9A961] to-[#D4AF37] px-6 py-4 text-lg font-bold text-[#0F172A] shadow-xl shadow-[#C9A961]/30 transition-all hover:scale-[1.02] hover:shadow-2xl hover:shadow-[#C9A961]/40 disabled:opacity-50 disabled:hover:scale-100"
-          >
+          <Button type="submit" disabled={loading} className="w-full py-3">
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#0F172A]/20 border-t-[#0F172A]"></span>
-                Analyse complète en cours...
-              </span>
+              <>
+                <Spinner /> Analyse en cours…
+              </>
             ) : (
-              '🎯 Analyser en profondeur'
+              'Analyser en profondeur'
             )}
-          </button>
+          </Button>
         </form>
-
         {cached !== null && !error && data && (
-          <div className="mt-4 flex items-center justify-between text-xs text-neutral-400">
-            <div className="flex items-center gap-4">
-              <span>
-                {cached ? (
-                  <span className="text-[#10B981]">⚡ Cache (0 $)</span>
-                ) : (
-                  <span className="text-[#D4AF37]">💳 API DataForSEO</span>
-                )}
-              </span>
-              {cached && fetchedAt && (
-                <span className="text-neutral-500">· Maj {timeAgo(fetchedAt)}</span>
-              )}
-              <span className="text-neutral-500">
-                · Source: {data.source === 'labs' ? 'Labs (complet)' : 'Google Ads (fallback)'}
-              </span>
-            </div>
+          <div className="mt-4 border-t border-[var(--line)] pt-3">
+            <CacheMeta
+              cached={cached}
+              fetchedAt={fetchedAt}
+              timeAgo={timeAgo}
+              extra={data.source === 'labs' ? 'source Labs' : 'source Google Ads'}
+            />
           </div>
         )}
-      </div>
+      </Card>
 
-      {/* Error */}
-      {error && (
-        <div className="mb-8 rounded-xl border border-red-400/30 bg-red-500/10 px-6 py-4 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <div className="font-semibold text-red-400">Erreur</div>
-              <div className="text-sm text-red-300">{error}</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {error && <div className="mb-6"><ErrorBox message={error} /></div>}
 
-      {/* Results */}
       {data && (
-        <div className="space-y-8">
-          {/* Fallback Notice */}
+        <div className="space-y-6">
           {data.source === 'google_ads' && (
-            <div className="rounded-xl border border-blue-400/30 bg-blue-500/10 px-6 py-4 backdrop-blur-sm">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">ℹ️</span>
-                <div>
-                  <div className="font-semibold text-blue-400">Mot-clé de niche (Google Ads)</div>
-                  <div className="mt-1 text-sm text-blue-300">
-                    Absent de Labs — données volume/CPC via Google Ads. Difficulté et intention non disponibles.
-                  </div>
-                </div>
-              </div>
+            <div className="rounded-2xl border border-[var(--line)] bg-[var(--subtle)] px-5 py-4 text-sm text-[var(--text-2)]">
+              <span className="font-semibold text-[var(--text)]">Mot-clé de niche (Google Ads) ·</span> Absent de Labs —
+              volume et CPC via Google Ads. Difficulté et intention non disponibles pour cette source.
             </div>
           )}
 
-          {/* Key Metrics */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            <div className="rounded-xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wider text-[#C9A961]/80">Volume</div>
-                <span className="text-2xl">📊</span>
-              </div>
-              <div className="mt-2 text-3xl font-bold text-[#C9A961]">
-                {data.volume?.toLocaleString('fr') ?? '—'}
-              </div>
-              <div className="mt-1 text-xs text-neutral-500">Recherches/mois</div>
-            </div>
-
-            <div className="rounded-xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wider text-[#D4AF37]/80">CPC</div>
-                <span className="text-2xl">💰</span>
-              </div>
-              <div className="mt-2 text-3xl font-bold text-[#D4AF37]">
-                {data.cpc != null ? `${data.cpc.toFixed(2)} $` : '—'}
-              </div>
-              <div className="mt-1 text-xs text-neutral-500">Coût par clic</div>
-            </div>
-
-            <div className="rounded-xl border border-[#059669]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wider text-[#059669]/80">Concurrence</div>
-                <span className="text-2xl">⚔️</span>
-              </div>
-              <div className="mt-2 text-3xl font-bold text-[#059669]">
-                {data.competition != null ? data.competition.toFixed(2) : '—'}
-              </div>
-              <div className="mt-1 text-xs text-neutral-500">Sur 1.00</div>
-            </div>
-
-            <div className="rounded-xl border border-purple-400/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wider text-purple-400/80">Intention</div>
-                <span className="text-2xl">{getIntentIcon(data.intent)}</span>
-              </div>
-              <div className="mt-2 text-xl font-bold text-purple-400">
-                {data.intent || 'N/A'}
-              </div>
-              <div className="mt-1 text-xs text-neutral-500">Type de recherche</div>
-            </div>
-
-            <div
-              className={`rounded-xl border ${
-                data.difficulty != null
-                  ? `border-${getDifficultyLevel(data.difficulty).color.replace('text-', '')}/20`
-                  : 'border-neutral-500/20'
-              } bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm`}
-            >
-              <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wider text-neutral-400">Difficulté</div>
-                <span className="text-2xl">
-                  {data.difficulty != null ? getDifficultyLevel(data.difficulty).icon : '❓'}
-                </span>
-              </div>
-              <div
-                className={`mt-2 text-3xl font-bold ${
-                  data.difficulty != null ? getDifficultyLevel(data.difficulty).color : 'text-neutral-500'
-                }`}
-              >
-                {data.difficulty ?? '—'}
-              </div>
-              <div className="mt-1 text-xs text-neutral-500">
-                {data.difficulty != null ? getDifficultyLevel(data.difficulty).label : 'Non calculée'}
-              </div>
-            </div>
+          {/* Metrics */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <StatCard label="Volume / mois" value={data.volume?.toLocaleString('fr') ?? '—'} />
+            <StatCard label="CPC" value={data.cpc != null ? `${data.cpc.toFixed(2)} $` : '—'} />
+            <StatCard label="Concurrence" value={data.competition != null ? data.competition.toFixed(2) : '—'} sub="Sur 1.00" />
+            <StatCard label="Intention" value={data.intent || 'N/A'} />
+            <StatCard
+              label="Difficulté"
+              value={data.difficulty ?? '—'}
+              sub={data.difficulty != null ? diffCfg(data.difficulty).l : 'Non calculée'}
+              accent={data.difficulty != null && data.difficulty < 30}
+            />
           </div>
 
-          {/* Trend Chart */}
+          {/* Trend */}
           {data.trend.length > 0 && (
-            <div className="rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 backdrop-blur-sm">
-              <div className="mb-6 flex items-center justify-between">
-                <div>
-                  <h2 className="text-2xl font-bold text-[#C9A961]">📈 Tendance (12 mois)</h2>
-                  <p className="mt-1 text-sm text-neutral-400">Évolution du volume de recherche mensuel</p>
-                </div>
-                <div className="flex gap-6 text-xs">
+            <Card>
+              <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+                <SectionTitle>Tendance · 12 mois</SectionTitle>
+                <div className="flex gap-5 text-xs">
                   <div>
-                    <div className="text-neutral-500">Max</div>
-                    <div className="font-bold text-[#10B981]">{maxTrend.toLocaleString('fr')}</div>
+                    <div className="text-[var(--text-3)]">Max</div>
+                    <div className="font-bold text-[var(--up)] tnum">{maxTrend.toLocaleString('fr')}</div>
                   </div>
                   <div>
-                    <div className="text-neutral-500">Moy.</div>
-                    <div className="font-bold text-[#D4AF37]">{Math.round(avgTrend).toLocaleString('fr')}</div>
+                    <div className="text-[var(--text-3)]">Moy.</div>
+                    <div className="font-bold text-[var(--text)] tnum">{Math.round(avgTrend).toLocaleString('fr')}</div>
                   </div>
                   <div>
-                    <div className="text-neutral-500">Min</div>
-                    <div className="font-bold text-red-400">{minTrend.toLocaleString('fr')}</div>
+                    <div className="text-[var(--text-3)]">Min</div>
+                    <div className="font-bold text-[var(--down)] tnum">{minTrend.toLocaleString('fr')}</div>
                   </div>
                 </div>
               </div>
-              <div className="flex h-48 items-end gap-2">
+              <div className="flex h-44 items-end gap-1.5">
                 {data.trend.map((t, i) => {
                   const pct = (t.volume / maxTrend) * 100
                   const isMax = t.volume === maxTrend
-                  const isMin = t.volume === minTrend
                   return (
                     <div key={i} className="group relative flex flex-1 flex-col items-center">
                       <div
-                        className={`w-full rounded-t-lg transition-all group-hover:scale-110 ${
-                          isMax
-                            ? 'bg-gradient-to-t from-[#10B981] to-[#059669]'
-                            : isMin
-                            ? 'bg-gradient-to-t from-red-400 to-red-500'
-                            : 'bg-gradient-to-t from-[#C9A961] to-[#D4AF37]'
+                        className={`w-full rounded-t-md transition-all group-hover:opacity-80 ${
+                          isMax ? 'bg-[var(--crimson)]' : 'bg-[var(--crimson)]/25'
                         }`}
-                        style={{ height: `${Math.max(8, pct)}%` }}
+                        style={{ height: `${Math.max(6, pct)}%` }}
                       />
-                      <div className="mt-2 text-[10px] text-neutral-500">{t.month.slice(5)}</div>
-                      <div className="absolute -top-12 z-10 hidden rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/95 px-3 py-2 text-xs text-neutral-100 shadow-xl backdrop-blur-sm group-hover:block">
-                        <div className="font-semibold">{t.month}</div>
-                        <div className="mt-1 text-[#C9A961]">{t.volume.toLocaleString('fr')} recherches</div>
+                      <div className="mt-1.5 text-[10px] text-[var(--text-3)]">{t.month.slice(5)}</div>
+                      <div className="pointer-events-none absolute -top-10 z-10 hidden rounded-lg bg-[var(--ink)] px-2.5 py-1.5 text-xs text-white shadow-lg group-hover:block">
+                        <div className="whitespace-nowrap font-semibold">{t.month}</div>
+                        <div className="whitespace-nowrap tnum">{t.volume.toLocaleString('fr')}</div>
                       </div>
                     </div>
                   )
                 })}
               </div>
-            </div>
+            </Card>
           )}
 
-          {/* Difficulty Breakdown */}
+          {/* Difficulty on demand */}
           {data.difficulty == null && (
-            <div className="rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 backdrop-blur-sm">
-              <h2 className="mb-4 text-2xl font-bold text-[#C9A961]">🔥 Difficulté Propriétaire</h2>
-              <p className="mb-6 text-sm text-neutral-400">
-                Calcul basé sur l'autorité des domaines en SERP · Exclusion automatique des plateformes
+            <Card>
+              <SectionTitle>Difficulté propriétaire</SectionTitle>
+              <p className="mb-4 text-sm text-[var(--text-2)]">
+                Calcul basé sur l'autorité des domaines en SERP · plateformes exclues automatiquement.
               </p>
               {!kd.data || kd.data.keyword !== data.keyword ? (
                 <>
-                  <button
-                    onClick={() => kd.run({ keyword: data.keyword, location, language, device })}
-                    disabled={kd.loading}
-                    className="rounded-lg bg-gradient-to-r from-[#C9A961] to-[#D4AF37] px-6 py-3 font-semibold text-[#0F172A] shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
-                  >
-                    {kd.loading ? 'Calcul en cours...' : '🧮 Calculer la difficulté maison'}
-                  </button>
-                  {kd.error && (
-                    <div className="mt-4 text-sm text-red-400">⚠️ {kd.error}</div>
-                  )}
+                  <Button onClick={() => kd.run({ keyword: data.keyword, location, language, device })} disabled={kd.loading}>
+                    {kd.loading ? (
+                      <>
+                        <Spinner /> Calcul…
+                      </>
+                    ) : (
+                      'Calculer la difficulté maison'
+                    )}
+                  </Button>
+                  {kd.error && <div className="mt-3 text-sm text-[var(--down)]">{kd.error}</div>}
                 </>
               ) : (
-                <div className="space-y-6">
-                  <div className="flex items-center gap-6">
-                    <div
-                      className={`flex h-24 w-24 items-center justify-center rounded-2xl ${
-                        getDifficultyLevel(kd.data.difficulty).bg
-                      }`}
-                    >
+                <div className="space-y-5">
+                  <div className="flex items-center gap-5">
+                    <div className={`flex h-20 w-20 items-center justify-center rounded-2xl ${diffCfg(kd.data.difficulty).b}`}>
                       <div className="text-center">
-                        <div className={`text-4xl font-bold ${getDifficultyLevel(kd.data.difficulty).color}`}>
-                          {kd.data.difficulty}
-                        </div>
-                        <div className="text-xs text-neutral-500">/100</div>
+                        <div className={`text-3xl font-bold tnum ${diffCfg(kd.data.difficulty).c}`}>{kd.data.difficulty}</div>
+                        <div className="text-[10px] text-[var(--text-3)]">/100</div>
                       </div>
                     </div>
                     <div>
-                      <div className={`text-2xl font-bold ${getDifficultyLevel(kd.data.difficulty).color}`}>
-                        {getDifficultyLevel(kd.data.difficulty).icon} {getDifficultyLevel(kd.data.difficulty).label}
-                      </div>
-                      <div className="mt-1 text-sm text-neutral-400">
-                        Calculé depuis l'autorité des {kd.data.competitors.filter((c) => c.counted).length} domaines SERP
+                      <div className={`text-lg font-bold ${diffCfg(kd.data.difficulty).c}`}>{diffCfg(kd.data.difficulty).l}</div>
+                      <div className="text-sm text-[var(--text-2)]">
+                        Depuis l'autorité de {kd.data.competitors.filter((c) => c.counted).length} domaines SERP
                       </div>
                     </div>
                   </div>
-
-                  <div className="overflow-hidden rounded-xl border border-[#C9A961]/20">
+                  <div className="overflow-hidden rounded-xl border border-[var(--line)]">
                     <table className="w-full text-sm">
-                      <thead className="border-b border-[#C9A961]/20 bg-[#0F172A]/50">
+                      <thead className="border-b border-[var(--line)] bg-[var(--subtle)] text-left text-xs text-[var(--text-2)]">
                         <tr>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#C9A961]">
-                            Position
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#C9A961]">
-                            Domaine
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[#C9A961]">
-                            Autorité /1000
-                          </th>
-                          <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-[#C9A961]">
-                            Compté
-                          </th>
+                          <th className="px-4 py-2.5 font-semibold">#</th>
+                          <th className="px-4 py-2.5 font-semibold">Domaine</th>
+                          <th className="px-4 py-2.5 text-right font-semibold">Autorité /1000</th>
+                          <th className="px-4 py-2.5 text-center font-semibold">Compté</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-[#C9A961]/10">
+                      <tbody className="divide-y divide-[var(--line)]">
                         {kd.data.competitors.map((c, i) => (
-                          <tr
-                            key={i}
-                            className={`transition-colors hover:bg-[#C9A961]/5 ${
-                              !c.counted && 'opacity-50'
-                            }`}
-                          >
-                            <td className="px-4 py-3 text-neutral-400">{c.position ?? '—'}</td>
-                            <td className="px-4 py-3 font-medium text-neutral-200">
+                          <tr key={i} className={c.counted ? '' : 'opacity-50'}>
+                            <td className="px-4 py-2.5 text-[var(--text-3)] tnum">{c.position ?? '—'}</td>
+                            <td className="px-4 py-2.5 font-medium text-[var(--text)]">
                               {c.domain || '—'}
-                              {!c.counted && (
-                                <span className="ml-2 text-xs italic text-neutral-500">
-                                  (plateforme · ignoré)
-                                </span>
-                              )}
+                              {!c.counted && <span className="ml-2 text-xs italic text-[var(--text-3)]">plateforme</span>}
                             </td>
-                            <td className="px-4 py-3 text-right font-semibold text-[#D4AF37]">
-                              {c.rank ?? '—'}
-                            </td>
-                            <td className="px-4 py-3 text-center">
-                              {c.counted ? (
-                                <span className="text-[#10B981]">✓</span>
-                              ) : (
-                                <span className="text-red-400">✗</span>
-                              )}
+                            <td className="px-4 py-2.5 text-right font-semibold tnum">{c.rank ?? '—'}</td>
+                            <td className="px-4 py-2.5 text-center">
+                              {c.counted ? <span className="text-[var(--up)]">✓</span> : <span className="text-[var(--down)]">✗</span>}
                             </td>
                           </tr>
                         ))}
@@ -378,56 +224,47 @@ export default function OverviewPage() {
                   </div>
                 </div>
               )}
-            </div>
+            </Card>
           )}
 
-          {/* Actionable Insights */}
+          {/* Recommendations */}
           {data.difficulty != null && (
-            <div className="rounded-2xl border border-[#10B981]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 backdrop-blur-sm">
-              <h2 className="mb-4 text-2xl font-bold text-[#10B981]">💡 Recommandations</h2>
-              <div className="space-y-3">
+            <Card>
+              <SectionTitle>Recommandations</SectionTitle>
+              <div className="space-y-2">
                 {data.difficulty < 30 && data.volume && data.volume > 100 && (
-                  <div className="rounded-lg border border-[#10B981]/20 bg-[#10B981]/10 p-4">
-                    <div className="font-semibold text-[#10B981]">✅ Opportunité rapide</div>
-                    <div className="mt-1 text-sm text-neutral-300">
-                      Difficulté faible + volume décent = ROI rapide. Priorise ce mot-clé.
-                    </div>
+                  <div className="flex items-start gap-2 rounded-xl bg-[var(--up-bg)] px-4 py-3 text-sm text-[var(--up)]">
+                    <span>✅</span>
+                    <span>
+                      <b>Opportunité rapide</b> — difficulté faible + volume décent = ROI rapide. Priorise ce mot-clé.
+                    </span>
                   </div>
                 )}
                 {data.cpc && data.cpc > 1 && (
-                  <div className="rounded-lg border border-[#D4AF37]/20 bg-[#D4AF37]/10 p-4">
-                    <div className="font-semibold text-[#D4AF37]">💰 Forte valeur commerciale</div>
-                    <div className="mt-1 text-sm text-neutral-300">
-                      CPC élevé ({data.cpc.toFixed(2)} $) = forte intention d'achat. Parfait pour conversion.
-                    </div>
+                  <div className="flex items-start gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700">
+                    <span>💰</span>
+                    <span>
+                      <b>Forte valeur commerciale</b> — CPC {data.cpc.toFixed(2)} $ = forte intention d'achat.
+                    </span>
                   </div>
                 )}
                 {data.difficulty >= 70 && (
-                  <div className="rounded-lg border border-red-400/20 bg-red-400/10 p-4">
-                    <div className="font-semibold text-red-400">⚠️ Très difficile</div>
-                    <div className="mt-1 text-sm text-neutral-300">
-                      Dominé par autorités. Évite sauf stratégie long-terme ou backlinks solides.
-                    </div>
+                  <div className="flex items-start gap-2 rounded-xl bg-[var(--down-bg)] px-4 py-3 text-sm text-[var(--down)]">
+                    <span>⚠️</span>
+                    <span>
+                      <b>Très difficile</b> — dominé par des autorités. Évite sauf stratégie long terme.
+                    </span>
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           )}
         </div>
       )}
 
-      {/* Empty State */}
       {!data && !loading && !error && (
-        <div className="rounded-2xl border border-[#C9A961]/10 bg-[#1E293B]/20 px-12 py-16 text-center backdrop-blur-sm">
-          <div className="mb-4 text-6xl">🎯</div>
-          <h3 className="mb-2 text-xl font-semibold text-[#C9A961]">
-            Analyse approfondie en un clic
-          </h3>
-          <p className="text-neutral-400">
-            Volume, difficulté, tendances, intention — tout ce qu'il faut pour décider.
-          </p>
-        </div>
+        <EmptyState icon="🎯" title="Analyse approfondie en un clic" hint="Volume, difficulté, tendances, intention — tout pour décider." />
       )}
-    </main>
+    </Page>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
+import { Page, PageHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
 interface PageAudit {
   url: string
@@ -20,24 +21,21 @@ interface PageAudit {
 const fmt = (n: number | null) => (n != null ? n.toLocaleString('fr') : '—')
 
 function scoreLevel(score: number) {
-  if (score >= 80) return { label: 'Excellent', color: 'text-[#10B981]', ring: '#10B981' }
-  if (score >= 60) return { label: 'Correct', color: 'text-[#D4AF37]', ring: '#D4AF37' }
-  return { label: 'À améliorer', color: 'text-red-400', ring: '#F87171' }
+  if (score >= 80) return { l: 'Excellent', c: 'text-[var(--up)]', ring: '#16a34a' }
+  if (score >= 60) return { l: 'Correct', c: 'text-amber-700', ring: '#d97706' }
+  return { l: 'À améliorer', c: 'text-[var(--down)]', ring: '#e11d48' }
 }
-
-// Length check helpers for meta hygiene
 function titleStatus(len: number | null) {
-  if (len == null) return { color: 'text-red-400', hint: 'manquant' }
-  if (len < 30) return { color: 'text-[#D4AF37]', hint: 'trop court' }
-  if (len > 60) return { color: 'text-[#D4AF37]', hint: 'trop long' }
-  return { color: 'text-[#10B981]', hint: 'optimal' }
+  if (len == null) return { c: 'text-[var(--down)]', h: 'manquant' }
+  if (len < 30) return { c: 'text-amber-700', h: 'trop court' }
+  if (len > 60) return { c: 'text-amber-700', h: 'trop long' }
+  return { c: 'text-[var(--up)]', h: 'optimal' }
 }
-
 function descStatus(len: number | null) {
-  if (len == null) return { color: 'text-red-400', hint: 'manquante' }
-  if (len < 120) return { color: 'text-[#D4AF37]', hint: 'trop courte' }
-  if (len > 160) return { color: 'text-[#D4AF37]', hint: 'trop longue' }
-  return { color: 'text-[#10B981]', hint: 'optimale' }
+  if (len == null) return { c: 'text-[var(--down)]', h: 'manquante' }
+  if (len < 120) return { c: 'text-amber-700', h: 'trop courte' }
+  if (len > 160) return { c: 'text-amber-700', h: 'trop longue' }
+  return { c: 'text-[var(--up)]', h: 'optimale' }
 }
 
 export default function AuditPage() {
@@ -53,208 +51,123 @@ export default function AuditPage() {
   const score = data?.onpageScore != null ? Math.round(data.onpageScore) : null
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-16">
-      <div className="mb-12">
-        <h1 className="bg-gradient-to-r from-[#C9A961] to-[#D4AF37] bg-clip-text text-5xl font-bold text-transparent">
-          Audit On-Page
-        </h1>
-        <p className="mt-3 text-lg text-neutral-400">
-          Diagnostic instantané · Score technique · Meta hygiene · Problèmes détectés
-        </p>
-      </div>
+    <Page>
+      <PageHeader title="Audit on-page" subtitle="Score technique · hygiène des balises meta · problèmes détectés" />
 
-      <div className="mb-8 rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 shadow-2xl backdrop-blur-sm">
-        <form onSubmit={search} className="space-y-6">
+      <Card className="mb-6">
+        <form onSubmit={search} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#C9A961]/80">
-              URL de la Page
-            </label>
+            <label className="mb-1.5 block text-xs font-medium text-[var(--text-2)]">URL de la page</label>
             <input
               value={url}
               onChange={(e) => setUrl(e.target.value)}
               placeholder="ex : https://monsite.ma/produit"
-              className="w-full rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-3 text-lg text-neutral-100 placeholder-neutral-500 outline-none transition-all focus:border-[#C9A961] focus:ring-2 focus:ring-[#C9A961]/20"
+              className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-gradient-to-r from-[#C9A961] to-[#D4AF37] px-6 py-4 text-lg font-bold text-[#0F172A] shadow-xl shadow-[#C9A961]/30 transition-all hover:scale-[1.02] hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
-          >
+          <Button type="submit" disabled={loading} className="w-full py-3">
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#0F172A]/20 border-t-[#0F172A]"></span>
-                Audit en cours...
-              </span>
+              <>
+                <Spinner /> Audit en cours…
+              </>
             ) : (
-              '🩺 Auditer la page'
+              'Auditer la page'
             )}
-          </button>
+          </Button>
         </form>
-
         {cached !== null && !error && data && (
-          <div className="mt-4 flex items-center gap-4 text-xs text-neutral-400">
-            <span className="truncate">
-              {cached ? (
-                <span className="text-[#10B981]">⚡ Cache (0 $)</span>
-              ) : (
-                <span className="text-[#D4AF37]">💳 API DataForSEO</span>
-              )}
-            </span>
-            {cached && fetchedAt && <span className="text-neutral-500">· Maj {timeAgo(fetchedAt)}</span>}
+          <div className="mt-4 border-t border-[var(--line)] pt-3">
+            <CacheMeta cached={cached} fetchedAt={fetchedAt} timeAgo={timeAgo} />
           </div>
         )}
-      </div>
+      </Card>
 
-      {error && (
-        <div className="mb-8 rounded-xl border border-red-400/30 bg-red-500/10 px-6 py-4 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <div className="font-semibold text-red-400">Erreur</div>
-              <div className="text-sm text-red-300">{error}</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {error && <div className="mb-6"><ErrorBox message={error} /></div>}
 
       {data && (
-        <div className="space-y-8">
-          {/* Score + Stats */}
-          <div className="grid gap-6 lg:grid-cols-3">
-            {/* Score gauge */}
+        <div className="space-y-6">
+          <div className="grid gap-4 lg:grid-cols-3">
             {score != null && (
-              <div className="flex flex-col items-center justify-center rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 backdrop-blur-sm">
-                <div className="relative flex h-40 w-40 items-center justify-center">
+              <Card className="flex flex-col items-center justify-center">
+                <div className="relative flex h-36 w-36 items-center justify-center">
                   <svg className="absolute h-full w-full -rotate-90" viewBox="0 0 100 100">
-                    <circle cx="50" cy="50" r="42" fill="none" stroke="#334155" strokeWidth="8" />
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="#ececee" strokeWidth="8" />
                     <circle
-                      cx="50"
-                      cy="50"
-                      r="42"
-                      fill="none"
-                      stroke={scoreLevel(score).ring}
-                      strokeWidth="8"
-                      strokeLinecap="round"
+                      cx="50" cy="50" r="42" fill="none"
+                      stroke={scoreLevel(score).ring} strokeWidth="8" strokeLinecap="round"
                       strokeDasharray={`${(score / 100) * 264} 264`}
                     />
                   </svg>
                   <div className="text-center">
-                    <div className={`text-5xl font-bold ${scoreLevel(score).color}`}>{score}</div>
-                    <div className="text-xs text-neutral-500">/ 100</div>
+                    <div className={`text-4xl font-bold tnum ${scoreLevel(score).c}`}>{score}</div>
+                    <div className="text-xs text-[var(--text-3)]">/ 100</div>
                   </div>
                 </div>
-                <div className={`mt-4 text-xl font-bold ${scoreLevel(score).color}`}>
-                  {scoreLevel(score).label}
-                </div>
-                <div className="text-xs text-neutral-500">Score on-page</div>
-              </div>
+                <div className={`mt-3 text-base font-bold ${scoreLevel(score).c}`}>{scoreLevel(score).l}</div>
+                <div className="text-xs text-[var(--text-3)]">Score on-page</div>
+              </Card>
             )}
-
-            {/* Content stats */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3 lg:col-span-2">
-              <div className="rounded-xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs uppercase tracking-wider text-[#C9A961]/80">Mots</div>
-                  <span className="text-2xl">📝</span>
-                </div>
-                <div className="mt-2 text-3xl font-bold text-[#C9A961]">{fmt(data.wordCount)}</div>
-              </div>
-              <div className="rounded-xl border border-[#10B981]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs uppercase tracking-wider text-[#10B981]/80">Liens Internes</div>
-                  <span className="text-2xl">🔗</span>
-                </div>
-                <div className="mt-2 text-3xl font-bold text-[#10B981]">{fmt(data.internalLinks)}</div>
-              </div>
-              <div className="rounded-xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
-                <div className="flex items-center justify-between">
-                  <div className="text-xs uppercase tracking-wider text-[#D4AF37]/80">Liens Externes</div>
-                  <span className="text-2xl">🌐</span>
-                </div>
-                <div className="mt-2 text-3xl font-bold text-[#D4AF37]">{fmt(data.externalLinks)}</div>
-              </div>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:col-span-2">
+              <StatCard label="Mots" value={fmt(data.wordCount)} />
+              <StatCard label="Liens internes" value={fmt(data.internalLinks)} />
+              <StatCard label="Liens externes" value={fmt(data.externalLinks)} />
             </div>
           </div>
 
-          {/* Meta hygiene */}
-          <div className="rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 backdrop-blur-sm">
-            <h2 className="mb-6 text-2xl font-bold text-[#C9A961]">🏷️ Balises Meta</h2>
-            <div className="space-y-5">
+          <Card>
+            <SectionTitle>Balises meta</SectionTitle>
+            <div className="space-y-4">
               <div>
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">Titre</span>
-                  {data.titleLength != null && (
-                    <span className="text-xs text-neutral-500">({data.titleLength} car.)</span>
-                  )}
-                  <span className={`text-xs font-semibold ${titleStatus(data.titleLength).color}`}>
-                    · {titleStatus(data.titleLength).hint}
-                  </span>
+                <div className="mb-1 flex items-center gap-2 text-xs">
+                  <span className="font-semibold text-[var(--text-2)]">Titre</span>
+                  {data.titleLength != null && <span className="text-[var(--text-3)]">({data.titleLength} car.)</span>}
+                  <span className={`font-semibold ${titleStatus(data.titleLength).c}`}>· {titleStatus(data.titleLength).h}</span>
                 </div>
-                <p className="text-neutral-200">{data.title || '— manquant —'}</p>
+                <p className="text-sm text-[var(--text)]">{data.title || '— manquant —'}</p>
               </div>
-              <div className="border-t border-[#C9A961]/10 pt-5">
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">
-                    Meta description
-                  </span>
-                  {data.descriptionLength != null && (
-                    <span className="text-xs text-neutral-500">({data.descriptionLength} car.)</span>
-                  )}
-                  <span className={`text-xs font-semibold ${descStatus(data.descriptionLength).color}`}>
-                    · {descStatus(data.descriptionLength).hint}
-                  </span>
+              <div className="border-t border-[var(--line)] pt-4">
+                <div className="mb-1 flex items-center gap-2 text-xs">
+                  <span className="font-semibold text-[var(--text-2)]">Meta description</span>
+                  {data.descriptionLength != null && <span className="text-[var(--text-3)]">({data.descriptionLength} car.)</span>}
+                  <span className={`font-semibold ${descStatus(data.descriptionLength).c}`}>· {descStatus(data.descriptionLength).h}</span>
                 </div>
-                <p className="text-neutral-200">{data.description || '— manquante —'}</p>
+                <p className="text-sm text-[var(--text)]">{data.description || '— manquante —'}</p>
               </div>
-              <div className="border-t border-[#C9A961]/10 pt-5">
-                <div className="mb-1 flex items-center gap-2">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-neutral-400">H1</span>
-                  <span className={`text-xs font-semibold ${data.h1.length === 1 ? 'text-[#10B981]' : 'text-[#D4AF37]'}`}>
+              <div className="border-t border-[var(--line)] pt-4">
+                <div className="mb-1 flex items-center gap-2 text-xs">
+                  <span className="font-semibold text-[var(--text-2)]">H1</span>
+                  <span className={`font-semibold ${data.h1.length === 1 ? 'text-[var(--up)]' : 'text-amber-700'}`}>
                     · {data.h1.length === 0 ? 'manquant' : data.h1.length === 1 ? 'unique' : `${data.h1.length} H1`}
                   </span>
                 </div>
-                <p className="text-neutral-200">{data.h1.length > 0 ? data.h1.join(' · ') : '— manquant —'}</p>
+                <p className="text-sm text-[var(--text)]">{data.h1.length > 0 ? data.h1.join(' · ') : '— manquant —'}</p>
               </div>
             </div>
-          </div>
+          </Card>
 
-          {/* Issues */}
-          <div className="rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 backdrop-blur-sm">
-            <h2 className="mb-4 text-2xl font-bold text-[#C9A961]">
-              🔍 Problèmes Détectés ({data.issues.length})
-            </h2>
+          <Card>
+            <SectionTitle>Problèmes détectés ({data.issues.length})</SectionTitle>
             {data.issues.length === 0 ? (
-              <div className="rounded-xl border border-[#10B981]/20 bg-[#10B981]/10 px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">✅</span>
-                  <div className="font-semibold text-[#10B981]">Aucun problème majeur détecté !</div>
-                </div>
+              <div className="rounded-xl bg-[var(--up-bg)] px-4 py-3 text-sm font-medium text-[var(--up)]">
+                ✅ Aucun problème majeur détecté !
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {data.issues.map((issue) => (
-                  <div
-                    key={issue}
-                    className="flex items-center gap-3 rounded-xl border border-[#D4AF37]/20 bg-[#D4AF37]/10 px-5 py-3"
-                  >
-                    <span className="text-xl">⚠️</span>
-                    <span className="text-sm text-neutral-200">{issue}</span>
+                  <div key={issue} className="flex items-center gap-2.5 rounded-xl bg-amber-50 px-4 py-2.5 text-sm text-amber-800">
+                    <span>⚠️</span>
+                    <span>{issue}</span>
                   </div>
                 ))}
               </div>
             )}
-          </div>
+          </Card>
         </div>
       )}
 
       {!data && !loading && !error && (
-        <div className="rounded-2xl border border-[#C9A961]/10 bg-[#1E293B]/20 px-12 py-16 text-center backdrop-blur-sm">
-          <div className="mb-4 text-6xl">🩺</div>
-          <h3 className="mb-2 text-xl font-semibold text-[#C9A961]">Diagnostique une page</h3>
-          <p className="text-neutral-400">Score technique, meta, structure et problèmes détectés.</p>
-        </div>
+        <EmptyState icon="🩺" title="Diagnostique une page" hint="Score technique, meta, structure et problèmes détectés." />
       )}
-    </main>
+    </Page>
   )
 }

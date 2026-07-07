@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
+import { Page, PageHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
 interface BacklinksSummary {
   domain: string
@@ -16,32 +17,10 @@ interface BacklinksSummary {
 
 const fmt = (n: number | null) => (n != null ? n.toLocaleString('fr') : '—')
 
-function Metric({
-  label,
-  value,
-  icon,
-  color,
-}: {
-  label: string
-  value: string
-  icon: string
-  color: string
-}) {
-  return (
-    <div className={`rounded-xl border ${color} bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm`}>
-      <div className="flex items-center justify-between">
-        <div className="text-xs uppercase tracking-wider text-neutral-400">{label}</div>
-        <span className="text-2xl">{icon}</span>
-      </div>
-      <div className="mt-2 text-3xl font-bold text-neutral-100">{value}</div>
-    </div>
-  )
-}
-
 function spamLevel(score: number) {
-  if (score < 15) return { label: 'Sain', color: 'text-[#10B981]', bg: 'from-[#10B981] to-[#059669]' }
-  if (score < 40) return { label: 'Modéré', color: 'text-[#D4AF37]', bg: 'from-[#D4AF37] to-[#C9A961]' }
-  return { label: 'Risqué', color: 'text-red-400', bg: 'from-red-400 to-red-500' }
+  if (score < 15) return { l: 'Sain', c: 'text-[var(--up)]', bar: 'bg-[var(--up)]', hint: 'Profil de liens sain et naturel.' }
+  if (score < 40) return { l: 'Modéré', c: 'text-amber-700', bar: 'bg-amber-500', hint: 'Quelques liens douteux à surveiller.' }
+  return { l: 'Risqué', c: 'text-[var(--down)]', bar: 'bg-[var(--down)]', hint: 'Beaucoup de liens toxiques — risque de pénalité.' }
 }
 
 export default function BacklinksPage() {
@@ -60,159 +39,87 @@ export default function BacklinksPage() {
       : null
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-16">
-      <div className="mb-12">
-        <h1 className="bg-gradient-to-r from-[#C9A961] to-[#D4AF37] bg-clip-text text-5xl font-bold text-transparent">
-          Profil de Backlinks
-        </h1>
-        <p className="mt-3 text-lg text-neutral-400">
-          Autorité du domaine · Domaines référents · Score de spam · Ratio dofollow
-        </p>
-      </div>
+    <Page>
+      <PageHeader title="Profil de backlinks" subtitle="Autorité du domaine · domaines référents · score de spam · ratio dofollow" />
 
-      <div className="mb-8 rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 shadow-2xl backdrop-blur-sm">
-        <form onSubmit={search} className="space-y-6">
+      <Card className="mb-6">
+        <form onSubmit={search} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#C9A961]/80">
-              Domaine
-            </label>
+            <label className="mb-1.5 block text-xs font-medium text-[var(--text-2)]">Domaine</label>
             <input
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
               placeholder="ex : jumia.ma"
-              className="w-full rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-3 text-lg text-neutral-100 placeholder-neutral-500 outline-none transition-all focus:border-[#C9A961] focus:ring-2 focus:ring-[#C9A961]/20"
+              className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10"
             />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-gradient-to-r from-[#C9A961] to-[#D4AF37] px-6 py-4 text-lg font-bold text-[#0F172A] shadow-xl shadow-[#C9A961]/30 transition-all hover:scale-[1.02] hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
-          >
+          <Button type="submit" disabled={loading} className="w-full py-3">
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#0F172A]/20 border-t-[#0F172A]"></span>
-                Analyse des backlinks...
-              </span>
+              <>
+                <Spinner /> Analyse des backlinks…
+              </>
             ) : (
-              '🔗 Analyser les backlinks'
+              'Analyser les backlinks'
             )}
-          </button>
+          </Button>
         </form>
-
         {cached !== null && !error && data && (
-          <div className="mt-4 flex items-center gap-4 text-xs text-neutral-400">
-            <span>
-              {data.domain} ·{' '}
-              {cached ? (
-                <span className="text-[#10B981]">⚡ Cache (0 $)</span>
-              ) : (
-                <span className="text-[#D4AF37]">💳 API DataForSEO</span>
-              )}
-            </span>
-            {cached && fetchedAt && <span className="text-neutral-500">· Maj {timeAgo(fetchedAt)}</span>}
+          <div className="mt-4 border-t border-[var(--line)] pt-3">
+            <CacheMeta cached={cached} fetchedAt={fetchedAt} timeAgo={timeAgo} extra={data.domain} />
           </div>
         )}
-      </div>
+      </Card>
 
-      {error && (
-        <div className="mb-8 rounded-xl border border-red-400/30 bg-red-500/10 px-6 py-4 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <div className="font-semibold text-red-400">Erreur</div>
-              <div className="text-sm text-red-300">{error}</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {error && <div className="mb-6"><ErrorBox message={error} /></div>}
 
       {data && (
-        <div className="space-y-8">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Metric label="Backlinks" value={fmt(data.backlinks)} icon="🔗" color="border-[#C9A961]/20" />
-            <Metric
-              label="Domaines Référents"
-              value={fmt(data.referringDomains)}
-              icon="🌐"
-              color="border-[#10B981]/20"
-            />
-            <Metric
-              label="Domaines Principaux"
-              value={fmt(data.referringMainDomains)}
-              icon="🏛️"
-              color="border-[#D4AF37]/20"
-            />
-            <Metric label="Rank Autorité" value={fmt(data.rank)} icon="⭐" color="border-purple-400/20" />
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <StatCard label="Backlinks" value={fmt(data.backlinks)} />
+            <StatCard label="Domaines référents" value={fmt(data.referringDomains)} accent />
+            <StatCard label="Domaines principaux" value={fmt(data.referringMainDomains)} />
+            <StatCard label="Rank autorité" value={fmt(data.rank)} />
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Spam Score gauge */}
+          <div className="grid gap-4 md:grid-cols-2">
             {data.spamScore != null && (
-              <div className="rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 backdrop-blur-sm">
-                <h2 className="mb-4 text-xl font-bold text-[#C9A961]">🛡️ Score de Spam</h2>
-                <div className="flex items-center gap-6">
-                  <div className="relative flex h-24 w-24 items-center justify-center">
-                    <div className={`text-4xl font-bold ${spamLevel(data.spamScore).color}`}>
-                      {data.spamScore}%
-                    </div>
-                  </div>
+              <Card>
+                <SectionTitle>Score de spam</SectionTitle>
+                <div className="flex items-center gap-5">
+                  <div className={`text-4xl font-bold tnum ${spamLevel(data.spamScore).c}`}>{data.spamScore}%</div>
                   <div>
-                    <div className={`text-2xl font-bold ${spamLevel(data.spamScore).color}`}>
-                      {spamLevel(data.spamScore).label}
-                    </div>
-                    <div className="mt-1 text-sm text-neutral-400">
-                      {data.spamScore < 15
-                        ? 'Profil de liens sain et naturel.'
-                        : data.spamScore < 40
-                        ? 'Quelques liens douteux à surveiller.'
-                        : 'Beaucoup de liens toxiques — risque de pénalité.'}
-                    </div>
+                    <div className={`text-lg font-bold ${spamLevel(data.spamScore).c}`}>{spamLevel(data.spamScore).l}</div>
+                    <div className="text-sm text-[var(--text-2)]">{spamLevel(data.spamScore).hint}</div>
                   </div>
                 </div>
-                <div className="mt-4 h-3 overflow-hidden rounded-full bg-[#0F172A]/50">
-                  <div
-                    className={`h-full rounded-full bg-gradient-to-r ${spamLevel(data.spamScore).bg}`}
-                    style={{ width: `${Math.min(100, data.spamScore)}%` }}
-                  />
+                <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[var(--subtle)]">
+                  <div className={`h-full rounded-full ${spamLevel(data.spamScore).bar}`} style={{ width: `${Math.min(100, data.spamScore)}%` }} />
                 </div>
-              </div>
+              </Card>
             )}
 
-            {/* Dofollow ratio */}
             {dofollowPct != null && (
-              <div className="rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 backdrop-blur-sm">
-                <h2 className="mb-4 text-xl font-bold text-[#C9A961]">🔀 Ratio Dofollow</h2>
-                <div className="flex items-center gap-6">
-                  <div className="text-4xl font-bold text-[#10B981]">{dofollowPct.toFixed(0)}%</div>
-                  <div className="text-sm text-neutral-400">
-                    <div>
-                      <span className="text-[#10B981]">●</span> {fmt(data.dofollow)} dofollow
-                    </div>
-                    <div>
-                      <span className="text-neutral-500">●</span> {fmt(data.nofollow)} nofollow
-                    </div>
+              <Card>
+                <SectionTitle>Ratio dofollow</SectionTitle>
+                <div className="flex items-center gap-5">
+                  <div className="text-4xl font-bold text-[var(--up)] tnum">{dofollowPct.toFixed(0)}%</div>
+                  <div className="text-sm text-[var(--text-2)]">
+                    <div><span className="text-[var(--up)]">●</span> {fmt(data.dofollow)} dofollow</div>
+                    <div><span className="text-[var(--text-3)]">●</span> {fmt(data.nofollow)} nofollow</div>
                   </div>
                 </div>
-                <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-[#0F172A]/50">
-                  <div
-                    className="h-full bg-gradient-to-r from-[#10B981] to-[#059669]"
-                    style={{ width: `${dofollowPct}%` }}
-                  />
-                  <div className="h-full flex-1 bg-neutral-600" />
+                <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-[var(--subtle)]">
+                  <div className="h-full bg-[var(--up)]" style={{ width: `${dofollowPct}%` }} />
                 </div>
-              </div>
+              </Card>
             )}
           </div>
         </div>
       )}
 
       {!data && !loading && !error && (
-        <div className="rounded-2xl border border-[#C9A961]/10 bg-[#1E293B]/20 px-12 py-16 text-center backdrop-blur-sm">
-          <div className="mb-4 text-6xl">🔗</div>
-          <h3 className="mb-2 text-xl font-semibold text-[#C9A961]">Mesure l'autorité d'un domaine</h3>
-          <p className="text-neutral-400">Backlinks, domaines référents, score de spam et plus.</p>
-        </div>
+        <EmptyState icon="🔗" title="Mesure l'autorité d'un domaine" hint="Backlinks, domaines référents, score de spam et plus." />
       )}
-    </main>
+    </Page>
   )
 }

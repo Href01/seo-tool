@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Page, PageHeader, Card, StatCard, SectionTitle } from '@/components/ui'
 
 interface Stats {
   bankCount: number
@@ -8,145 +10,49 @@ interface Stats {
   projectsCount: number
 }
 
+const links = [
+  { href: '/database', icon: '🗃️', title: 'Base de mots-clés', desc: 'Tous les mots-clés MENA · recherche · export' },
+  { href: '/tracker', icon: '📈', title: 'Suivi de positions', desc: 'Tracking global · historique · vérifications' },
+  { href: '/', icon: '🔍', title: 'Recherche & analyse', desc: 'Mots-clés · SERP · difficulté maison · volume' },
+  { href: '/domain', icon: '🌐', title: 'Analyse concurrence', desc: 'Domaines · backlinks · audit on-page' },
+]
+
 export default function AdminPage() {
   const [stats, setStats] = useState<Stats | null>(null)
 
-  async function load() {
-    try {
-      const res = await fetch('/api/admin/stats')
-      const data = await res.json()
-      setStats(data)
-    } catch (e) {
-      console.error(e)
-    }
-  }
-
   useEffect(() => {
-    load()
+    fetch('/api/admin/stats')
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(console.error)
   }, [])
 
   return (
-    <main className="mx-auto max-w-6xl px-6 py-16">
-      <div className="mb-8">
-        <h1 className="bg-gradient-to-r from-[#C9A961] to-[#D4AF37] bg-clip-text text-4xl font-bold text-transparent">
-          Dashboard Admin
-        </h1>
-        <p className="mt-2 text-sm text-neutral-400">
-          Vue omnisciente · Tous les projets, stats, et données.
-        </p>
-      </div>
+    <Page>
+      <PageHeader title="Dashboard Admin" subtitle="Vue omnisciente · tous les projets, stats et données" />
 
       {stats && (
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="group rounded-xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm transition-all hover:border-[#C9A961]/40 hover:shadow-2xl hover:shadow-[#C9A961]/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-[#C9A961]/80">
-                  📚 Base de mots-clés
-                </div>
-                <div className="mt-2 text-3xl font-bold text-[#C9A961]">
-                  {stats.bankCount.toLocaleString('fr')}
-                </div>
-                <div className="mt-1 text-xs text-neutral-500">Mots-clés MENA accumulés</div>
-              </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#C9A961]/10 text-2xl">
-                🗃️
-              </div>
-            </div>
-          </div>
-          <div className="group rounded-xl border border-[#059669]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm transition-all hover:border-[#059669]/40 hover:shadow-2xl hover:shadow-[#059669]/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-[#059669]/80">
-                  👥 Utilisateurs
-                </div>
-                <div className="mt-2 text-3xl font-bold text-[#059669]">
-                  {stats.usersCount.toLocaleString('fr')}
-                </div>
-                <div className="mt-1 text-xs text-neutral-500">Comptes actifs</div>
-              </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#059669]/10 text-2xl">
-                👤
-              </div>
-            </div>
-          </div>
-          <div className="group rounded-xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm transition-all hover:border-[#D4AF37]/40 hover:shadow-2xl hover:shadow-[#D4AF37]/10">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-xs uppercase tracking-wider text-[#D4AF37]/80">
-                  🌐 Projets
-                </div>
-                <div className="mt-2 text-3xl font-bold text-[#D4AF37]">
-                  {stats.projectsCount.toLocaleString('fr')}
-                </div>
-                <div className="mt-1 text-xs text-neutral-500">Sites suivis</div>
-              </div>
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#D4AF37]/10 text-2xl">
-                📊
-              </div>
-            </div>
-          </div>
+        <div className="mb-6 grid gap-3 sm:grid-cols-3">
+          <StatCard label="Base de mots-clés" value={stats.bankCount.toLocaleString('fr')} sub="Mots-clés MENA accumulés" accent />
+          <StatCard label="Utilisateurs" value={stats.usersCount.toLocaleString('fr')} sub="Comptes actifs" />
+          <StatCard label="Projets" value={stats.projectsCount.toLocaleString('fr')} sub="Sites suivis" />
         </div>
       )}
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2">
-        <a
-          href="/database"
-          className="group rounded-xl border border-[#C9A961]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#C9A961]/40 hover:shadow-xl hover:shadow-[#C9A961]/10"
-        >
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-2xl">📚</span>
-            <div className="text-lg font-semibold text-[#C9A961] group-hover:text-[#D4AF37]">
-              Base de mots-clés
-            </div>
-          </div>
-          <div className="text-sm text-neutral-400">
-            Tous les mots-clés MENA accumulés • Recherche • Export
-          </div>
-        </a>
-        <a
-          href="/tracker"
-          className="group rounded-xl border border-[#10B981]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#10B981]/40 hover:shadow-xl hover:shadow-[#10B981]/10"
-        >
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-2xl">📈</span>
-            <div className="text-lg font-semibold text-[#10B981] group-hover:text-[#059669]">
-              Suivi de positions
-            </div>
-          </div>
-          <div className="text-sm text-neutral-400">
-            Tracking global • Historique • Vérifications manuelles
-          </div>
-        </a>
-        <a
-          href="/"
-          className="group rounded-xl border border-[#059669]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#059669]/40 hover:shadow-xl hover:shadow-[#059669]/10"
-        >
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-2xl">🔍</span>
-            <div className="text-lg font-semibold text-[#059669] group-hover:text-[#10B981]">
-              Recherche & Analyse
-            </div>
-          </div>
-          <div className="text-sm text-neutral-400">
-            Mots-clés • SERP • Difficulté maison • Volume • Tendances
-          </div>
-        </a>
-        <a
-          href="/overview"
-          className="group rounded-xl border border-[#D4AF37]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#D4AF37]/40 hover:shadow-xl hover:shadow-[#D4AF37]/10"
-        >
-          <div className="mb-2 flex items-center gap-2">
-            <span className="text-2xl">🎯</span>
-            <div className="text-lg font-semibold text-[#D4AF37] group-hover:text-[#C9A961]">
-              Analyse Concurrence
-            </div>
-          </div>
-          <div className="text-sm text-neutral-400">
-            Domaines • Backlinks • Audit on-page • Métriques
-          </div>
-        </a>
+      <SectionTitle>Accès rapides</SectionTitle>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {links.map((l) => (
+          <Link key={l.href} href={l.href}>
+            <Card className="transition-colors hover:border-[var(--crimson)]">
+              <div className="mb-1.5 flex items-center gap-2.5">
+                <span className="text-xl">{l.icon}</span>
+                <div className="font-semibold text-[var(--text)]">{l.title}</div>
+              </div>
+              <div className="text-sm text-[var(--text-2)]">{l.desc}</div>
+            </Card>
+          </Link>
+        ))}
       </div>
-    </main>
+    </Page>
   )
 }

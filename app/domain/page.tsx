@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { DEFAULT_LOCATION, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
+import { Page, PageHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
 interface DomainKeyword {
   keyword: string
@@ -19,11 +20,11 @@ interface DomainOverview {
   keywords: DomainKeyword[]
 }
 
-function posBadge(position: number | null) {
-  if (position == null) return 'bg-neutral-500/20 text-neutral-400'
-  if (position <= 3) return 'bg-[#10B981]/20 text-[#10B981]'
-  if (position <= 10) return 'bg-[#D4AF37]/20 text-[#D4AF37]'
-  return 'bg-neutral-500/20 text-neutral-400'
+function posClass(p: number | null) {
+  if (p == null) return 'bg-[var(--subtle)] text-[var(--text-2)]'
+  if (p <= 3) return 'bg-[var(--up-bg)] text-[var(--up)]'
+  if (p <= 10) return 'bg-amber-100 text-amber-700'
+  return 'bg-[var(--subtle)] text-[var(--text-2)]'
 }
 
 export default function DomainPage() {
@@ -39,145 +40,81 @@ export default function DomainPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-6 py-16">
-      <div className="mb-12">
-        <h1 className="bg-gradient-to-r from-[#C9A961] to-[#D4AF37] bg-clip-text text-5xl font-bold text-transparent">
-          Analyse de Domaine
-        </h1>
-        <p className="mt-3 text-lg text-neutral-400">
-          Trafic estimé · Mots-clés organiques · Espionnage concurrentiel MENA/Gulf
-        </p>
-      </div>
+    <Page>
+      <PageHeader title="Analyse de domaine" subtitle="Trafic estimé et mots-clés organiques d'un concurrent" />
 
-      <div className="mb-8 rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 shadow-2xl backdrop-blur-sm">
-        <form onSubmit={search} className="space-y-6">
+      <Card className="mb-6">
+        <form onSubmit={search} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#C9A961]/80">
-              Domaine à Analyser
-            </label>
+            <label className="mb-1.5 block text-xs font-medium text-[var(--text-2)]">Domaine à analyser</label>
             <input
               value={domain}
               onChange={(e) => setDomain(e.target.value)}
               placeholder="ex : jumia.ma"
-              className="w-full rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-3 text-lg text-neutral-100 placeholder-neutral-500 outline-none transition-all focus:border-[#C9A961] focus:ring-2 focus:ring-[#C9A961]/20"
+              className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10"
             />
           </div>
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-3 md:grid-cols-2">
             <LocationSelector value={location} onChange={setLocation} />
             <LanguageSelector value={language} onChange={setLanguage} />
           </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-gradient-to-r from-[#C9A961] to-[#D4AF37] px-6 py-4 text-lg font-bold text-[#0F172A] shadow-xl shadow-[#C9A961]/30 transition-all hover:scale-[1.02] hover:shadow-2xl disabled:opacity-50 disabled:hover:scale-100"
-          >
+          <Button type="submit" disabled={loading} className="w-full py-3">
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#0F172A]/20 border-t-[#0F172A]"></span>
-                Analyse du domaine...
-              </span>
+              <>
+                <Spinner /> Analyse du domaine…
+              </>
             ) : (
-              '🌐 Analyser le domaine'
+              'Analyser le domaine'
             )}
-          </button>
+          </Button>
         </form>
-
         {cached !== null && !error && data && (
-          <div className="mt-4 flex items-center gap-4 text-xs text-neutral-400">
-            <span>
-              {data.domain} ·{' '}
-              {cached ? (
-                <span className="text-[#10B981]">⚡ Cache (0 $)</span>
-              ) : (
-                <span className="text-[#D4AF37]">💳 API DataForSEO</span>
-              )}
-            </span>
-            {cached && fetchedAt && <span className="text-neutral-500">· Maj {timeAgo(fetchedAt)}</span>}
+          <div className="mt-4 border-t border-[var(--line)] pt-3">
+            <CacheMeta cached={cached} fetchedAt={fetchedAt} timeAgo={timeAgo} extra={data.domain} />
           </div>
         )}
-      </div>
+      </Card>
 
-      {error && (
-        <div className="mb-8 rounded-xl border border-red-400/30 bg-red-500/10 px-6 py-4 backdrop-blur-sm">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <div className="font-semibold text-red-400">Erreur</div>
-              <div className="text-sm text-red-300">{error}</div>
-            </div>
-          </div>
-        </div>
-      )}
+      {error && <div className="mb-6"><ErrorBox message={error} /></div>}
 
       {data && (
-        <div className="space-y-8">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wider text-[#C9A961]/80">Mots-clés Organiques</div>
-                <span className="text-2xl">🔑</span>
-              </div>
-              <div className="mt-2 text-4xl font-bold text-[#C9A961]">
-                {data.organicKeywords?.toLocaleString('fr') ?? '—'}
-              </div>
-              <div className="mt-1 text-xs text-neutral-500">Positions en SERP</div>
-            </div>
-            <div className="rounded-xl border border-[#10B981]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
-              <div className="flex items-center justify-between">
-                <div className="text-xs uppercase tracking-wider text-[#10B981]/80">Trafic Estimé</div>
-                <span className="text-2xl">📈</span>
-              </div>
-              <div className="mt-2 text-4xl font-bold text-[#10B981]">
-                {data.estimatedTraffic?.toLocaleString('fr') ?? '—'}
-              </div>
-              <div className="mt-1 text-xs text-neutral-500">Visites/mois estimées</div>
-            </div>
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <StatCard label="Mots-clés organiques" value={data.organicKeywords?.toLocaleString('fr') ?? '—'} sub="Positions en SERP" />
+            <StatCard label="Trafic estimé" value={data.estimatedTraffic?.toLocaleString('fr') ?? '—'} sub="Visites / mois (estimation)" accent />
           </div>
 
           {data.keywords.length > 0 && (
             <div>
-              <h2 className="mb-4 text-2xl font-bold text-[#C9A961]">🎯 Top Mots-Clés du Domaine</h2>
-              <div className="overflow-hidden rounded-2xl border border-[#C9A961]/20 bg-[#1E293B]/40 shadow-2xl backdrop-blur-sm">
+              <SectionTitle>Top mots-clés du domaine</SectionTitle>
+              <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]">
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="border-b border-[#C9A961]/20 bg-[#0F172A]/50">
+                    <thead className="border-b border-[var(--line)] bg-[var(--subtle)] text-left text-xs text-[var(--text-2)]">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#C9A961]">
-                          Mot-clé
-                        </th>
-                        <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-[#C9A961]">
-                          Position
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[#C9A961]">
-                          Volume
-                        </th>
+                        <th className="px-4 py-3 font-semibold">Mot-clé</th>
+                        <th className="px-4 py-3 text-center font-semibold">Position</th>
+                        <th className="px-4 py-3 text-right font-semibold">Volume</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-[#C9A961]/10">
+                    <tbody className="divide-y divide-[var(--line)]">
                       {data.keywords.map((k, i) => (
-                        <tr key={i} className="transition-colors hover:bg-[#C9A961]/5">
+                        <tr key={i} className="transition-colors hover:bg-[var(--subtle)]">
                           <td className="px-4 py-3">
                             {k.url ? (
-                              <a
-                                href={k.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="font-medium text-[#C9A961] transition-colors hover:text-[#D4AF37]"
-                              >
+                              <a href={k.url} target="_blank" rel="noreferrer" className="font-medium text-[var(--text)] hover:text-[var(--crimson)]">
                                 {k.keyword}
                               </a>
                             ) : (
-                              <span className="font-medium text-neutral-200">{k.keyword}</span>
+                              <span className="font-medium text-[var(--text)]">{k.keyword}</span>
                             )}
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${posBadge(k.position)}`}>
+                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold tnum ${posClass(k.position)}`}>
                               {k.position != null ? `#${k.position}` : '—'}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right text-sm text-neutral-300">
-                            {k.volume?.toLocaleString('fr') ?? '—'}
-                          </td>
+                          <td className="px-4 py-3 text-right text-sm text-[var(--text-2)] tnum">{k.volume?.toLocaleString('fr') ?? '—'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -190,12 +127,8 @@ export default function DomainPage() {
       )}
 
       {!data && !loading && !error && (
-        <div className="rounded-2xl border border-[#C9A961]/10 bg-[#1E293B]/20 px-12 py-16 text-center backdrop-blur-sm">
-          <div className="mb-4 text-6xl">🌐</div>
-          <h3 className="mb-2 text-xl font-semibold text-[#C9A961]">Espionne tes concurrents</h3>
-          <p className="text-neutral-400">Découvre leur trafic et leurs meilleurs mots-clés.</p>
-        </div>
+        <EmptyState icon="🌐" title="Espionne tes concurrents" hint="Découvre leur trafic et leurs meilleurs mots-clés." />
       )}
-    </main>
+    </Page>
   )
 }
