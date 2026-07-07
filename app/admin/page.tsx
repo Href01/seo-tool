@@ -38,22 +38,52 @@ export default function AdminPage() {
 
       {stats && (
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <div className="rounded-xl border border-[#C9A961]/20 bg-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm">
-            <div className="text-xs uppercase tracking-wider text-[#C9A961]/80">Base de mots-clés</div>
-            <div className="mt-2 text-3xl font-bold text-[#C9A961]">
-              {stats.bankCount.toLocaleString('fr')}
+          <div className="group rounded-xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm transition-all hover:border-[#C9A961]/40 hover:shadow-2xl hover:shadow-[#C9A961]/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-wider text-[#C9A961]/80">
+                  📚 Base de mots-clés
+                </div>
+                <div className="mt-2 text-3xl font-bold text-[#C9A961]">
+                  {stats.bankCount.toLocaleString('fr')}
+                </div>
+                <div className="mt-1 text-xs text-neutral-500">Mots-clés MENA accumulés</div>
+              </div>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#C9A961]/10 text-2xl">
+                🗃️
+              </div>
             </div>
           </div>
-          <div className="rounded-xl border border-[#059669]/20 bg-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm">
-            <div className="text-xs uppercase tracking-wider text-[#059669]/80">Utilisateurs</div>
-            <div className="mt-2 text-3xl font-bold text-[#059669]">
-              {stats.usersCount.toLocaleString('fr')}
+          <div className="group rounded-xl border border-[#059669]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm transition-all hover:border-[#059669]/40 hover:shadow-2xl hover:shadow-[#059669]/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-wider text-[#059669]/80">
+                  👥 Utilisateurs
+                </div>
+                <div className="mt-2 text-3xl font-bold text-[#059669]">
+                  {stats.usersCount.toLocaleString('fr')}
+                </div>
+                <div className="mt-1 text-xs text-neutral-500">Comptes actifs</div>
+              </div>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#059669]/10 text-2xl">
+                👤
+              </div>
             </div>
           </div>
-          <div className="rounded-xl border border-[#D4AF37]/20 bg-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm">
-            <div className="text-xs uppercase tracking-wider text-[#D4AF37]/80">Projets</div>
-            <div className="mt-2 text-3xl font-bold text-[#D4AF37]">
-              {stats.projectsCount.toLocaleString('fr')}
+          <div className="group rounded-xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 shadow-xl backdrop-blur-sm transition-all hover:border-[#D4AF37]/40 hover:shadow-2xl hover:shadow-[#D4AF37]/10">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-wider text-[#D4AF37]/80">
+                  🌐 Projets
+                </div>
+                <div className="mt-2 text-3xl font-bold text-[#D4AF37]">
+                  {stats.projectsCount.toLocaleString('fr')}
+                </div>
+                <div className="mt-1 text-xs text-neutral-500">Sites suivis</div>
+              </div>
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#D4AF37]/10 text-2xl">
+                📊
+              </div>
             </div>
           </div>
         </div>
@@ -64,22 +94,56 @@ export default function AdminPage() {
           href="/database"
           className="group rounded-xl border border-[#C9A961]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#C9A961]/40 hover:shadow-xl hover:shadow-[#C9A961]/10"
         >
-          <div className="text-lg font-semibold text-[#C9A961] group-hover:text-[#D4AF37]">
-            Base de mots-clés
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-2xl">📚</span>
+            <div className="text-lg font-semibold text-[#C9A961] group-hover:text-[#D4AF37]">
+              Base de mots-clés
+            </div>
           </div>
-          <div className="mt-1 text-sm text-neutral-400">
-            Tous les mots-clés accumulés dans la base propriétaire
+          <div className="text-sm text-neutral-400">
+            Tous les mots-clés MENA accumulés • Recherche • Export
+          </div>
+        </a>
+        <a
+          href="/tracker"
+          className="group rounded-xl border border-[#10B981]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#10B981]/40 hover:shadow-xl hover:shadow-[#10B981]/10"
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-2xl">📈</span>
+            <div className="text-lg font-semibold text-[#10B981] group-hover:text-[#059669]">
+              Suivi de positions
+            </div>
+          </div>
+          <div className="text-sm text-neutral-400">
+            Tracking global • Historique • Vérifications manuelles
           </div>
         </a>
         <a
           href="/"
           className="group rounded-xl border border-[#059669]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#059669]/40 hover:shadow-xl hover:shadow-[#059669]/10"
         >
-          <div className="text-lg font-semibold text-[#059669] group-hover:text-[#10B981]">
-            Outils SEO
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-2xl">🔍</span>
+            <div className="text-lg font-semibold text-[#059669] group-hover:text-[#10B981]">
+              Recherche & Analyse
+            </div>
           </div>
-          <div className="mt-1 text-sm text-neutral-400">
-            Recherche, SERP, difficulté, domaine, backlinks, audit
+          <div className="text-sm text-neutral-400">
+            Mots-clés • SERP • Difficulté maison • Volume • Tendances
+          </div>
+        </a>
+        <a
+          href="/overview"
+          className="group rounded-xl border border-[#D4AF37]/20 bg-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#D4AF37]/40 hover:shadow-xl hover:shadow-[#D4AF37]/10"
+        >
+          <div className="mb-2 flex items-center gap-2">
+            <span className="text-2xl">🎯</span>
+            <div className="text-lg font-semibold text-[#D4AF37] group-hover:text-[#C9A961]">
+              Analyse Concurrence
+            </div>
+          </div>
+          <div className="text-sm text-neutral-400">
+            Domaines • Backlinks • Audit on-page • Métriques
           </div>
         </a>
       </div>

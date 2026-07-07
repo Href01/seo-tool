@@ -3,29 +3,24 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useMode } from '@/lib/useMode'
-import { useEffect, useState } from 'react'
 
 const userLinks = [
   { href: '/app', label: 'Mes Projets' },
   { href: '/', label: 'Recherche' },
+  { href: '/overview', label: 'Aperçu' },
   { href: '/tracker', label: 'Suivi' },
 ]
 
 const adminLinks = [
   { href: '/admin', label: 'Dashboard' },
   { href: '/database', label: 'Base' },
-  { href: '/', label: 'Outils' },
+  { href: '/', label: 'Recherche' },
+  { href: '/tracker', label: 'Suivi' },
 ]
 
 export default function Nav() {
   const pathname = usePathname()
   const [mode, setMode] = useMode()
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
   const links = mode === 'admin' ? adminLinks : userLinks
 
   return (
@@ -46,30 +41,28 @@ export default function Nav() {
         </Link>
 
         <div className="flex items-center gap-4">
-          {mounted && (
-            <div className="flex gap-1 rounded-lg bg-[#1E293B]/50 p-1">
-              <button
-                onClick={() => setMode('user')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                  mode === 'user'
-                    ? 'bg-gradient-to-r from-[#C9A961] to-[#D4AF37] text-[#0F172A] shadow-lg shadow-[#C9A961]/20'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                User
-              </button>
-              <button
-                onClick={() => setMode('admin')}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
-                  mode === 'admin'
-                    ? 'bg-gradient-to-r from-[#C9A961] to-[#D4AF37] text-[#0F172A] shadow-lg shadow-[#C9A961]/20'
-                    : 'text-neutral-400 hover:text-neutral-200'
-                }`}
-              >
-                Admin
-              </button>
-            </div>
-          )}
+          <div className="flex gap-1 rounded-lg bg-[#1E293B]/50 p-1">
+            <button
+              onClick={() => setMode('user')}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
+                mode === 'user'
+                  ? 'bg-gradient-to-r from-[#C9A961] to-[#D4AF37] text-[#0F172A] shadow-lg shadow-[#C9A961]/20'
+                  : 'text-neutral-400 hover:text-neutral-200'
+              }`}
+            >
+              User
+            </button>
+            <button
+              onClick={() => setMode('admin')}
+              className={`rounded-md px-3 py-1.5 text-sm font-medium transition-all ${
+                mode === 'admin'
+                  ? 'bg-gradient-to-r from-[#C9A961] to-[#D4AF37] text-[#0F172A] shadow-lg shadow-[#C9A961]/20'
+                  : 'text-neutral-400 hover:text-neutral-200'
+              }`}
+            >
+              Admin
+            </button>
+          </div>
 
           <div className="flex gap-1">
             {links.map((l) => {
