@@ -123,37 +123,70 @@ export interface KeywordOverview {
   competition: number | null
   difficulty: number | null
   intent: string | null
+  source: 'labs' | 'google_ads'
   trend: { month: string; volume: number }[]
 }
 
-/** Deep dive on one keyword: volume, difficulty, CPC, intent and 12-month trend. */
+const trend12 = (monthly: any[]): { month: string; volume: number }[] =>
+  (monthly ?? []).slice(-12).map((m) => ({
+    month: `${m.year}-${String(m.month).padStart(2, '0')}`,
+    volume: m.search_volume ?? 0,
+  }))
+
+/**
+ * Deep dive on one keyword: volume, difficulty, CPC, intent, 12-month trend.
+ * Tries the Labs database first (richer: difficulty + intent). If Labs has no
+ * entry — common for niche/long-tail keywords in Morocco — it falls back to
+ * Google Ads, which returns volume/CPC for virtually any keyword.
+ */
 export async function keywordOverview(
   keyword: string,
   opts: { location?: number; language?: string } = {}
 ): Promise<KeywordOverview | null> {
+  const location = opts.location ?? LOCATION_MOROCCO
+  const language = opts.language ?? 'fr'
+
   const data = await dfs<any>('/dataforseo_labs/google/keyword_overview/live', [
-    {
-      keywords: [keyword],
-      location_code: opts.location ?? LOCATION_MOROCCO,
-      language_code: opts.language ?? 'fr',
-    },
+    { keywords: [keyword], location_code: location, language_code: language },
   ])
   const it = data?.tasks?.[0]?.result?.[0]?.items?.[0]
+  if (it) {
+    const info = it.keyword_info ?? {}
+    const props = it.keyword_properties ?? {}
+    return {
+      keyword: it.keyword ?? keyword,
+      volume: info.search_volume ?? null,
+      cpc: info.cpc ?? null,
+      competition: info.competition ?? null,
+      difficulty: props.keyword_difficulty ?? null,
+      intent: it.search_intent_info?.main_intent ?? null,
+      source: 'labs',
+      trend: trend12(info.monthly_searches),
+    }
+  }
+
+  return googleAdsVolume(keyword, { location, language })
+}
+
+/** Google Ads search volume — coverage fallback. No SEO difficulty/intent here. */
+async function googleAdsVolume(
+  keyword: string,
+  opts: { location: number; language: string }
+): Promise<KeywordOverview | null> {
+  const data = await dfs<any>('/keywords_data/google_ads/search_volume/live', [
+    { keywords: [keyword], location_code: opts.location, language_code: opts.language },
+  ])
+  const it = data?.tasks?.[0]?.result?.[0]
   if (!it) return null
-  const info = it.keyword_info ?? {}
-  const props = it.keyword_properties ?? {}
-  const monthly: any[] = info.monthly_searches ?? []
   return {
     keyword: it.keyword ?? keyword,
-    volume: info.search_volume ?? null,
-    cpc: info.cpc ?? null,
-    competition: info.competition ?? null,
-    difficulty: props.keyword_difficulty ?? null,
-    intent: it.search_intent_info?.main_intent ?? null,
-    trend: monthly.slice(-12).map((m) => ({
-      month: `${m.year}-${String(m.month).padStart(2, '0')}`,
-      volume: m.search_volume ?? 0,
-    })),
+    volume: it.search_volume ?? null,
+    cpc: it.cpc ?? null,
+    competition: it.competition_index != null ? it.competition_index / 100 : null,
+    difficulty: null,
+    intent: null,
+    source: 'google_ads',
+    trend: trend12(it.monthly_searches),
   }
 }
 

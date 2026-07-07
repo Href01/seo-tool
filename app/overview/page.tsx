@@ -10,6 +10,7 @@ interface KeywordOverview {
   competition: number | null
   difficulty: number | null
   intent: string | null
+  source: 'labs' | 'google_ads'
   trend: { month: string; volume: number }[]
 }
 
@@ -65,7 +66,15 @@ export default function OverviewPage() {
 
       {cached !== null && !error && data && (
         <p className="mt-6 text-xs text-neutral-500">
-          « {data.keyword} » · {cached ? '⚡ depuis le cache (0 $)' : '💳 requête DataForSEO'}
+          « {data.keyword} » · {cached ? '⚡ depuis le cache (0 $)' : '💳 requête DataForSEO'} ·{' '}
+          {data.source === 'labs' ? 'source : Labs' : 'source : Google Ads'}
+        </p>
+      )}
+
+      {data && data.source === 'google_ads' && (
+        <p className="mt-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300">
+          Mot-clé de niche absent de la base Labs — volume et CPC via Google Ads. La difficulté et
+          l&apos;intention ne sont pas disponibles pour cette source.
         </p>
       )}
 
