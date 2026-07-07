@@ -17,7 +17,7 @@ interface KeywordOverview {
 interface DifficultyResult {
   keyword: string
   difficulty: number
-  competitors: { position: number | null; domain: string; rank: number | null }[]
+  competitors: { position: number | null; domain: string; rank: number | null; counted: boolean }[]
 }
 
 function kdLabel(score: number): { label: string; cls: string } {
@@ -156,9 +156,19 @@ export default function OverviewPage() {
                       </thead>
                       <tbody>
                         {kd.data.competitors.map((c, i) => (
-                          <tr key={i} className="border-t border-neutral-100 dark:border-neutral-800">
+                          <tr
+                            key={i}
+                            className={`border-t border-neutral-100 dark:border-neutral-800 ${
+                              c.counted ? '' : 'text-neutral-400 dark:text-neutral-600'
+                            }`}
+                          >
                             <td className="px-4 py-2.5 tabular-nums text-neutral-400">{c.position ?? '—'}</td>
-                            <td className="px-4 py-2.5">{c.domain || '—'}</td>
+                            <td className="px-4 py-2.5">
+                              {c.domain || '—'}
+                              {!c.counted && (
+                                <span className="ml-2 text-xs italic">plateforme · ignoré</span>
+                              )}
+                            </td>
                             <td className="px-4 py-2.5 text-right tabular-nums">{c.rank ?? '—'}</td>
                           </tr>
                         ))}

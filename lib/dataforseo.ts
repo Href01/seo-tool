@@ -348,8 +348,26 @@ export async function instantPageAudit(url: string): Promise<PageAudit> {
 export interface DifficultyResult {
   keyword: string
   difficulty: number // 0-100, our own estimate
-  competitors: { position: number | null; domain: string; rank: number | null }[]
+  // `counted: false` = excluded from the score (mega-platform or duplicate domain).
+  competitors: { position: number | null; domain: string; rank: number | null; counted: boolean }[]
 }
+
+// Social / video / encyclopaedia domains: they have max authority but ranking on
+// them isn't the SEO competition a merchant faces (a real product page beats them).
+// Counting them massively inflates difficulty, so we exclude them from the score.
+const MEGA_PLATFORMS = new Set([
+  'instagram.com',
+  'facebook.com',
+  'youtube.com',
+  'pinterest.com',
+  'pinterest.fr',
+  'tiktok.com',
+  'twitter.com',
+  'x.com',
+  'linkedin.com',
+  'wikipedia.org',
+  'reddit.com',
+])
 
 /** Backlink authority rank (0-1000) for many domains in a single call. */
 async function bulkBacklinkRanks(domains: string[]): Promise<Record<string, number>> {
@@ -366,30 +384,42 @@ async function bulkBacklinkRanks(domains: string[]): Promise<Record<string, numb
 /**
  * Our own keyword difficulty (0-100), computed the way big SEO tools do it: pull
  * the SERP, measure the backlink authority (rank 0-1000) of the domains that rank,
- * and aggregate — weighted by position (#1 counts most). Works for ANY keyword,
- * including niche ones the Labs database has no difficulty for.
+ * and aggregate — weighted by position. Works for ANY keyword, including niche ones
+ * the Labs database has no difficulty for.
+ *
+ * Accuracy guards: domains are de-duplicated (a domain ranking twice counts once,
+ * at its best position) and mega-platforms are excluded from the score, since a
+ * merchant's real competition is other sites, not Instagram/YouTube.
  */
 export async function computeKeywordDifficulty(
   keyword: string,
   opts: { location?: number; language?: string } = {}
 ): Promise<DifficultyResult> {
   const serp = await serpOrganic(keyword, { ...opts, depth: 10 })
-  const top = serp.slice(0, 10)
-  const domains = [...new Set(top.map((r) => r.domain).filter(Boolean))]
-  const ranks = await bulkBacklinkRanks(domains)
+
+  // De-duplicate by normalized domain, keeping the best (first-seen) position.
+  const seen = new Set<string>()
+  const unique: { position: number | null; domain: string; raw: string }[] = []
+  for (const r of serp.slice(0, 10)) {
+    const domain = cleanDomain(r.domain)
+    if (!domain || seen.has(domain)) continue
+    seen.add(domain)
+    unique.push({ position: r.position, domain, raw: r.domain })
+  }
+
+  const ranks = await bulkBacklinkRanks(unique.map((u) => u.raw))
 
   let weightedSum = 0
   let weightTotal = 0
-  const competitors = top.map((r, i) => {
-    const rank = r.domain ? ranks[r.domain] ?? 0 : 0
-    const weight = top.length - i // earlier positions weigh more
-    weightedSum += weight * (rank / 10) // rank 0-1000 -> 0-100 scale
-    weightTotal += weight
-    return {
-      position: r.position,
-      domain: r.domain,
-      rank: r.domain ? ranks[r.domain] ?? null : null,
+  const competitors = unique.map((u) => {
+    const rank = ranks[u.raw] ?? null
+    const counted = !MEGA_PLATFORMS.has(u.domain)
+    if (counted) {
+      const weight = Math.max(1, 11 - (u.position ?? 10)) // #1 heaviest
+      weightedSum += weight * ((rank ?? 0) / 10) // rank 0-1000 -> 0-100 scale
+      weightTotal += weight
     }
+    return { position: u.position, domain: u.domain, rank, counted }
   })
 
   const difficulty = weightTotal > 0 ? Math.round(weightedSum / weightTotal) : 0
