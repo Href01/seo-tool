@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSeoQuery } from '@/lib/useSeoQuery'
+import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 
 interface KeywordOverview {
   keyword: string
@@ -37,7 +37,7 @@ function Tile({ label, value }: { label: string; value: string }) {
 
 export default function OverviewPage() {
   const [keyword, setKeyword] = useState('')
-  const { loading, error, cached, data, run } = useSeoQuery<KeywordOverview>('/api/keyword-overview')
+  const { loading, error, cached, fetchedAt, data, run } = useSeoQuery<KeywordOverview>('/api/keyword-overview')
   const kd = useSeoQuery<DifficultyResult>('/api/difficulty')
 
   function search(e: React.FormEvent) {
@@ -80,7 +80,8 @@ export default function OverviewPage() {
 
       {cached !== null && !error && data && (
         <p className="mt-6 text-xs text-neutral-500">
-          « {data.keyword} » · {cached ? '⚡ depuis le cache (0 $)' : '💳 requête DataForSEO'} ·{' '}
+          « {data.keyword} » · {cached ? '⚡ depuis le cache (0 $)' : '💳 requête DataForSEO'}
+          {cached && fetchedAt ? ` · maj ${timeAgo(fetchedAt)}` : ''} ·{' '}
           {data.source === 'labs' ? 'source : Labs' : 'source : Google Ads'}
         </p>
       )}

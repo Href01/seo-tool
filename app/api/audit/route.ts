@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { instantPageAudit } from '@/lib/dataforseo'
-import { getCached, setCached, cacheKey } from '@/lib/cache'
+import { getCachedMeta, setCached, cacheKey } from '@/lib/cache'
 
 export const runtime = 'nodejs'
 
@@ -27,15 +27,15 @@ export async function POST(req: Request) {
 
   const key = cacheKey('audit', url)
 
-  const cached = await getCached(key, TTL_DAYS)
-  if (cached) {
-    return NextResponse.json({ cached: true, url, result: cached })
+  const hit = await getCachedMeta(key, TTL_DAYS)
+  if (hit) {
+    return NextResponse.json({ cached: true, fetchedAt: hit.fetchedAt, url, result: hit.payload })
   }
 
   try {
     const result = await instantPageAudit(url)
     await setCached(key, result)
-    return NextResponse.json({ cached: false, url, result })
+    return NextResponse.json({ cached: false, fetchedAt: new Date().toISOString(), url, result })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })
   }

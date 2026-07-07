@@ -13,22 +13,33 @@ export function cacheKey(prefix: string, ...parts: (string | number)[]): string 
   return `${prefix}:${hash}`
 }
 
-/** Return cached payload if it exists and is younger than ttlDays, else null. */
-export async function getCached<T = unknown>(key: string, ttlDays: number): Promise<T | null> {
+/** Cache hit with its age, or null. `fetchedAt` lets the UI show data freshness. */
+export async function getCachedMeta<T = unknown>(
+  key: string,
+  ttlDays: number
+): Promise<{ payload: T; fetchedAt: string } | null> {
   const p = getPool()
   if (!p) return null
   try {
     await ready()
     const r = await p.query(
-      `SELECT payload FROM seo_cache
+      `SELECT payload, fetched_at FROM seo_cache
        WHERE cache_key = $1 AND fetched_at > now() - ($2 || ' days')::interval`,
       [key, String(ttlDays)]
     )
-    return (r.rows[0]?.payload as T) ?? null
+    const row = r.rows[0]
+    if (!row) return null
+    return { payload: row.payload as T, fetchedAt: new Date(row.fetched_at).toISOString() }
   } catch (e) {
     console.error('[cache] read failed:', e)
     return null
   }
+}
+
+/** Return cached payload if it exists and is younger than ttlDays, else null. */
+export async function getCached<T = unknown>(key: string, ttlDays: number): Promise<T | null> {
+  const hit = await getCachedMeta<T>(key, ttlDays)
+  return hit ? hit.payload : null
 }
 
 /** Store (or refresh) a payload under a key. */

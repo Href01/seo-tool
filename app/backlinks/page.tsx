@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSeoQuery } from '@/lib/useSeoQuery'
+import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 
 interface BacklinksSummary {
   domain: string
@@ -27,7 +27,7 @@ const fmt = (n: number | null) => (n != null ? n.toLocaleString('fr') : '—')
 
 export default function BacklinksPage() {
   const [domain, setDomain] = useState('')
-  const { loading, error, cached, data, run } = useSeoQuery<BacklinksSummary>('/api/backlinks')
+  const { loading, error, cached, fetchedAt, data, run } = useSeoQuery<BacklinksSummary>('/api/backlinks')
 
   function search(e: React.FormEvent) {
     e.preventDefault()
@@ -67,6 +67,7 @@ export default function BacklinksPage() {
       {cached !== null && !error && data && (
         <p className="mt-6 text-xs text-neutral-500">
           {data.domain} · {cached ? '⚡ depuis le cache (0 $)' : '💳 requête DataForSEO'}
+          {cached && fetchedAt ? ` · maj ${timeAgo(fetchedAt)}` : ''}
         </p>
       )}
 

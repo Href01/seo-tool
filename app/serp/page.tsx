@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useSeoQuery } from '@/lib/useSeoQuery'
+import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 
 interface SerpResult {
   position: number | null
@@ -13,7 +13,7 @@ interface SerpResult {
 
 export default function SerpPage() {
   const [keyword, setKeyword] = useState('')
-  const { loading, error, cached, data, run } = useSeoQuery<SerpResult[]>('/api/serp')
+  const { loading, error, cached, fetchedAt, data, run } = useSeoQuery<SerpResult[]>('/api/serp')
 
   function search(e: React.FormEvent) {
     e.preventDefault()
@@ -53,6 +53,7 @@ export default function SerpPage() {
       {cached !== null && !error && data && (
         <p className="mt-6 text-xs text-neutral-500">
           {data.length} résultats · {cached ? '⚡ depuis le cache (0 $)' : '💳 requête DataForSEO'}
+          {cached && fetchedAt ? ` · maj ${timeAgo(fetchedAt)}` : ''}
         </p>
       )}
 

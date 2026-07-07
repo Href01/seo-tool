@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { keywordOverview, LOCATION_MOROCCO } from '@/lib/dataforseo'
-import { getCached, setCached, cacheKey } from '@/lib/cache'
+import { getCachedMeta, setCached, cacheKey } from '@/lib/cache'
 import { recordKeyword } from '@/lib/bank'
 
 export const runtime = 'nodejs'
@@ -20,9 +20,9 @@ export async function POST(req: Request) {
 
   const key = cacheKey('kwov', keyword, location, language)
 
-  const cached = await getCached(key, TTL_DAYS)
-  if (cached) {
-    return NextResponse.json({ cached: true, keyword, result: cached })
+  const hit = await getCachedMeta(key, TTL_DAYS)
+  if (hit) {
+    return NextResponse.json({ cached: true, fetchedAt: hit.fetchedAt, keyword, result: hit.payload })
   }
 
   try {
@@ -40,7 +40,7 @@ export async function POST(req: Request) {
       difficulty: result.difficulty,
       source: result.source,
     })
-    return NextResponse.json({ cached: false, keyword, result })
+    return NextResponse.json({ cached: false, fetchedAt: new Date().toISOString(), keyword, result })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })
   }

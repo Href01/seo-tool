@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { serpOrganic, LOCATION_MOROCCO } from '@/lib/dataforseo'
-import { getCached, setCached, cacheKey } from '@/lib/cache'
+import { getCachedMeta, setCached, cacheKey } from '@/lib/cache'
 
 export const runtime = 'nodejs'
 
@@ -19,15 +19,15 @@ export async function POST(req: Request) {
 
   const key = cacheKey('serp', keyword, location, language)
 
-  const cached = await getCached(key, TTL_DAYS)
-  if (cached) {
-    return NextResponse.json({ cached: true, keyword, results: cached })
+  const hit = await getCachedMeta(key, TTL_DAYS)
+  if (hit) {
+    return NextResponse.json({ cached: true, fetchedAt: hit.fetchedAt, keyword, results: hit.payload })
   }
 
   try {
     const results = await serpOrganic(keyword, { location, language })
     await setCached(key, results)
-    return NextResponse.json({ cached: false, keyword, results })
+    return NextResponse.json({ cached: false, fetchedAt: new Date().toISOString(), keyword, results })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })
   }

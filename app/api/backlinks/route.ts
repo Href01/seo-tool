@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { backlinksSummary, cleanDomain } from '@/lib/dataforseo'
-import { getCached, setCached, cacheKey } from '@/lib/cache'
+import { getCachedMeta, setCached, cacheKey } from '@/lib/cache'
 
 export const runtime = 'nodejs'
 
@@ -17,15 +17,15 @@ export async function POST(req: Request) {
 
   const key = cacheKey('backlinks', domain)
 
-  const cached = await getCached(key, TTL_DAYS)
-  if (cached) {
-    return NextResponse.json({ cached: true, domain, result: cached })
+  const hit = await getCachedMeta(key, TTL_DAYS)
+  if (hit) {
+    return NextResponse.json({ cached: true, fetchedAt: hit.fetchedAt, domain, result: hit.payload })
   }
 
   try {
     const result = await backlinksSummary(domain)
     await setCached(key, result)
-    return NextResponse.json({ cached: false, domain, result })
+    return NextResponse.json({ cached: false, fetchedAt: new Date().toISOString(), domain, result })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })
   }

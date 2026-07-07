@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { timeAgo } from '@/lib/useSeoQuery'
 
 interface KeywordResult {
   keyword: string
@@ -15,6 +16,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [cached, setCached] = useState<boolean | null>(null)
+  const [fetchedAt, setFetchedAt] = useState<string | null>(null)
   const [results, setResults] = useState<KeywordResult[]>([])
 
   async function search(e: React.FormEvent) {
@@ -24,6 +26,7 @@ export default function Home() {
     setError('')
     setResults([])
     setCached(null)
+    setFetchedAt(null)
     try {
       const res = await fetch('/api/keywords', {
         method: 'POST',
@@ -34,6 +37,7 @@ export default function Home() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
       setResults(data.results || [])
       setCached(!!data.cached)
+      setFetchedAt(data.fetchedAt ?? null)
     } catch (err: any) {
       setError(err.message || 'Erreur')
     } finally {
@@ -73,6 +77,7 @@ export default function Home() {
       {cached !== null && !error && (
         <p className="mt-6 text-xs text-neutral-500">
           {results.length} résultats · {cached ? '⚡ depuis le cache (0 $)' : '💳 requête DataForSEO'}
+          {cached && fetchedAt ? ` · maj ${timeAgo(fetchedAt)}` : ''}
         </p>
       )}
 
