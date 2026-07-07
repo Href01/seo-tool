@@ -92,14 +92,17 @@ export interface SerpResult {
 /** Top organic results (google.co.ma by default) for a keyword — who you'd compete with. */
 export async function serpOrganic(
   keyword: string,
-  opts: { location?: number; language?: string; depth?: number } = {}
+  opts: { location?: number; language?: string; depth?: number; device?: string } = {}
 ): Promise<SerpResult[]> {
+  // Google SERP supports desktop/mobile; tablet falls back to mobile.
+  const device = opts.device === 'mobile' || opts.device === 'tablet' ? 'mobile' : 'desktop'
   const data = await dfs<any>('/serp/google/organic/live/advanced', [
     {
       keyword,
       location_code: opts.location ?? LOCATION_MOROCCO,
       language_code: opts.language ?? 'fr',
       depth: opts.depth ?? 20,
+      device,
     },
   ])
   const items: any[] = data?.tasks?.[0]?.result?.[0]?.items ?? []
