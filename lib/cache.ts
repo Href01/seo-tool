@@ -6,6 +6,13 @@
 // DataForSEO, no caching) so you can test before wiring up Neon/Postgres.
 
 import { Pool } from 'pg'
+import crypto from 'crypto'
+
+/** Deterministic cache key: `prefix:sha1(parts)`. Same inputs => same key => shared hit. */
+export function cacheKey(prefix: string, ...parts: (string | number)[]): string {
+  const hash = crypto.createHash('sha1').update(parts.join('|')).digest('hex')
+  return `${prefix}:${hash}`
+}
 
 // Reuse one pool across invocations. On serverless (Vercel), a plain module-level
 // variable is reset between cold starts and can spawn many pools under load, which

@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server'
-import { keywordSuggestions, LOCATION_MOROCCO } from '@/lib/dataforseo'
+import { keywordOverview, LOCATION_MOROCCO } from '@/lib/dataforseo'
 import { getCached, setCached, cacheKey } from '@/lib/cache'
 
 export const runtime = 'nodejs'
 
-// Keyword volumes change slowly -> cache 30 days. A hit is free.
+// Volumes/difficulty change slowly -> cache 30 days.
 const TTL_DAYS = 30
 
 export async function POST(req: Request) {
@@ -17,17 +17,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'keyword requis' }, { status: 400 })
   }
 
-  const key = cacheKey('kwsug', keyword, location, language)
+  const key = cacheKey('kwov', keyword, location, language)
 
   const cached = await getCached(key, TTL_DAYS)
   if (cached) {
-    return NextResponse.json({ cached: true, keyword, location, language, results: cached })
+    return NextResponse.json({ cached: true, keyword, result: cached })
   }
 
   try {
-    const results = await keywordSuggestions(keyword, { location, language })
-    await setCached(key, results)
-    return NextResponse.json({ cached: false, keyword, location, language, results })
+    const result = await keywordOverview(keyword, { location, language })
+    if (!result) {
+      return NextResponse.json({ error: 'Aucune donnée pour ce mot-clé' }, { status: 404 })
+    }
+    await setCached(key, result)
+    return NextResponse.json({ cached: false, keyword, result })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })
   }

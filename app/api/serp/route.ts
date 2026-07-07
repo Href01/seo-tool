@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
-import { keywordSuggestions, LOCATION_MOROCCO } from '@/lib/dataforseo'
+import { serpOrganic, LOCATION_MOROCCO } from '@/lib/dataforseo'
 import { getCached, setCached, cacheKey } from '@/lib/cache'
 
 export const runtime = 'nodejs'
 
-// Keyword volumes change slowly -> cache 30 days. A hit is free.
-const TTL_DAYS = 30
+// SERP shifts within days -> cache 14 days. A hit is free and shared across users.
+const TTL_DAYS = 14
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
@@ -17,17 +17,17 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'keyword requis' }, { status: 400 })
   }
 
-  const key = cacheKey('kwsug', keyword, location, language)
+  const key = cacheKey('serp', keyword, location, language)
 
   const cached = await getCached(key, TTL_DAYS)
   if (cached) {
-    return NextResponse.json({ cached: true, keyword, location, language, results: cached })
+    return NextResponse.json({ cached: true, keyword, results: cached })
   }
 
   try {
-    const results = await keywordSuggestions(keyword, { location, language })
+    const results = await serpOrganic(keyword, { location, language })
     await setCached(key, results)
-    return NextResponse.json({ cached: false, keyword, location, language, results })
+    return NextResponse.json({ cached: false, keyword, results })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })
   }
