@@ -8,7 +8,7 @@ export interface KeywordRow {
   cpc: number | null
   difficulty: number | null
   trend?: number[] // sparkline data
-  competition?: string
+  competition?: number | null
 }
 
 interface KeywordTableProps {

@@ -25,7 +25,7 @@ export default function Nav() {
 
   return (
     <header className="relative border-b border-[#C9A961]/20 bg-[#0F172A]/80 backdrop-blur-xl">
-      <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gradient-to-br from-[#C9A961] to-[#D4AF37] shadow-lg shadow-[#C9A961]/20">
             <span className="text-xl font-bold text-[#0F172A]">س</span>

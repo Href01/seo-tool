@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 
 interface TrackedKeyword {
   id: number
@@ -11,37 +11,61 @@ interface TrackedKeyword {
   history: { position: number | null; checkedAt: string }[]
 }
 
-function PositionBadge({ position }: { position: number | null }) {
+function getPositionBadge(position: number | null) {
   if (position == null) {
-    return (
-      <span className="rounded-md bg-neutral-100 px-2 py-1 text-sm font-semibold text-neutral-500 dark:bg-neutral-800">
-        &gt; 100
-      </span>
-    )
+    return {
+      label: '> 100',
+      color: 'text-neutral-500',
+      bg: 'bg-neutral-500/20',
+      icon: '❌',
+    }
   }
-  const cls =
-    position <= 3
-      ? 'bg-green-100 text-green-700 dark:bg-green-950/40 dark:text-green-400'
-      : position <= 10
-        ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
-        : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800 dark:text-neutral-300'
-  return <span className={`rounded-md px-2 py-1 text-sm font-semibold tabular-nums ${cls}`}>#{position}</span>
+  if (position <= 3) {
+    return { label: `#${position}`, color: 'text-[#10B981]', bg: 'bg-[#10B981]/20', icon: '🏆' }
+  }
+  if (position <= 10) {
+    return { label: `#${position}`, color: 'text-[#D4AF37]', bg: 'bg-[#D4AF37]/20', icon: '⭐' }
+  }
+  if (position <= 20) {
+    return { label: `#${position}`, color: 'text-blue-400', bg: 'bg-blue-400/20', icon: '📍' }
+  }
+  return { label: `#${position}`, color: 'text-neutral-400', bg: 'bg-neutral-400/20', icon: '📊' }
 }
 
-/** Tiny position history: taller bar = better rank (position 1 is best). */
-function History({ points }: { points: { position: number | null; checkedAt: string }[] }) {
-  if (points.length === 0) return <span className="text-xs text-neutral-400">—</span>
+function PositionHistory({ points }: { points: { position: number | null; checkedAt: string }[] }) {
+  if (points.length === 0) return <div className="text-xs text-neutral-500">Pas d'historique</div>
+
+  const recent = points.slice(-20)
+  const maxPos = Math.max(...recent.map((p) => p.position ?? 100))
+
   return (
-    <div className="flex h-8 items-end gap-0.5">
-      {points.slice(-16).map((p, i) => {
-        const height = p.position == null ? 4 : Math.max(6, ((101 - Math.min(p.position, 100)) / 101) * 100)
+    <div className="flex h-16 items-end gap-0.5">
+      {recent.map((p, i) => {
+        const height = p.position == null ? 4 : Math.max(8, ((101 - Math.min(p.position, 100)) / 101) * 100)
+        const isImproving = i > 0 && p.position && recent[i - 1].position && p.position < (recent[i - 1].position ?? 999)
+        const isWorsening = i > 0 && p.position && recent[i - 1].position && p.position > (recent[i - 1].position ?? 0)
         return (
           <div
             key={i}
             title={`${new Date(p.checkedAt).toLocaleDateString('fr')} : ${p.position ?? '> 100'}`}
-            className="w-1.5 rounded-t bg-neutral-300 dark:bg-neutral-700"
+            className={`group relative w-1.5 rounded-t transition-all hover:scale-150 ${
+              isImproving
+                ? 'bg-gradient-to-t from-[#10B981] to-[#059669]'
+                : isWorsening
+                ? 'bg-gradient-to-t from-red-400 to-red-500'
+                : 'bg-gradient-to-t from-[#C9A961] to-[#D4AF37]'
+            }`}
             style={{ height: `${height}%` }}
-          />
+          >
+            <div className="absolute -top-12 left-1/2 z-10 hidden -translate-x-1/2 rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/95 px-2 py-1 text-xs text-neutral-100 shadow-xl backdrop-blur-sm group-hover:block">
+              <div className="whitespace-nowrap font-semibold">
+                {new Date(p.checkedAt).toLocaleDateString('fr', { month: 'short', day: 'numeric' })}
+              </div>
+              <div className="mt-0.5 whitespace-nowrap text-[#C9A961]">
+                {p.position ? `#${p.position}` : '> 100'}
+              </div>
+            </div>
+          </div>
         )
       })}
     </div>
@@ -133,76 +157,212 @@ export default function TrackerPage() {
     }
   }
 
+  const stats = useMemo(() => {
+    const topThree = items.filter((it) => it.position && it.position <= 3).length
+    const topTen = items.filter((it) => it.position && it.position <= 10).length
+    const avgPosition =
+      items.filter((it) => it.position).reduce((sum, it) => sum + (it.position || 0), 0) /
+      (items.filter((it) => it.position).length || 1)
+    const winners = items.filter((it) => {
+      if (it.history.length < 2) return false
+      const last = it.history[it.history.length - 1].position
+      const prev = it.history[it.history.length - 2].position
+      return last && prev && last < prev
+    })
+    const losers = items.filter((it) => {
+      if (it.history.length < 2) return false
+      const last = it.history[it.history.length - 1].position
+      const prev = it.history[it.history.length - 2].position
+      return last && prev && last > prev
+    })
+    return { topThree, topTen, avgPosition, winners, losers }
+  }, [items])
+
+  function exportCSV() {
+    const headers = ['Mot-clé', 'Domaine', 'Position', 'Dernière vérif']
+    const rows = items.map((it) => [
+      it.keyword,
+      it.domain,
+      it.position ?? '> 100',
+      it.checkedAt ? new Date(it.checkedAt).toLocaleDateString('fr') : '',
+    ])
+    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `rank-tracker-${Date.now()}.csv`
+    a.click()
+  }
+
   return (
-    <main className="mx-auto max-w-3xl px-6 py-16">
-      <h1 className="text-3xl font-bold tracking-tight">Suivi de positions</h1>
-      <p className="mt-2 text-sm text-neutral-500">
-        Suis la position de ton domaine sur google.co.ma pour un mot-clé, dans le temps. Maroc · français.
-      </p>
+    <main className="mx-auto max-w-7xl px-6 py-16">
+      {/* Header */}
+      <div className="mb-12">
+        <h1 className="bg-gradient-to-r from-[#C9A961] to-[#D4AF37] bg-clip-text text-5xl font-bold text-transparent">
+          Suivi de Positions
+        </h1>
+        <p className="mt-3 text-lg text-neutral-400">
+          Track tes rankings dans le temps · Détecte les progressions/chutes · Optimise ta stratégie
+        </p>
+      </div>
 
-      <form onSubmit={add} className="mt-8 flex flex-col gap-2 sm:flex-row">
-        <input
-          value={keyword}
-          onChange={(e) => setKeyword(e.target.value)}
-          placeholder="mot-clé (ex : coloration cheveux)"
-          className="flex-1 rounded-lg border border-neutral-300 px-4 py-2.5 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900"
-        />
-        <input
-          value={domain}
-          onChange={(e) => setDomain(e.target.value)}
-          placeholder="ton domaine (ex : monsite.ma)"
-          className="flex-1 rounded-lg border border-neutral-300 px-4 py-2.5 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-900"
-        />
-        <button
-          type="submit"
-          disabled={loading}
-          className="rounded-lg bg-neutral-900 px-5 py-2.5 font-medium text-white disabled:opacity-50 dark:bg-white dark:text-neutral-900"
-        >
-          {loading ? '…' : 'Suivre'}
-        </button>
-      </form>
-
-      {error && (
-        <div className="mt-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
+      {/* Stats */}
+      {items.length > 0 && (
+        <div className="mb-8 grid gap-4 sm:grid-cols-5">
+          <div className="rounded-xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
+            <div className="text-xs uppercase tracking-wider text-[#C9A961]/80">Total Suivi</div>
+            <div className="mt-2 text-3xl font-bold text-[#C9A961]">{items.length}</div>
+            <div className="mt-1 text-xs text-neutral-500">Mots-clés</div>
+          </div>
+          <div className="rounded-xl border border-[#10B981]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
+            <div className="text-xs uppercase tracking-wider text-[#10B981]/80">Top 3</div>
+            <div className="mt-2 text-3xl font-bold text-[#10B981]">{stats.topThree}</div>
+            <div className="mt-1 text-xs text-neutral-500">🏆 Podium</div>
+          </div>
+          <div className="rounded-xl border border-[#D4AF37]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
+            <div className="text-xs uppercase tracking-wider text-[#D4AF37]/80">Top 10</div>
+            <div className="mt-2 text-3xl font-bold text-[#D4AF37]">{stats.topTen}</div>
+            <div className="mt-1 text-xs text-neutral-500">⭐ Première page</div>
+          </div>
+          <div className="rounded-xl border border-blue-400/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
+            <div className="text-xs uppercase tracking-wider text-blue-400/80">Pos. Moy.</div>
+            <div className="mt-2 text-3xl font-bold text-blue-400">
+              {stats.avgPosition.toFixed(0)}
+            </div>
+            <div className="mt-1 text-xs text-neutral-500">Position moyenne</div>
+          </div>
+          <div className="rounded-xl border border-purple-400/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 backdrop-blur-sm">
+            <div className="text-xs uppercase tracking-wider text-purple-400/80">Tendance</div>
+            <div className="mt-2 flex items-center gap-2 text-2xl font-bold">
+              <span className="text-[#10B981]">↑{stats.winners.length}</span>
+              <span className="text-neutral-500">/</span>
+              <span className="text-red-400">↓{stats.losers.length}</span>
+            </div>
+            <div className="mt-1 text-xs text-neutral-500">Gains / Pertes</div>
+          </div>
         </div>
       )}
 
-      {items.length === 0 && !error ? (
-        <p className="mt-10 text-center text-sm text-neutral-500">
-          Aucun mot-clé suivi. Ajoute-en un ci-dessus — la première position est vérifiée aussitôt.
-        </p>
-      ) : (
-        <div className="mt-6 space-y-3">
-          {items.map((it) => (
-            <div
-              key={it.id}
-              className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-lg border border-neutral-200 px-4 py-3 dark:border-neutral-800"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="truncate font-medium">{it.keyword}</div>
-                <div className="truncate text-xs text-neutral-500">{it.domain}</div>
-              </div>
-              <PositionBadge position={it.position} />
-              <History points={it.history} />
-              <div className="flex gap-1">
-                <button
-                  onClick={() => check(it.id)}
-                  disabled={busyId === it.id}
-                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-neutral-800"
-                >
-                  {busyId === it.id ? '…' : 'Vérifier'}
-                </button>
-                <button
-                  onClick={() => remove(it.id)}
-                  disabled={busyId === it.id}
-                  className="rounded-md border border-neutral-300 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50 dark:border-neutral-700 dark:hover:bg-red-950/30"
-                >
-                  Suppr.
-                </button>
-              </div>
+      {/* Add Form */}
+      <div className="mb-8 rounded-2xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-8 shadow-2xl backdrop-blur-sm">
+        <h2 className="mb-4 text-xl font-bold text-[#C9A961]">➕ Ajouter un Suivi</h2>
+        <form onSubmit={add} className="flex flex-col gap-3 sm:flex-row">
+          <input
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            placeholder="Mot-clé (ex : coloration cheveux)"
+            className="flex-1 rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-3 text-neutral-100 placeholder-neutral-500 outline-none transition-all focus:border-[#C9A961] focus:ring-2 focus:ring-[#C9A961]/20"
+          />
+          <input
+            value={domain}
+            onChange={(e) => setDomain(e.target.value)}
+            placeholder="Ton domaine (ex : monsite.ma)"
+            className="flex-1 rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-3 text-neutral-100 placeholder-neutral-500 outline-none transition-all focus:border-[#C9A961] focus:ring-2 focus:ring-[#C9A961]/20"
+          />
+          <button
+            type="submit"
+            disabled={loading}
+            className="rounded-lg bg-gradient-to-r from-[#C9A961] to-[#D4AF37] px-6 py-3 font-semibold text-[#0F172A] shadow-lg transition-all hover:shadow-xl disabled:opacity-50"
+          >
+            {loading ? 'Ajout...' : 'Suivre'}
+          </button>
+        </form>
+      </div>
+
+      {/* Error */}
+      {error && (
+        <div className="mb-8 rounded-xl border border-red-400/30 bg-red-500/10 px-6 py-4 backdrop-blur-sm">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <div className="font-semibold text-red-400">Erreur</div>
+              <div className="text-sm text-red-300">{error}</div>
             </div>
-          ))}
+          </div>
+        </div>
+      )}
+
+      {/* Export */}
+      {items.length > 0 && (
+        <div className="mb-6 flex justify-end">
+          <button
+            onClick={exportCSV}
+            className="rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-2 text-sm font-medium text-[#C9A961] transition-all hover:bg-[#C9A961]/10"
+          >
+            📥 Export CSV
+          </button>
+        </div>
+      )}
+
+      {/* Tracked Keywords */}
+      {items.length === 0 && !error ? (
+        <div className="rounded-2xl border border-[#C9A961]/10 bg-[#1E293B]/20 px-12 py-16 text-center backdrop-blur-sm">
+          <div className="mb-4 text-6xl">📈</div>
+          <h3 className="mb-2 text-xl font-semibold text-[#C9A961]">
+            Commence à tracker tes positions
+          </h3>
+          <p className="text-neutral-400">
+            Ajoute un mot-clé ci-dessus — la position est vérifiée immédiatement.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {items.map((it) => {
+            const badge = getPositionBadge(it.position)
+            return (
+              <div
+                key={it.id}
+                className="rounded-xl border border-[#C9A961]/20 bg-gradient-to-br from-[#1E293B]/60 to-[#1E293B]/40 p-6 shadow-lg backdrop-blur-sm transition-all hover:border-[#C9A961]/40 hover:shadow-xl"
+              >
+                <div className="flex flex-wrap items-center gap-4">
+                  {/* Info */}
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 truncate text-lg font-semibold text-neutral-100">
+                      {it.keyword}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-neutral-500">
+                      <span>🌐 {it.domain}</span>
+                      {it.checkedAt && (
+                        <span>· 🕒 {new Date(it.checkedAt).toLocaleDateString('fr')}</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Position Badge */}
+                  <div
+                    className={`flex items-center gap-2 rounded-lg ${badge.bg} px-4 py-2`}
+                  >
+                    <span className="text-xl">{badge.icon}</span>
+                    <span className={`text-2xl font-bold ${badge.color}`}>{badge.label}</span>
+                  </div>
+
+                  {/* History */}
+                  <div className="w-48">
+                    <PositionHistory points={it.history} />
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => check(it.id)}
+                      disabled={busyId === it.id}
+                      className="rounded-lg border border-[#C9A961]/30 bg-[#0F172A]/50 px-4 py-2 text-sm font-medium text-[#C9A961] transition-all hover:bg-[#C9A961]/10 disabled:opacity-50"
+                    >
+                      {busyId === it.id ? '⏳' : '🔄 Vérifier'}
+                    </button>
+                    <button
+                      onClick={() => remove(it.id)}
+                      disabled={busyId === it.id}
+                      className="rounded-lg border border-red-400/30 bg-[#0F172A]/50 px-4 py-2 text-sm font-medium text-red-400 transition-all hover:bg-red-400/10 disabled:opacity-50"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )
+          })}
         </div>
       )}
     </main>
