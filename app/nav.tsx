@@ -16,7 +16,10 @@ const groups: { label: string; href: string }[][] = [
     { href: '/backlinks', label: 'Backlinks' },
     { href: '/audit', label: 'Audit' },
   ],
-  [{ href: '/tracker', label: 'Suivi' }],
+  [
+    { href: '/tracker', label: 'Suivi' },
+    { href: '/database', label: 'Base' },
+  ],
 ]
 
 export default function Nav() {

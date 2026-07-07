@@ -45,6 +45,19 @@ export function ready(): Promise<void> {
           position    integer,
           checked_at  timestamptz NOT NULL DEFAULT now()
         );
+        CREATE TABLE IF NOT EXISTS keyword_bank (
+          keyword        text NOT NULL,
+          location       integer NOT NULL,
+          language       text NOT NULL,
+          volume         integer,
+          cpc            numeric,
+          difficulty     integer,
+          source         text,
+          times_searched integer NOT NULL DEFAULT 1,
+          first_seen     timestamptz NOT NULL DEFAULT now(),
+          last_seen      timestamptz NOT NULL DEFAULT now(),
+          PRIMARY KEY (keyword, location, language)
+        );
       `)
       .then(() => undefined)
   }

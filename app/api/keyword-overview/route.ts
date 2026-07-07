@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { keywordOverview, LOCATION_MOROCCO } from '@/lib/dataforseo'
 import { getCached, setCached, cacheKey } from '@/lib/cache'
+import { recordKeyword } from '@/lib/bank'
 
 export const runtime = 'nodejs'
 
@@ -30,6 +31,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Aucune donnée pour ce mot-clé' }, { status: 404 })
     }
     await setCached(key, result)
+    await recordKeyword({
+      keyword: result.keyword,
+      location,
+      language,
+      volume: result.volume,
+      cpc: result.cpc,
+      difficulty: result.difficulty,
+      source: result.source,
+    })
     return NextResponse.json({ cached: false, keyword, result })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })

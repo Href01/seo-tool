@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { keywordSuggestions, LOCATION_MOROCCO } from '@/lib/dataforseo'
 import { getCached, setCached, cacheKey } from '@/lib/cache'
+import { recordKeywords } from '@/lib/bank'
 
 export const runtime = 'nodejs'
 
@@ -27,6 +28,18 @@ export async function POST(req: Request) {
   try {
     const results = await keywordSuggestions(keyword, { location, language })
     await setCached(key, results)
+    // Every suggestion enriches the proprietary Morocco keyword bank.
+    await recordKeywords(
+      results.map((r) => ({
+        keyword: r.keyword,
+        location,
+        language,
+        volume: r.volume,
+        cpc: r.cpc,
+        difficulty: r.difficulty,
+        source: 'suggestions',
+      }))
+    )
     return NextResponse.json({ cached: false, keyword, location, language, results })
   } catch (e: any) {
     return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })
