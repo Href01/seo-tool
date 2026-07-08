@@ -58,7 +58,10 @@ export default function Tracker() {
 
   // Fetch "above you" competitors for the focused keyword
   useEffect(() => {
-    if (focus) kd.run({ keyword: focus.keyword, language: lang })
+    // Rank tracking runs in French (google.co.ma) server-side; keep the
+    // "above you" SERP query on the same stable language so the UI toggle
+    // never triggers a fresh paid call.
+    if (focus) kd.run({ keyword: focus.keyword, language: 'fr' })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusId])
 

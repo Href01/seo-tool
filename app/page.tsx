@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT, intentLabel } from '@/lib/i18n'
-import { LOCATIONS, DEVICES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName } from '@/lib/locations'
+import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
 
 interface KeywordResult {
@@ -43,6 +43,10 @@ export default function Explorer() {
   const [detailOpen, setDetailOpen] = useState(true)
   const [location, setLocation] = useState(DEFAULT_LOCATION.code)
   const [device, setDevice] = useState(DEFAULT_DEVICE.id)
+  // Search language is INDEPENDENT of the UI language (toggling the interface
+  // must never trigger paid re-fetches). Defaults to French — the dominant
+  // Google SERP language across the Maghreb.
+  const [searchLang, setSearchLang] = useState('fr')
   const [recent, setRecent] = useState<string[]>([])
 
   const suggestions = useSeoQuery<KeywordResult[]>('/api/keywords')
@@ -53,7 +57,7 @@ export default function Explorer() {
     const q = kw.trim()
     if (!q) return
     setFocus(q)
-    const payload = { keyword: q, location, language: lang, device }
+    const payload = { keyword: q, location, language: searchLang, device }
     overview.run(payload)
     kd.run(payload)
     let seed = query.trim()
@@ -69,7 +73,7 @@ export default function Explorer() {
       })
     }
     try {
-      localStorage.setItem('explorer:last', JSON.stringify({ seed, focus: q, location, device }))
+      localStorage.setItem('explorer:last', JSON.stringify({ seed, focus: q, location, device, searchLang }))
     } catch {}
   }
 
@@ -79,19 +83,20 @@ export default function Explorer() {
     try { raw = localStorage.getItem('explorer:last') } catch {}
     if (!raw) return
     try {
-      const s = JSON.parse(raw) as { seed?: string; focus?: string; location?: number; device?: string }
+      const s = JSON.parse(raw) as { seed?: string; focus?: string; location?: number; device?: string; searchLang?: string }
       const loc = s.location ?? location
       const dev = s.device ?? device
+      const sl = s.searchLang ?? 'fr' // never the UI language → cache stays warm on reload
       if (s.location) setLocation(s.location)
       if (s.device) setDevice(s.device)
-      const l = (localStorage.getItem('lang') as string) || 'fr'
+      if (s.searchLang) setSearchLang(s.searchLang)
       if (s.seed) {
         setQuery(s.seed)
-        suggestions.run({ keyword: s.seed, location: loc, language: l, device: dev })
+        suggestions.run({ keyword: s.seed, location: loc, language: sl, device: dev })
       }
       if (s.focus) {
         setFocus(s.focus)
-        const fp = { keyword: s.focus, location: loc, language: l, device: dev }
+        const fp = { keyword: s.focus, location: loc, language: sl, device: dev }
         overview.run(fp)
         kd.run(fp)
       }
@@ -240,6 +245,9 @@ export default function Explorer() {
                   </select>
                   <select value={device} onChange={(e) => setDevice(e.target.value)} className={selCls}>
                     {DEVICES.map((d) => (<option key={d.id} value={d.id}>{d.icon} {deviceName(d, lang)}</option>))}
+                  </select>
+                  <select value={searchLang} onChange={(e) => setSearchLang(e.target.value)} className={selCls} title="Langue de recherche">
+                    {LANGUAGES.map((l) => (<option key={l.code} value={l.code}>{l.flag} {l.name}</option>))}
                   </select>
                 </div>
               </div>
