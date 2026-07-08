@@ -20,7 +20,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'keyword requis' }, { status: 400 })
   }
 
-  const key = cacheKey('kd', keyword, location, language)
+  // gcom: SERP behind the difficulty is now google.com (was google.co.ma).
+  const key = cacheKey('kd', 'gcom', keyword, location, language)
 
   const hit = await getCachedMeta(key, TTL_DAYS)
   if (hit) {

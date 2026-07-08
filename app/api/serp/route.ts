@@ -23,7 +23,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'keyword requis' }, { status: 400 })
   }
 
-  const key = cacheKey('serp', keyword, location, language, serpDevice)
+  // gcom: SERP now pinned to se_domain=google.com (was google.co.ma).
+  const key = cacheKey('serp', 'gcom', keyword, location, language, serpDevice)
 
   const hit = await getCachedMeta(key, TTL_DAYS)
   if (hit) {

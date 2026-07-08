@@ -103,6 +103,10 @@ export async function serpOrganic(
       language_code: opts.language ?? 'fr',
       depth: opts.depth ?? 20,
       device,
+      // Google deprecated ccTLDs in 2017 — everyone (incl. Morocco/Opera/Chrome)
+      // hits google.com with geo-targeting. Forcing this matches what users
+      // actually see, instead of the legacy google.co.ma SERP.
+      se_domain: 'google.com',
     },
   ])
   const items: any[] = data?.tasks?.[0]?.result?.[0]?.items ?? []
