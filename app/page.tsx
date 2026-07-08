@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useSeoQuery } from '@/lib/useSeoQuery'
-import { useT, intentLabel } from '@/lib/i18n'
+import { useT, usePT, intentLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName } from '@/lib/locations'
 
 interface KeywordResult {
@@ -35,12 +35,14 @@ function diffCfg(s: number, t: { easy: string; medium: string; hard: string }) {
 
 export default function Explorer() {
   const { t, lang } = useT()
+  const p = usePT()
   const [query, setQuery] = useState('')
   const [focus, setFocus] = useState('')
   const [variant, setVariant] = useState<'a' | 'b'>('a')
   const [detailOpen, setDetailOpen] = useState(true)
   const [location, setLocation] = useState(DEFAULT_LOCATION.code)
   const [device, setDevice] = useState(DEFAULT_DEVICE.id)
+  const [recent, setRecent] = useState<string[]>([])
 
   const suggestions = useSeoQuery<KeywordResult[]>('/api/keywords')
   const overview = useSeoQuery<KeywordOverview>('/api/keyword-overview')
@@ -58,6 +60,12 @@ export default function Explorer() {
       seed = q
       setQuery(q)
       suggestions.run(payload)
+      // push to recent (dedupe, cap 12)
+      setRecent((prev) => {
+        const next = [q, ...prev.filter((x) => x.toLowerCase() !== q.toLowerCase())].slice(0, 12)
+        try { localStorage.setItem('explorer:recent', JSON.stringify(next)) } catch {}
+        return next
+      })
     }
     try {
       localStorage.setItem('explorer:last', JSON.stringify({ seed, focus: q, location, device }))
@@ -88,6 +96,14 @@ export default function Explorer() {
       }
     } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Load recent seeds
+  useEffect(() => {
+    try {
+      const r = localStorage.getItem('explorer:recent')
+      if (r) setRecent(JSON.parse(r))
+    } catch {}
   }, [])
 
   const ov = overview.data
@@ -324,11 +340,27 @@ export default function Explorer() {
             </div>
           </>
         ) : (
-          <div className="flex flex-1 items-center justify-center">
-            <div className="text-center">
+          <div className="flex flex-1 items-center justify-center px-6">
+            <div className="w-full max-w-md text-center">
               <div className="mb-3 text-4xl">🔍</div>
               <div className="text-base font-semibold">{loading ? t.analyzing : t.emptyExplorerTitle}</div>
               {!loading && <div className="mt-1 text-sm text-[var(--text-2)]">{t.emptyExplorerHint}</div>}
+              {!loading && recent.length > 0 && (
+                <div className="mt-6">
+                  <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-3)]">{p.recent}</div>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {recent.map((r, i) => (
+                      <button
+                        key={i}
+                        onClick={() => { setQuery(r); analyze(r, true) }}
+                        className="rounded-full border border-[var(--line)] bg-[var(--card)] px-3.5 py-1.5 text-[13px] font-medium text-[var(--text)] transition-colors hover:border-[var(--crimson)] hover:text-[var(--crimson)]"
+                      >
+                        {r}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

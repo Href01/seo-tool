@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { usePT } from '@/lib/i18n'
-import { Page, PageHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
 interface BacklinksSummary {
   domain: string
@@ -42,7 +42,7 @@ export default function BacklinksPage() {
 
   return (
     <Page>
-      <PageHeader title={p.blTitle} subtitle={p.blSub} />
+      <WorkspaceHeader icon="🔗" title={p.blTitle} subtitle={p.blSub} />
       <Card className="mb-6">
         <form onSubmit={search} className="space-y-4">
           <div>

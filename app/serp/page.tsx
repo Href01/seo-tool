@@ -5,7 +5,7 @@ import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { LocationSelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
-import { Page, PageHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill } from '@/components/ui'
 
 interface SerpResult { position: number | null; title: string; url: string; domain: string; description: string }
 
@@ -42,7 +42,7 @@ export default function SerpPage() {
 
   return (
     <Page>
-      <PageHeader title={p.serpTitle} subtitle={p.serpSub} />
+      <WorkspaceHeader icon="📊" title={p.serpTitle} subtitle={p.serpSub} />
       <Card className="mb-6">
         <form onSubmit={search} className="space-y-4">
           <div>

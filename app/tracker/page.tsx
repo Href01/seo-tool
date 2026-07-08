@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { useSeoQuery } from '@/lib/useSeoQuery'
-import { useT } from '@/lib/i18n'
+import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, locName, deviceName } from '@/lib/locations'
+import { DistributionBar, visibilityScore } from '@/components/ui'
 
 interface HistPoint { position: number | null; checkedAt: string }
 interface Tracked {
@@ -30,6 +31,7 @@ const dfmt = (s: string | null) => (s ? new Date(s).toLocaleDateString('fr-FR', 
 
 export default function Tracker() {
   const { t, lang } = useT()
+  const p = usePT()
   const [items, setItems] = useState<Tracked[]>([])
   const [focusId, setFocusId] = useState<number | null>(null)
   const [keyword, setKeyword] = useState('')
@@ -97,12 +99,19 @@ export default function Tracker() {
       }
       return acc
     }, { g: 0, l: 0 })
+    const positions = items.map((i) => i.position)
+    const t3 = items.filter((i) => i.position != null && i.position <= 3).length
+    const t10 = items.filter((i) => i.position != null && i.position > 3 && i.position <= 10).length
+    const t20 = items.filter((i) => i.position != null && i.position > 10 && i.position <= 20).length
+    const beyond = items.filter((i) => i.position == null || i.position > 20).length
     return {
       total: items.length,
       top3: items.filter((i) => i.position != null && i.position <= 3).length,
       top10: items.filter((i) => i.position != null && i.position <= 10).length,
       avg: cur.length ? Math.round(cur.reduce((s, p) => s + p, 0) / cur.length) : 0,
       gains: gl.g, losses: gl.l,
+      vis: visibilityScore(positions),
+      dist: { t3, t10, t20, beyond },
     }
   }, [items])
 
@@ -202,6 +211,10 @@ export default function Tracker() {
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-7 pt-5">
               <div className="mb-4 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(112px,1fr))]">
+                <div className="rounded-[14px] border border-[var(--crimson)] bg-[var(--card)] px-3.5 py-3">
+                  <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{p.visibility}</div>
+                  <div className="mt-1 flex items-baseline gap-1 text-xl font-bold text-[var(--crimson)] tnum">{stats.vis}<span className="text-[11px] font-medium text-[var(--text-3)]">/100</span></div>
+                </div>
                 <Mini label={t.total} value={stats.total} />
                 <Mini label={t.top3} value={stats.top3} color="#16a34a" border />
                 <Mini label={t.top10} value={stats.top10} />
@@ -210,6 +223,16 @@ export default function Tracker() {
                   <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{t.gainsLosses}</div>
                   <div className="mt-1 text-xl font-bold tnum"><span className="text-[#16a34a]">↑{stats.gains}</span> <span className="text-[#e11d48]">↓{stats.losses}</span></div>
                 </div>
+              </div>
+
+              <div className="mb-4 rounded-2xl border border-[var(--line)] bg-[var(--card)] px-[22px] py-5">
+                <div className="mb-3.5 text-sm font-bold">{p.distribution}</div>
+                <DistributionBar segments={[
+                  { label: t.top3, value: stats.dist.t3, color: '#16a34a' },
+                  { label: p.rng4_10, value: stats.dist.t10, color: '#d97706' },
+                  { label: p.rng11_20, value: stats.dist.t20, color: '#ec0b43' },
+                  { label: p.rng21p, value: stats.dist.beyond, color: '#d4d4d8' },
+                ]} />
               </div>
 
               <div className="rounded-2xl border border-[var(--line)] bg-[var(--card)] px-[22px] py-5">

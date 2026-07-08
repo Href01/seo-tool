@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePT } from '@/lib/i18n'
-import { Page, PageHeader, Card, Button, Spinner, EmptyState } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, EmptyState } from '@/components/ui'
 
 interface Project { id: string; name: string; domain: string; createdAt?: string }
 
@@ -42,7 +42,7 @@ export default function AppPage() {
 
   return (
     <Page>
-      <PageHeader title={p.appTitle} subtitle={p.appSub} />
+      <WorkspaceHeader icon="📁" title={p.appTitle} subtitle={p.appSub} />
       <Card className="mb-6">
         <form onSubmit={create} className="flex flex-col gap-2 sm:flex-row">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder={p.projNamePh} className="flex-1 rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]" />

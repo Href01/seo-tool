@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePT, useT } from '@/lib/i18n'
-import { Page, PageHeader, Card, StatCard, SectionTitle } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, StatCard, SectionTitle } from '@/components/ui'
 
 interface Stats { bankCount: number; usersCount: number; projectsCount: number }
 
@@ -25,7 +25,7 @@ export default function AdminPage() {
 
   return (
     <Page>
-      <PageHeader title={p.adminTitle} subtitle={p.adminSub} />
+      <WorkspaceHeader icon="🏠" title={p.adminTitle} subtitle={p.adminSub} />
       {stats && (
         <div className="mb-6 grid gap-3 sm:grid-cols-3">
           <StatCard label={p.kwBank} value={stats.bankCount.toLocaleString('fr')} sub={p.kwBankSub} accent />

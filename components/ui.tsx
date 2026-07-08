@@ -3,6 +3,63 @@
 import { ReactNode } from 'react'
 import { usePT } from '@/lib/i18n'
 
+/* WorkspaceHeader — page identity: crimson icon tile + title + subtitle + actions */
+export function WorkspaceHeader({
+  icon,
+  title,
+  subtitle,
+  right,
+}: {
+  icon: ReactNode
+  title: string
+  subtitle?: string
+  right?: ReactNode
+}) {
+  return (
+    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--crimson)]/10 text-[19px] text-[var(--crimson)]">
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <h1 className="truncate text-xl font-bold tracking-[-0.02em] text-[var(--text)]">{title}</h1>
+          {subtitle && <p className="mt-0.5 text-sm text-[var(--text-2)]">{subtitle}</p>}
+        </div>
+      </div>
+      {right && <div className="flex shrink-0 items-center gap-2">{right}</div>}
+    </div>
+  )
+}
+
+/* DistributionBar — a stacked ratio bar with legend (position spread, etc.) */
+export function DistributionBar({ segments }: { segments: { label: string; value: number; color: string }[] }) {
+  const total = segments.reduce((s, x) => s + x.value, 0) || 1
+  return (
+    <div>
+      <div className="flex h-3 overflow-hidden rounded-full bg-[var(--subtle)]">
+        {segments.map((s, i) =>
+          s.value > 0 ? <div key={i} style={{ width: `${(s.value / total) * 100}%`, background: s.color }} title={`${s.label}: ${s.value}`} /> : null
+        )}
+      </div>
+      <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--text-2)]">
+        {segments.map((s, i) => (
+          <span key={i} className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm" style={{ background: s.color }} />
+            {s.label} <b className="text-[var(--text)] tnum">{s.value}</b>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** 0–100 presence score: rank 1 ≈ 100, rank ≥21 or unranked ≈ 0. */
+export function visibilityScore(positions: (number | null)[]): number {
+  if (!positions.length) return 0
+  const s = positions.reduce<number>((acc, p) => acc + (p == null ? 0 : Math.max(0, (21 - Math.min(p, 21)) / 20)), 0)
+  return Math.round((s / positions.length) * 100)
+}
+
 /* Card — the base white rounded surface used everywhere */
 export function Card({
   children,

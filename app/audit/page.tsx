@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { usePT } from '@/lib/i18n'
-import { Page, PageHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
 interface PageAudit {
   url: string
@@ -54,7 +54,7 @@ export default function AuditPage() {
 
   return (
     <Page>
-      <PageHeader title={p.auditTitle} subtitle={p.auditSub} />
+      <WorkspaceHeader icon="🩺" title={p.auditTitle} subtitle={p.auditSub} />
       <Card className="mb-6">
         <form onSubmit={search} className="space-y-4">
           <div>

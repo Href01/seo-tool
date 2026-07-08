@@ -5,7 +5,7 @@ import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
-import { Page, PageHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
 interface DomainKeyword { keyword: string; position: number | null; volume: number | null; url: string }
 interface DomainOverview { domain: string; organicKeywords: number | null; estimatedTraffic: number | null; keywords: DomainKeyword[] }
@@ -32,7 +32,7 @@ export default function DomainPage() {
 
   return (
     <Page>
-      <PageHeader title={p.domTitle} subtitle={p.domSub} />
+      <WorkspaceHeader icon="🌐" title={p.domTitle} subtitle={p.domSub} />
       <Card className="mb-6">
         <form onSubmit={search} className="space-y-4">
           <div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { usePT, useT } from '@/lib/i18n'
-import { Page, PageHeader, Card, Button, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
 interface BankEntry {
   keyword: string
@@ -89,7 +89,7 @@ export default function DatabasePage() {
 
   return (
     <Page>
-      <PageHeader title={p.dbTitle} subtitle={p.dbSub} right={<Button variant="ghost" onClick={exportCSV}>{p.exportCsv}</Button>} />
+      <WorkspaceHeader icon="🗃️" title={p.dbTitle} subtitle={p.dbSub} right={<Button variant="ghost" onClick={exportCSV}>{p.exportCsv}</Button>} />
 
       <div className="mb-6 grid gap-3 sm:grid-cols-4">
         <StatCard label={p.totalBase} value={count?.toLocaleString('fr') ?? '—'} sub={p.uniqueKw} accent />

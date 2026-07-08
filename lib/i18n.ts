@@ -326,6 +326,8 @@ export const PT: Record<Lang, Record<string, string>> = {
     actSearch: 'Rechercher des mots-clés', actSearchSub: 'Trouve de nouvelles opportunités', actSerp: 'Analyser le SERP', actSerpSub: 'Qui ranke sur tes mots-clés', auditSite: 'Audit du site', soon: 'Bientôt disponible',
     trackForSite: 'Suivre un mot-clé pour ce site', positionsOfSite: 'Positions du site', noKwForSite: 'Aucun mot-clé suivi pour ce site', addKwHint: 'Ajoute un mot-clé ci-dessus pour commencer.',
     projNotFound: 'Projet introuvable', projNotFoundH: "Ce projet n'existe pas ou a été supprimé.",
+    visibility: 'Visibilité', visibilitySub: 'Score de présence /100', distribution: 'Distribution des positions',
+    rng4_10: '4–10', rng11_20: '11–20', rng21p: '21+ / hors', recent: 'Dernières recherches', visitSite: 'Visiter', fullTracking: 'Suivi complet',
   },
   ar: {
     analyze: 'تحليل', analyzing: 'جارٍ التحليل…', cacheFree: '⚡ من الذاكرة · 0 $', apiCall: '💳 واجهة DataForSEO', maj: 'حُدّث',
@@ -372,6 +374,8 @@ export const PT: Record<Lang, Record<string, string>> = {
     actSearch: 'ابحث عن كلمات', actSearchSub: 'اكتشف فرصًا جديدة', actSerp: 'حلّل نتائج البحث', actSerpSub: 'من يتصدّر كلماتك', auditSite: 'تدقيق الموقع', soon: 'قريبًا',
     trackForSite: 'تابع كلمة لهذا الموقع', positionsOfSite: 'مراكز الموقع', noKwForSite: 'لا كلمات متابَعة لهذا الموقع', addKwHint: 'أضف كلمة أعلاه للبدء.',
     projNotFound: 'المشروع غير موجود', projNotFoundH: 'هذا المشروع غير موجود أو تم حذفه.',
+    visibility: 'الظهور', visibilitySub: 'مؤشّر الحضور /100', distribution: 'توزّع المراكز',
+    rng4_10: '4–10', rng11_20: '11–20', rng21p: '21+ / خارج', recent: 'عمليات بحث أخيرة', visitSite: 'زيارة', fullTracking: 'التتبّع الكامل',
   },
 }
 
