@@ -80,6 +80,7 @@ export default function Explorer() {
   const ov = overview.data
   const loading = suggestions.loading || overview.loading
   const maxTrend = ov ? Math.max(1, ...ov.trend.map((t) => t.volume)) : 1
+  const trendHasData = !!ov && ov.trend.some((t) => t.volume > 0)
   const hasResults = (suggestions.data && suggestions.data.length > 0) || ov
 
   return (
@@ -130,9 +131,10 @@ export default function Explorer() {
           {ov && (
             <div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <h2 className="text-lg font-bold text-[var(--text)]">
-                  « {ov.keyword} »
-                </h2>
+                <div>
+                  <h2 className="text-lg font-bold text-[var(--text)]">« {ov.keyword} »</h2>
+                  <p className="text-xs text-[var(--text-2)]">Analyse du mot-clé exact</p>
+                </div>
                 <CacheMeta
                   cached={!!overview.cached}
                   fetchedAt={overview.fetchedAt}
@@ -171,27 +173,39 @@ export default function Explorer() {
               {ov.trend.length > 0 && (
                 <Card className="mt-3">
                   <SectionTitle>Tendance · 12 mois</SectionTitle>
-                  <div className="flex h-32 items-end gap-1.5">
-                    {ov.trend.map((t, i) => {
-                      const pct = (t.volume / maxTrend) * 100
-                      const isMax = t.volume === maxTrend
-                      return (
-                        <div key={i} className="group relative flex flex-1 flex-col items-center">
-                          <div
-                            className={`w-full rounded-t-md transition-all group-hover:opacity-80 ${
-                              isMax ? 'bg-[var(--crimson)]' : 'bg-[var(--crimson)]/25'
-                            }`}
-                            style={{ height: `${Math.max(6, pct)}%` }}
-                          />
-                          <div className="mt-1.5 text-[10px] text-[var(--text-3)]">{t.month.slice(5)}</div>
-                          <div className="pointer-events-none absolute -top-10 z-10 hidden whitespace-nowrap rounded-lg bg-[var(--ink)] px-2.5 py-1.5 text-xs text-white shadow-lg group-hover:block">
-                            <div className="font-semibold">{t.month}</div>
-                            <div className="tnum">{t.volume.toLocaleString('fr')}</div>
+                  {trendHasData ? (
+                    <>
+                      {/* Bars row — fixed height so the % heights have a reference */}
+                      <div className="flex h-32 items-end gap-1.5">
+                        {ov.trend.map((t, i) => {
+                          const pct = (t.volume / maxTrend) * 100
+                          const isMax = t.volume === maxTrend
+                          return (
+                            <div
+                              key={i}
+                              title={`${t.month} : ${t.volume.toLocaleString('fr')}`}
+                              className={`flex-1 rounded-t-md transition-opacity hover:opacity-70 ${
+                                isMax ? 'bg-[var(--crimson)]' : 'bg-[var(--crimson)]/30'
+                              }`}
+                              style={{ height: `${Math.max(2, pct)}%` }}
+                            />
+                          )
+                        })}
+                      </div>
+                      {/* Labels row — aligned to the bars above */}
+                      <div className="mt-1.5 flex gap-1.5">
+                        {ov.trend.map((t, i) => (
+                          <div key={i} className="flex-1 text-center text-[10px] text-[var(--text-3)]">
+                            {t.month.slice(5)}
                           </div>
-                        </div>
-                      )
-                    })}
-                  </div>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="py-8 text-center text-sm text-[var(--text-3)]">
+                      Données de tendance indisponibles pour ce mot-clé.
+                    </div>
+                  )}
                 </Card>
               )}
 
@@ -272,7 +286,12 @@ export default function Explorer() {
           {suggestions.data && suggestions.data.length > 0 && (
             <>
               <div>
-                <SectionTitle>Insights stratégiques</SectionTitle>
+                <SectionTitle>
+                  Insights stratégiques
+                </SectionTitle>
+                <p className="-mt-2 mb-3 text-xs text-[var(--text-2)]">
+                  Agrégé sur les {suggestions.data.length} idées ci-dessous (pas seulement le mot exact).
+                </p>
                 <KeywordInsights keywords={suggestions.data} />
               </div>
               <div>
