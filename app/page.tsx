@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react'
 import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT, intentLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName } from '@/lib/locations'
+import { KW_EXAMPLES } from '@/lib/examples'
 
 interface KeywordResult {
   keyword: string
@@ -345,22 +346,26 @@ export default function Explorer() {
               <div className="mb-3 text-4xl">🔍</div>
               <div className="text-base font-semibold">{loading ? t.analyzing : t.emptyExplorerTitle}</div>
               {!loading && <div className="mt-1 text-sm text-[var(--text-2)]">{t.emptyExplorerHint}</div>}
-              {!loading && recent.length > 0 && (
-                <div className="mt-6">
-                  <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-3)]">{p.recent}</div>
-                  <div className="flex flex-wrap justify-center gap-2">
-                    {recent.map((r, i) => (
-                      <button
-                        key={i}
-                        onClick={() => { setQuery(r); analyze(r, true) }}
-                        className="rounded-full border border-[var(--line)] bg-[var(--card)] px-3.5 py-1.5 text-[13px] font-medium text-[var(--text)] transition-colors hover:border-[var(--crimson)] hover:text-[var(--crimson)]"
-                      >
-                        {r}
-                      </button>
-                    ))}
+              {!loading && (() => {
+                const chips = recent.length > 0 ? recent : KW_EXAMPLES[lang]
+                const chipsLabel = recent.length > 0 ? p.recent : p.examples
+                return (
+                  <div className="mt-6">
+                    <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-3)]">{chipsLabel}</div>
+                    <div className="flex flex-wrap justify-center gap-2">
+                      {chips.map((r, i) => (
+                        <button
+                          key={i}
+                          onClick={() => { setQuery(r); analyze(r, true) }}
+                          className="rounded-full border border-[var(--line)] bg-[var(--card)] px-3.5 py-1.5 text-[13px] font-medium text-[var(--text)] transition-colors hover:border-[var(--crimson)] hover:text-[var(--crimson)]"
+                        >
+                          {r}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              })()}
             </div>
           </div>
         )}

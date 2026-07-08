@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, DEFAULT_LANGUAGE } from '@/lib/locations'
+import { KW_EXAMPLES } from '@/lib/examples'
 import { LocationSelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill } from '@/components/ui'
 
@@ -98,7 +99,15 @@ export default function SerpPage() {
         </div>
       )}
 
-      {!data && !loading && !error && <EmptyState icon="📊" title={p.emptySerpT} hint={p.emptySerpH} />}
+      {!data && !loading && !error && (
+        <EmptyState
+          icon="📊"
+          title={p.emptySerpT}
+          hint={p.emptySerpH}
+          chipsLabel={p.examples}
+          chips={KW_EXAMPLES[lang].map((ex) => ({ label: ex, onClick: () => { setKeyword(ex); run({ keyword: ex, location, language, device }) } }))}
+        />
+      )}
     </Page>
   )
 }

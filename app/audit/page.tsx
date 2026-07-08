@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { usePT } from '@/lib/i18n'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
+import { URL_EXAMPLES } from '@/lib/examples'
 
 interface PageAudit {
   url: string
@@ -144,7 +145,15 @@ export default function AuditPage() {
         </div>
       )}
 
-      {!data && !loading && !error && <EmptyState icon="🩺" title={p.emptyAuditT} hint={p.emptyAuditH} />}
+      {!data && !loading && !error && (
+        <EmptyState
+          icon="🩺"
+          title={p.emptyAuditT}
+          hint={p.emptyAuditH}
+          chipsLabel={p.examples}
+          chips={URL_EXAMPLES.map((ex) => ({ label: ex.replace('https://', ''), onClick: () => { setUrl(ex); run({ url: ex }) } }))}
+        />
+      )}
     </Page>
   )
 }

@@ -5,6 +5,7 @@ import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
+import { DOMAIN_EXAMPLES } from '@/lib/examples'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
 interface DomainKeyword { keyword: string; position: number | null; volume: number | null; traffic: number | null; url: string }
@@ -100,7 +101,15 @@ export default function DomainPage() {
         </div>
       )}
 
-      {!data && !loading && !error && <EmptyState icon="🌐" title={p.emptyDomT} hint={p.emptyDomH} />}
+      {!data && !loading && !error && (
+        <EmptyState
+          icon="🌐"
+          title={p.emptyDomT}
+          hint={p.emptyDomH}
+          chipsLabel={p.examples}
+          chips={DOMAIN_EXAMPLES.map((ex) => ({ label: ex, onClick: () => { setDomain(ex); run({ domain: ex, location, language }) } }))}
+        />
+      )}
     </Page>
   )
 }

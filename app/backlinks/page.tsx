@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { usePT } from '@/lib/i18n'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
+import { DOMAIN_EXAMPLES } from '@/lib/examples'
 
 interface BacklinksSummary {
   domain: string
@@ -107,7 +108,15 @@ export default function BacklinksPage() {
         </div>
       )}
 
-      {!data && !loading && !error && <EmptyState icon="🔗" title={p.emptyBlT} hint={p.emptyBlH} />}
+      {!data && !loading && !error && (
+        <EmptyState
+          icon="🔗"
+          title={p.emptyBlT}
+          hint={p.emptyBlH}
+          chipsLabel={p.examples}
+          chips={DOMAIN_EXAMPLES.map((ex) => ({ label: ex, onClick: () => { setDomain(ex); run({ domain: ex }) } }))}
+        />
+      )}
     </Page>
   )
 }

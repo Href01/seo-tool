@@ -228,13 +228,37 @@ export function Spinner() {
   )
 }
 
-/* Empty state */
-export function EmptyState({ icon, title, hint }: { icon: string; title: string; hint: string }) {
+/* Empty state (optionally with clickable example chips) */
+export function EmptyState({
+  icon,
+  title,
+  hint,
+  chipsLabel,
+  chips,
+}: {
+  icon: string
+  title: string
+  hint: string
+  chipsLabel?: string
+  chips?: { label: string; onClick: () => void }[]
+}) {
   return (
-    <div className="rounded-2xl border border-dashed border-[var(--line)] bg-[var(--card)] px-10 py-16 text-center">
+    <div className="rounded-2xl border border-dashed border-[var(--line)] bg-[var(--card)] px-10 py-14 text-center">
       <div className="mb-3 text-4xl">{icon}</div>
       <h3 className="mb-1 text-base font-semibold text-[var(--text)]">{title}</h3>
       <p className="text-sm text-[var(--text-2)]">{hint}</p>
+      {chips && chips.length > 0 && (
+        <div className="mt-6">
+          {chipsLabel && <div className="mb-2.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-[var(--text-3)]">{chipsLabel}</div>}
+          <div className="flex flex-wrap justify-center gap-2">
+            {chips.map((c, i) => (
+              <button key={i} onClick={c.onClick} className="rounded-full border border-[var(--line)] bg-[var(--card)] px-3.5 py-1.5 text-[13px] font-medium text-[var(--text)] transition-colors hover:border-[var(--crimson)] hover:text-[var(--crimson)]">
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
