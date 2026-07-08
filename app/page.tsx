@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, intentLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName } from '@/lib/locations'
@@ -53,8 +53,42 @@ export default function Explorer() {
     const payload = { keyword: q, location, language: lang, device }
     overview.run(payload)
     kd.run(payload)
-    if (full) suggestions.run(payload)
+    let seed = query.trim()
+    if (full) {
+      seed = q
+      setQuery(q)
+      suggestions.run(payload)
+    }
+    try {
+      localStorage.setItem('explorer:last', JSON.stringify({ seed, focus: q, location, device }))
+    } catch {}
   }
+
+  // Restore the last search after a page refresh (results are server-cached → free).
+  useEffect(() => {
+    let raw: string | null = null
+    try { raw = localStorage.getItem('explorer:last') } catch {}
+    if (!raw) return
+    try {
+      const s = JSON.parse(raw) as { seed?: string; focus?: string; location?: number; device?: string }
+      const loc = s.location ?? location
+      const dev = s.device ?? device
+      if (s.location) setLocation(s.location)
+      if (s.device) setDevice(s.device)
+      const l = (localStorage.getItem('lang') as string) || 'fr'
+      if (s.seed) {
+        setQuery(s.seed)
+        suggestions.run({ keyword: s.seed, location: loc, language: l, device: dev })
+      }
+      if (s.focus) {
+        setFocus(s.focus)
+        const fp = { keyword: s.focus, location: loc, language: l, device: dev }
+        overview.run(fp)
+        kd.run(fp)
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const ov = overview.data
   const loc = getLocationByCode(location) ?? DEFAULT_LOCATION
