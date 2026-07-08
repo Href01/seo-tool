@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
+import { usePT } from '@/lib/i18n'
 import { Page, PageHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
 interface BacklinksSummary {
@@ -17,15 +18,16 @@ interface BacklinksSummary {
 
 const fmt = (n: number | null) => (n != null ? n.toLocaleString('fr') : '—')
 
-function spamLevel(score: number) {
-  if (score < 15) return { l: 'Sain', c: 'text-[var(--up)]', bar: 'bg-[var(--up)]', hint: 'Profil de liens sain et naturel.' }
-  if (score < 40) return { l: 'Modéré', c: 'text-amber-700', bar: 'bg-amber-500', hint: 'Quelques liens douteux à surveiller.' }
-  return { l: 'Risqué', c: 'text-[var(--down)]', bar: 'bg-[var(--down)]', hint: 'Beaucoup de liens toxiques — risque de pénalité.' }
-}
-
 export default function BacklinksPage() {
+  const p = usePT()
   const [domain, setDomain] = useState('')
   const { loading, error, cached, fetchedAt, data, run } = useSeoQuery<BacklinksSummary>('/api/backlinks')
+
+  function spamLevel(score: number) {
+    if (score < 15) return { l: p.spamHealthy, c: 'text-[var(--up)]', bar: 'bg-[var(--up)]', hint: p.spamHealthyHint }
+    if (score < 40) return { l: p.spamModerate, c: 'text-amber-700', bar: 'bg-amber-500', hint: p.spamModHint }
+    return { l: p.spamRisky, c: 'text-[var(--down)]', bar: 'bg-[var(--down)]', hint: p.spamRiskyHint }
+  }
 
   function search(e: React.FormEvent) {
     e.preventDefault()
@@ -40,27 +42,15 @@ export default function BacklinksPage() {
 
   return (
     <Page>
-      <PageHeader title="Profil de backlinks" subtitle="Autorité du domaine · domaines référents · score de spam · ratio dofollow" />
-
+      <PageHeader title={p.blTitle} subtitle={p.blSub} />
       <Card className="mb-6">
         <form onSubmit={search} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-xs font-medium text-[var(--text-2)]">Domaine</label>
-            <input
-              value={domain}
-              onChange={(e) => setDomain(e.target.value)}
-              placeholder="ex : jumia.ma"
-              className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10"
-            />
+            <label className="mb-1.5 block text-xs font-medium text-[var(--text-2)]">{p.domainLabel}</label>
+            <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder={p.domPh} className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10" />
           </div>
           <Button type="submit" disabled={loading} className="w-full py-3">
-            {loading ? (
-              <>
-                <Spinner /> Analyse des backlinks…
-              </>
-            ) : (
-              'Analyser les backlinks'
-            )}
+            {loading ? (<><Spinner /> {p.analyzing}</>) : p.analyze}
           </Button>
         </form>
         {cached !== null && !error && data && (
@@ -75,16 +65,16 @@ export default function BacklinksPage() {
       {data && (
         <div className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label="Backlinks" value={fmt(data.backlinks)} />
-            <StatCard label="Domaines référents" value={fmt(data.referringDomains)} accent />
-            <StatCard label="Domaines principaux" value={fmt(data.referringMainDomains)} />
-            <StatCard label="Rank autorité" value={fmt(data.rank)} />
+            <StatCard label={p.backlinks} value={fmt(data.backlinks)} />
+            <StatCard label={p.refDomains} value={fmt(data.referringDomains)} accent />
+            <StatCard label={p.mainDomains} value={fmt(data.referringMainDomains)} />
+            <StatCard label={p.authRank} value={fmt(data.rank)} />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             {data.spamScore != null && (
               <Card>
-                <SectionTitle>Score de spam</SectionTitle>
+                <SectionTitle>{p.spamScore}</SectionTitle>
                 <div className="flex items-center gap-5">
                   <div className={`text-4xl font-bold tnum ${spamLevel(data.spamScore).c}`}>{data.spamScore}%</div>
                   <div>
@@ -100,12 +90,12 @@ export default function BacklinksPage() {
 
             {dofollowPct != null && (
               <Card>
-                <SectionTitle>Ratio dofollow</SectionTitle>
+                <SectionTitle>{p.dofollowRatio}</SectionTitle>
                 <div className="flex items-center gap-5">
                   <div className="text-4xl font-bold text-[var(--up)] tnum">{dofollowPct.toFixed(0)}%</div>
                   <div className="text-sm text-[var(--text-2)]">
-                    <div><span className="text-[var(--up)]">●</span> {fmt(data.dofollow)} dofollow</div>
-                    <div><span className="text-[var(--text-3)]">●</span> {fmt(data.nofollow)} nofollow</div>
+                    <div><span className="text-[var(--up)]">●</span> {fmt(data.dofollow)} {p.dofollow}</div>
+                    <div><span className="text-[var(--text-3)]">●</span> {fmt(data.nofollow)} {p.nofollow}</div>
                   </div>
                 </div>
                 <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-[var(--subtle)]">
@@ -117,9 +107,7 @@ export default function BacklinksPage() {
         </div>
       )}
 
-      {!data && !loading && !error && (
-        <EmptyState icon="🔗" title="Mesure l'autorité d'un domaine" hint="Backlinks, domaines référents, score de spam et plus." />
-      )}
+      {!data && !loading && !error && <EmptyState icon="🔗" title={p.emptyBlT} hint={p.emptyBlH} />}
     </Page>
   )
 }

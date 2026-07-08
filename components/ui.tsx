@@ -1,6 +1,7 @@
 'use client'
 
 import { ReactNode } from 'react'
+import { usePT } from '@/lib/i18n'
 
 /* Card — the base white rounded surface used everywhere */
 export function Card({
@@ -219,18 +220,19 @@ export function CacheMeta({
   timeAgo: (s: string) => string
   extra?: string
 }) {
+  const p = usePT()
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-2)]">
       {cached ? (
         <span className="inline-flex items-center gap-1 rounded-full bg-[var(--up-bg)] px-2 py-0.5 font-medium text-[var(--up)]">
-          ⚡ Cache · 0 $
+          {p.cacheFree}
         </span>
       ) : (
         <span className="inline-flex items-center gap-1 rounded-full bg-[var(--subtle)] px-2 py-0.5 font-medium text-[var(--text-2)]">
-          💳 API DataForSEO
+          {p.apiCall}
         </span>
       )}
-      {cached && fetchedAt && <span className="text-[var(--text-3)]">maj {timeAgo(fetchedAt)}</span>}
+      {cached && fetchedAt && <span className="text-[var(--text-3)]">{p.maj} {timeAgo(fetchedAt)}</span>}
       {extra && <span className="text-[var(--text-3)]">· {extra}</span>}
     </div>
   )

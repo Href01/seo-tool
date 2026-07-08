@@ -1,20 +1,22 @@
 'use client'
 
-import { LOCATIONS, DEVICES, LANGUAGES } from '@/lib/locations'
+import { LOCATIONS, DEVICES, LANGUAGES, locName, deviceName } from '@/lib/locations'
+import { useT, usePT } from '@/lib/i18n'
 
 const selectCls =
   'w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-3.5 py-2.5 text-sm text-[var(--text)] outline-none transition-colors hover:border-[var(--text-3)] focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10'
-
 const labelCls = 'mb-1.5 block text-xs font-medium text-[var(--text-2)]'
 
 export function LocationSelector({ value, onChange }: { value: number; onChange: (code: number) => void }) {
+  const { lang } = useT()
+  const p = usePT()
   return (
     <div>
-      <label className={labelCls}>Pays / Marché</label>
+      <label className={labelCls}>{p.countryLabel}</label>
       <select value={value} onChange={(e) => onChange(Number(e.target.value))} className={selectCls}>
         {LOCATIONS.map((loc) => (
           <option key={loc.code} value={loc.code}>
-            {loc.flag} {loc.name}
+            {loc.flag} {locName(loc, lang)}
           </option>
         ))}
       </select>
@@ -23,9 +25,11 @@ export function LocationSelector({ value, onChange }: { value: number; onChange:
 }
 
 export function DeviceSelector({ value, onChange }: { value: string; onChange: (id: string) => void }) {
+  const { lang } = useT()
+  const p = usePT()
   return (
     <div>
-      <label className={labelCls}>Appareil</label>
+      <label className={labelCls}>{p.deviceLabelTitle}</label>
       <div className="flex gap-1.5">
         {DEVICES.map((device) => {
           const active = value === device.id
@@ -41,7 +45,7 @@ export function DeviceSelector({ value, onChange }: { value: string; onChange: (
               }`}
             >
               <span>{device.icon}</span>
-              <span className="hidden sm:inline">{device.label}</span>
+              <span className="hidden sm:inline">{deviceName(device, lang)}</span>
             </button>
           )
         })}
@@ -51,13 +55,14 @@ export function DeviceSelector({ value, onChange }: { value: string; onChange: (
 }
 
 export function LanguageSelector({ value, onChange }: { value: string; onChange: (code: string) => void }) {
+  const p = usePT()
   return (
     <div>
-      <label className={labelCls}>Langue</label>
+      <label className={labelCls}>{p.langLabel}</label>
       <select value={value} onChange={(e) => onChange(e.target.value)} className={selectCls}>
-        {LANGUAGES.map((lang) => (
-          <option key={lang.code} value={lang.code}>
-            {lang.flag} {lang.name}
+        {LANGUAGES.map((l) => (
+          <option key={l.code} value={l.code}>
+            {l.flag} {l.name}
           </option>
         ))}
       </select>
