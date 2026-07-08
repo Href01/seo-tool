@@ -7,7 +7,7 @@ import { DEFAULT_LOCATION, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
 
-interface DomainKeyword { keyword: string; position: number | null; volume: number | null; url: string }
+interface DomainKeyword { keyword: string; position: number | null; volume: number | null; traffic: number | null; url: string }
 interface DomainOverview { domain: string; organicKeywords: number | null; estimatedTraffic: number | null; keywords: DomainKeyword[] }
 
 function posClass(p: number | null) {
@@ -33,6 +33,7 @@ export default function DomainPage() {
   return (
     <Page>
       <WorkspaceHeader icon="🌐" title={p.domTitle} subtitle={p.domSub} />
+      <div className="mb-4 rounded-xl border border-[var(--line)] bg-[var(--subtle)] px-4 py-2.5 text-xs text-[var(--text-2)]">💡 {p.domHint}</div>
       <Card className="mb-6">
         <form onSubmit={search} className="space-y-4">
           <div>
@@ -65,15 +66,16 @@ export default function DomainPage() {
 
           {data.keywords.length > 0 && (
             <div>
-              <SectionTitle>{p.topKeywords}</SectionTitle>
+              <SectionTitle action={<span className="text-xs text-[var(--text-3)] tnum">{data.keywords.length} {p.keywordsWord}</span>}>{p.topKeywords}</SectionTitle>
               <div className="overflow-hidden rounded-2xl border border-[var(--line)] bg-[var(--card)]">
-                <div className="overflow-x-auto">
+                <div className="max-h-[560px] overflow-auto">
                   <table className="w-full">
-                    <thead className="border-b border-[var(--line)] bg-[var(--subtle)] text-start text-xs text-[var(--text-2)]">
+                    <thead className="sticky top-0 z-10 border-b border-[var(--line)] bg-[var(--subtle)] text-start text-xs text-[var(--text-2)]">
                       <tr>
                         <th className="px-4 py-3 text-start font-semibold">{p.keywordCol}</th>
                         <th className="px-4 py-3 text-center font-semibold">{p.positionCol}</th>
                         <th className="px-4 py-3 text-end font-semibold">{p.volumeCol}</th>
+                        <th className="px-4 py-3 text-end font-semibold">{p.trafficCol}</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[var(--line)]">
@@ -86,6 +88,7 @@ export default function DomainPage() {
                             <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold tnum ${posClass(k.position)}`}>{k.position != null ? `#${k.position}` : '—'}</span>
                           </td>
                           <td className="px-4 py-3 text-end text-sm text-[var(--text-2)] tnum">{k.volume?.toLocaleString('fr') ?? '—'}</td>
+                          <td className="px-4 py-3 text-end text-sm font-semibold text-[var(--text)] tnum">{k.traffic != null ? k.traffic.toLocaleString('fr') : '—'}</td>
                         </tr>
                       ))}
                     </tbody>

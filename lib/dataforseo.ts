@@ -199,6 +199,7 @@ export interface DomainKeyword {
   keyword: string
   position: number | null
   volume: number | null
+  traffic: number | null
   url: string
 }
 
@@ -222,7 +223,13 @@ export async function domainOverview(
       { target: domain, location_code: location, language_code: language },
     ]),
     dfs<any>('/dataforseo_labs/google/ranked_keywords/live', [
-      { target: domain, location_code: location, language_code: language, limit: opts.limit ?? 50 },
+      {
+        target: domain,
+        location_code: location,
+        language_code: language,
+        limit: opts.limit ?? 200,
+        order_by: ['ranked_serp_element.serp_item.etv,desc'],
+      },
     ]),
   ])
 
@@ -236,6 +243,7 @@ export async function domainOverview(
       keyword: kd.keyword ?? '',
       position: serp.rank_absolute ?? serp.rank_group ?? null,
       volume: kd.keyword_info?.search_volume ?? null,
+      traffic: serp.etv != null ? Math.round(serp.etv) : null,
       url: serp.url ?? '',
     }
   })
