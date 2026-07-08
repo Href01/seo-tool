@@ -34,6 +34,11 @@ function diffCfg(s: number, t: { easy: string; medium: string; hard: string }) {
   return { c: '#e11d48', bg: '#ffe4e6', l: t.hard }
 }
 
+function defer(callback: () => void) {
+  if (typeof queueMicrotask === 'function') queueMicrotask(callback)
+  else setTimeout(callback, 0)
+}
+
 export default function Explorer() {
   const { t, lang } = useT()
   const p = usePT()
@@ -59,7 +64,6 @@ export default function Explorer() {
     setFocus(q)
     const payload = { keyword: q, location, language: searchLang, device }
     overview.run(payload)
-    kd.run(payload)
     let seed = query.trim()
     if (full) {
       seed = q
@@ -77,7 +81,19 @@ export default function Explorer() {
     } catch {}
   }
 
+  function runDifficulty(kw: string) {
+    const q = kw.trim()
+    if (!q) return
+    kd.run({ keyword: q, location, language: searchLang, device })
+  }
+
+  function showLandscape() {
+    setVariant('b')
+    runDifficulty(focus)
+  }
+
   // Restore the last search after a page refresh (results are server-cached → free).
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     let raw: string | null = null
     try { raw = localStorage.getItem('explorer:last') } catch {}
@@ -87,28 +103,29 @@ export default function Explorer() {
       const loc = s.location ?? location
       const dev = s.device ?? device
       const sl = s.searchLang ?? 'fr' // never the UI language → cache stays warm on reload
-      if (s.location) setLocation(s.location)
-      if (s.device) setDevice(s.device)
-      if (s.searchLang) setSearchLang(s.searchLang)
+      defer(() => {
+        if (s.location) setLocation(s.location)
+        if (s.device) setDevice(s.device)
+        if (s.searchLang) setSearchLang(s.searchLang)
+        if (s.seed) setQuery(s.seed)
+        if (s.focus) setFocus(s.focus)
+      })
       if (s.seed) {
-        setQuery(s.seed)
         suggestions.run({ keyword: s.seed, location: loc, language: sl, device: dev })
       }
       if (s.focus) {
-        setFocus(s.focus)
         const fp = { keyword: s.focus, location: loc, language: sl, device: dev }
         overview.run(fp)
-        kd.run(fp)
       }
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   // Load recent seeds
   useEffect(() => {
     try {
       const r = localStorage.getItem('explorer:recent')
-      if (r) setRecent(JSON.parse(r))
+      if (r) defer(() => setRecent(JSON.parse(r)))
     } catch {}
   }, [])
 
@@ -150,7 +167,6 @@ export default function Explorer() {
       }
     : null
 
-  const hasData = (suggestions.data && suggestions.data.length > 0) || !!ov
   const loading = overview.loading
 
   const selCls =
@@ -254,7 +270,7 @@ export default function Explorer() {
               <div className="flex shrink-0 items-center gap-2">
                 <div className="flex gap-1 rounded-xl bg-[#e9e9ec] p-1">
                   <button onClick={() => setVariant('a')} className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${variant === 'a' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>📈 {t.trendView}</button>
-                  <button onClick={() => setVariant('b')} className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${variant === 'b' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>🗺️ {t.landscape}</button>
+                  <button onClick={showLandscape} className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${variant === 'b' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>🗺️ {t.landscape}</button>
                 </div>
                 <button
                   onClick={() => setDetailOpen((v) => !v)}
@@ -402,7 +418,7 @@ export default function Explorer() {
               <div className="mt-[18px] border-t border-[var(--line)] pt-4">
                 <div className="flex items-center justify-between">
                   <div className="text-[13.5px] font-bold">{t.diffMaison}</div>
-                  <button onClick={() => analyze(focus, false)} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--crimson)]">↻ {t.recalc}</button>
+                  <button onClick={() => runDifficulty(focus)} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--crimson)]">↻ {t.recalc}</button>
                 </div>
                 {kd.data?.keyword === focus && dcfg ? (
                   <div className="mt-3 flex items-center gap-3.5">

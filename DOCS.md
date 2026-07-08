@@ -1,200 +1,236 @@
-# SEO·MENA — Documentation projet
+# SEO MENA - Documentation projet
 
-Outil SEO pour les marchés **MENA / Golfe** (Maroc, Algérie, Tunisie, Égypte,
-Arabie Saoudite, EAU, Qatar…). Positionnement : ne pas concurrencer Ahrefs/Semrush
-sur la donnée brute, mais offrir une **couche MENA** — difficulté propriétaire,
-base de mots-clés locale, interface **bilingue FR/العربية (RTL)**, économie de
-coût via cache partagé.
+Outil SEO pour les marches MENA / Golfe (Maroc, Algerie, Tunisie, Egypte,
+Arabie Saoudite, EAU, Qatar...). Positionnement : ne pas concurrencer Ahrefs ou
+Semrush sur la donnee brute, mais offrir une couche MENA : difficulte
+proprietaire, base de mots-cles locale, interface bilingue FR/AR avec RTL, et
+economie de cout via cache partage.
 
-> Doc vivante. À mettre à jour à chaque évolution structurante. Voir aussi
-> `AGENTS.md` (⚠️ Next.js 16, lire les docs bundlées avant de coder).
+Doc vivante. A mettre a jour a chaque evolution structurante. Voir aussi
+`AGENTS.md` : Next.js 16, lire les docs bundlees avant de coder.
 
 ---
 
-## 1. Stack & déploiement
+## 1. Stack & deploiement
 
 | | |
 |---|---|
-| Framework | **Next.js 16** + React 19 (App Router, Turbopack) |
+| Framework | Next.js 16 + React 19 (App Router, Turbopack) |
 | Langage | TypeScript |
 | Style | Tailwind v4 (`@import "tailwindcss"`) + tokens CSS dans `app/globals.css` |
-| Données SEO | **DataForSEO** (HTTP Basic, `DATAFORSEO_LOGIN` / `DATAFORSEO_PASSWORD`) |
-| DB | **Neon Postgres** (connexion *poolée* `-pooler`, `DATABASE_URL`) |
-| Hébergement | **Vercel** (Hobby) — `seo-tool-ten-sooty.vercel.app` — repo `Href01/seo-tool` |
-| Auth | **Aucune** (mode User/Admin via `localStorage`, pas de comptes) |
+| Donnees SEO | DataForSEO (HTTP Basic, `DATAFORSEO_LOGIN` / `DATAFORSEO_PASSWORD`) |
+| DB | Neon Postgres (connexion poolee `-pooler`, `DATABASE_URL`) |
+| Hebergement | Vercel Hobby - `seo-tool-ten-sooty.vercel.app` - repo `Href01/seo-tool` |
+| Auth | Sessions email/password maison (cookie httpOnly, `scrypt`, roles user/admin) |
 
-**Variables d'env** : `DATABASE_URL`, `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`,
-`CRON_SECRET` (protège le cron de suivi — voir §9).
-Sans DB → l'app tourne en mode dégradé (pas de cache, pas de suivi, pas de bank).
+Variables d'env : `DATABASE_URL`, `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`,
+`CRON_SECRET`, `ADMIN_EMAIL` optionnel. Sans DB, l'app tourne en mode degrade :
+pas de cache, pas de comptes, pas de suivi, pas de bank.
 
 ---
 
-## 2. Architecture & flux de données
+## 2. Architecture & flux de donnees
 
+```text
+UI (client) --POST--> app/api/<feature>/route.ts (runtime nodejs)
+                         |
+                         +-- cacheKey(prefix, ...parts) -> lib/cache.ts
+                         +-- getCachedMeta(key, TTL)    -> HIT = 0 $
+                         |                                  MISS
+                         +-- lib/dataforseo.ts ---------> DataForSEO (PAYANT)
+                         +-- recordDfsUsage(...)         -> couts admin
+                         +-- recordCacheEvent(...)       -> hit/miss admin
+                         +-- setCached(key, payload)     -> cache partage
+                         +-- recordKeywords(...)         -> lib/bank.ts
 ```
-UI (client) ──POST──> app/api/<feature>/route.ts (runtime nodejs)
-                          │
-                          ├─ cacheKey(prefix, …parts)   → lib/cache.ts
-                          ├─ getCachedMeta(key, TTL)     → HIT = 0 $, renvoie {payload, fetchedAt}
-                          │                                   MISS ↓
-                          ├─ lib/dataforseo.ts  ──HTTP──> DataForSEO  (PAYANT)
-                          ├─ setCached(key, payload)     → réutilisable par TOUS les users
-                          └─ recordKeywords(…)           → lib/bank.ts (asset propriétaire)
-```
 
-**Le cache partagé est le cœur du modèle économique** : la même
-`(mot-clé, pays, langue)` renvoie la même donnée pour tout le monde → **un seul
-appel payant sert tous les users** jusqu'à expiration du TTL. Un hit coûte 0 $.
+Le cache partage est le coeur du modele economique : la meme requete
+`(mot-cle, pays, langue)` sert tous les users jusqu'a expiration du TTL. Un hit
+de cache coute 0 $.
 
-### Pattern de chaque feature
-`dfs()` (client HTTP) → normaliseur → route cachée (`getCachedMeta`/`setCached`,
-TTL selon le type de donnée) → page qui consomme via `useSeoQuery` (ou fetch direct).
+Pattern feature : `dfs()` -> normaliseur -> route cachee
+(`getCachedMeta`/`setCached`) -> page via `useSeoQuery` ou fetch direct.
 
 ---
 
 ## 3. Carte du code
 
-```
+```text
 app/
-  layout.tsx            Shell + <html dir> (RTL)
-  shell.tsx             Sidebar + contenu, applique dir=rtl selon la langue UI
-  nav.tsx               Sidebar : icônes SVG, sections, toggles User/Admin + FR/ع
-  page.tsx              EXPLORER (master-detail 3 panneaux) — écran principal
-  tracker/page.tsx      TRACKER de positions (master-detail)
-  overview/page.tsx     Redirige vers / (fusionné dans l'Explorer)
-  serp|domain|backlinks|audit/page.tsx   Pages d'analyse (mono-colonne)
-  database/page.tsx     Base de mots-clés (admin)
-  admin/page.tsx        Dashboard admin
-  app/page.tsx          Liste des projets (user)
-  app/project/[id]/page.tsx   Détail projet (dashboard riche)
+  layout.tsx                  Shell + <html dir>
+  shell.tsx                   Sidebar + contenu, applique dir=rtl selon la langue UI
+  nav.tsx                     Sidebar, toggles User/Admin + FR/AR
+  page.tsx                    Explorer principal (master-detail 3 panneaux)
+  tracker/page.tsx            Tracker de positions
+  serp|domain|backlinks|audit Pages d'analyse
+  database/page.tsx           Base de mots-cles (admin)
+  admin/page.tsx              Dashboard admin + cost cockpit
+  login/page.tsx              Login/signup email+password
+  app/page.tsx                Liste des projets
+  app/project/[id]/page.tsx   Detail projet
   api/
-    keywords            suggestions Labs
-    keyword-overview    volume/CPC/difficulté/intention/tendance (Labs → Google Ads)
-    difficulty          difficulté propriétaire (SERP + autorité)
-    serp                SERP organique (desktop/mobile)
-    domain              ranked keywords + trafic estimé (v2, limit 200)
-    backlinks           profil de liens
-    audit               audit on-page instantané
-    rank + rank/check   suivi de positions
-    projects + [id]     CRUD projets
-    database            lecture de la bank
-    admin/stats         compteurs
+    keywords                  suggestions Labs
+    keyword-overview          volume/CPC/difficulte/intention/tendance
+    difficulty                difficulte proprietaire (SERP + autorite)
+    serp                      SERP organique
+    domain                    ranked keywords + trafic estime
+    backlinks                 profil de liens
+    audit                     audit on-page instantane
+    auth/login|signup|logout|session
+    rank + rank/check         suivi de positions (ajout non payant, check par id)
+    cron/check-ranks          refresh quotidien protege par CRON_SECRET
+    projects + [id]           CRUD projets
+    database                  lecture de la bank
+    admin/stats               compteurs
+
 lib/
-  dataforseo.ts   Client DataForSEO + tous les normaliseurs + difficulté maison
-  cache.ts        Cache Postgres partagé (cacheKey / getCachedMeta / setCached)
-  db.ts           Pool Postgres + init schéma (idempotent, globalThis)
-  tracking.ts     Suivi de rang (tables rank_tracking / rank_history)
-  bank.ts         Base de mots-clés propriétaire (upsert, COALESCE)
-  projects.ts     CRUD projets
-  i18n.ts         useLang + dictionnaires T (strict) & PT (pages) + intentLabel
-  locations.ts    12 pays MENA/Golfe + appareils (noms FR/AR)
-  examples.ts     Exemples MENA pour les états vides
-  useSeoQuery.ts  Hook client {loading,error,cached,fetchedAt,data,run} + timeAgo
-  useMode.ts      Toggle User/Admin (localStorage)
+  api.ts / errors.ts          parsing JSON, params, erreurs typees
+  auth.ts                     sessions, hash password, roles, requireUser/Admin
+  usage.ts                    cout DataForSEO + events cache + dashboard
+  dataforseo.ts               client DataForSEO + normaliseurs + difficulte maison
+  cache.ts                    cache Postgres partage
+  db.ts                       pool Postgres + init schema idempotent
+  tracking.ts                 rank_tracking / rank_history
+  bank.ts                     base de mots-cles proprietaire
+  projects.ts                 CRUD projets
+  i18n.ts                     useLang + dictionnaires T/PT + intentLabel
+  locations.ts                pays MENA/Golfe + appareils
+  examples.ts                 exemples MENA
+  useSeoQuery.ts              hook client SEO POST/cache state
+  useMode.ts                  toggle User/Admin
+
 components/
-  ui.tsx          Design system : Card, StatCard, Button, WorkspaceHeader,
-                  DistributionBar, visibilityScore, EmptyState (chips), CacheMeta…
-  LocationSelector.tsx  Sélecteurs pays/appareil/langue (traduits)
-  KeywordTable.tsx / KeywordInsights.tsx   Table + insights de l'Explorer
+  ui.tsx                      design system
+  LocationSelector.tsx        selecteurs pays/appareil/langue
+  KeywordTable.tsx            table mots-cles
+
 scripts/
-  warmup.mjs + warmup-seeds.txt   Pré-remplissage de 500 mots-clés (⚠️ NON exécuté)
+  warmup.mjs + warmup-seeds.txt  pre-remplissage de 50 seeds (non execute)
 ```
 
 ---
 
-## 4. Modules clés
+## 4. Modules cles
 
 ### `lib/dataforseo.ts`
-- `keywordSuggestions` — 50 suggestions (Labs) : volume, CPC, difficulté.
-- `keywordOverview` — 1 mot-clé : volume/CPC/concurrence/intention/tendance 12 mois.
-  **Labs d'abord**, fallback **Google Ads** pour la longue traîne (sans intention/difficulté).
-- `serpOrganic` — top organique. `device` desktop/mobile (tablet→mobile).
-- `computeKeywordDifficulty` — **difficulté propriétaire** : SERP top 10 →
-  dédup domaines → exclut les méga-plateformes (Instagram, YouTube…) →
-  autorité backlinks (0-1000) pondérée par position (#1 le plus lourd) →
-  `difficulty = weightedSum / weightTotal` (0-100). ⚠️ voir *Faiblesses*.
-- `domainOverview` — ranked keywords (limit 200, triés par trafic `etv` desc) + trafic estimé.
+- `dfs()` valide les `status_code` DataForSEO (enveloppe + tasks), remonte
+  `tasks_error`, detecte les hard failures task-level, et logge le `cost` annonce
+  par l'API pour chaque miss payant. Les couts non nuls sont aussi ecrits dans
+  `dataforseo_usage`.
+- `keywordSuggestions` : 50 suggestions Labs, volume, CPC, difficulte.
+- `keywordOverview` : 1 mot-cle, Labs d'abord, fallback Google Ads pour la longue
+  traine (sans intention/difficulte).
+- `serpOrganic` : top organique google.com geo-cible, desktop/mobile. Pour le
+  tracking, `stop_crawl_on_match` arrete le crawl quand le domaine cible est trouve.
+- `computeKeywordDifficulty` : SERP top 10 -> dedup domaines -> exclusion des
+  mega-plateformes -> autorite backlinks (0-1000) ponderee par position -> score
+  0-100.
+- `domainOverview` : ranked keywords limit 200, tries par trafic `etv` desc.
 - `backlinksSummary`, `instantPageAudit`, `bulkBacklinkRanks`.
 
-### `lib/cache.ts` — TTL par type
-| Donnée | TTL | Raison |
-|---|---|---|
+### `lib/cache.ts`
+| Donnee | TTL | Raison |
+|---|---:|---|
 | suggestions, overview | 30 j | volumes bougent lentement |
-| SERP, difficulté, domaine | 14 j | le SERP bouge en quelques jours |
+| SERP, difficulte, domaine | 14 j | SERP bouge en quelques jours |
+| audit | 7 j | page peut changer plus vite |
 
-`cacheKey('domain','v2',…)` → **versionner le préfixe quand la forme du payload change**.
+Versionner les prefixes de cache quand la forme du payload change, ex.
+`cacheKey('domain', 'v2', ...)`.
+Chaque lookup cache ecrit un event hit/miss dans `cache_events` pour le cockpit admin.
 
 ### `lib/tracking.ts`
-Par `(keyword, domain, location, language)`. `checkRank` fait un SERP **frais**
-(depth 100), écrit un point d'historique. `checkAll` est planifié via **Vercel Cron
-quotidien** (§9). Actuellement **Maroc/fr en dur** côté route `/api/rank`.
+Par `(user_id, keyword, domain, location, language)`. Ajouter un mot-cle ne declenche plus
+de SERP payant : l'historique commence quand l'utilisateur clique **Verifier**.
+`checkRank` throttle les checks manuels (6 h par defaut) et renvoie le dernier
+point si la donnee est encore fraiche. `checkAll` est reserve au Vercel Cron
+quotidien et force un SERP frais. Actuellement Maroc/fr en dur cote route
+`/api/rank`.
+
+### `lib/auth.ts`
+- Signup/login email+password, hash `scrypt`, cookie `seo_session` httpOnly.
+- Le premier compte devient admin. Si `ADMIN_EMAIL` est defini, cet email devient
+  admin a la creation du compte.
+- `requireUser(req)` protege projets/tracking ; `requireAdmin(req)` protege
+  `/admin`, `/database` et les stats.
+
+### `lib/usage.ts`
+Agrege le cockpit admin : cout aujourd'hui/7j/30j, cout par endpoint DataForSEO,
+hits/misses cache par prefixe.
 
 ### `lib/bank.ts`
-Chaque lookup enrichit `keyword_bank` (upsert, `COALESCE` des métriques,
-`times_searched++`). Best-effort, n'interrompt jamais l'utilisateur.
+Chaque lookup enrichit `keyword_bank` (upsert, `COALESCE`, `times_searched++`).
+Best-effort : la bank ne doit jamais interrompre l'utilisateur.
 
 ### `lib/i18n.ts`
-- `T` / `useT` : chaînes strictes (Explorer, Tracker, sidebar).
-- `PT` / `usePT` : chaînes des autres pages (typage souple).
+- `T` / `useT` : chaines strictes (Explorer, Tracker, sidebar).
+- `PT` / `usePT` : chaines des autres pages.
 - `useLang` : langue UI dans `localStorage`, event `langchange`.
-- **Règle d'or** : la langue UI est **cosmétique** (labels + RTL). Elle ne doit
-  **jamais** être un paramètre d'API — sinon chaque bascule casse le cache et
-  **coûte de l'argent**. La *langue de recherche* est un état séparé (`searchLang`).
+- Regle d'or : langue UI != langue de recherche. Le toggle FR/AR ne doit jamais
+  changer les params d'API, sinon il casse le cache et coute de l'argent.
 
 ---
 
-## 5. Économie de coût (à respecter absolument)
+## 5. Economie de cout
 
-1. **Cache partagé** = 1 appel payant sert tous les users.
-2. **Langue UI ≠ langue de recherche.** `searchLang` (défaut `fr`) est indépendant
-   du toggle FR/ع et persisté avec la recherche.
-3. Appels **payants** : suggestions, overview (miss), SERP, **difficulté (2 appels :
-   SERP + autorité bulk)**, domaine, backlinks, audit, `rank/check`.
-4. La difficulté est le plus cher — elle s'auto-lance au focus dans l'Explorer.
+1. Cache partage = 1 appel payant sert tous les users.
+2. Langue UI != langue de recherche. `searchLang` est separe du toggle FR/AR.
+3. Appels payants : suggestions, overview miss, SERP, difficulte maison
+   (SERP + backlinks bulk), domaine, backlinks, audit, `rank/check`.
+4. La difficulte maison est explicite : elle se lance via **Paysage SERP** ou
+   **Recalculer**, plus au focus/reload de l'Explorer.
+5. Ajouter un tracking ne consomme rien ; seul **Verifier** ou le cron consomme.
+6. Checks manuels de tracking throttles 6 h ; cron force un check frais.
+7. Le cockpit admin suit `dataforseo_usage` et `cache_events`.
 
 ---
 
-## 6. i18n / RTL
-- Bascule FR ⇄ العربية dans la sidebar. `app/shell.tsx` pose `dir=rtl`.
-- Tables : propriétés logiques `text-start` / `text-end`.
-- Noms de pays/appareils traduits (`locName` / `deviceName`).
-- États vides invitants : chips d'exemples MENA (`lib/examples.ts`).
+## 6. Securite actuelle
+
+- `lib/auth.ts` : sessions DB + cookie httpOnly ; hash password `scrypt`.
+- `lib/guard.ts` : controle d'origine + rate-limit IP 25/min et 300/jour, adosse
+  a Postgres quand disponible.
+- Guard applique aux routes payantes, auth, projet/tracking/admin.
+- Routes projet/tracking isolees par `user_id`. Routes admin reservees au role admin.
+- Cron : `GET /api/cron/check-ranks` refuse de tourner sans `CRON_SECRET`, puis
+  exige `Authorization: Bearer <CRON_SECRET>`.
+- Reste a faire : OAuth Google/Auth.js, reset password, verification email.
 
 ---
 
 ## 7. Dev local
+
 ```bash
 npm install
-# .env.local : DATABASE_URL, DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD
+# .env.local : DATABASE_URL, DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD, CRON_SECRET, ADMIN_EMAIL
 npm run dev          # http://localhost:3000
 npx tsc --noEmit     # typecheck
-npx next build       # build de prod
+npm run lint         # lint
+npm run build        # build de prod
 ```
-Déploiement : push sur `main` → Vercel build & deploy auto.
+
+Deploy : push sur `main` -> Vercel build & deploy auto.
 
 ---
 
-## 9. Cron de suivi (Vercel)
-- `vercel.json` planifie `GET /api/cron/check-ranks` **tous les jours à 06:00 UTC**.
-- La route relance `checkAll()` → un SERP frais (payant) par mot-clé suivi.
-- **Protection obligatoire** : définir `CRON_SECRET` dans les env Vercel. Vercel
-  ajoute alors `Authorization: Bearer <CRON_SECRET>` ; la route **refuse de tourner**
-  si le secret est absent → jamais déclenchable par un visiteur.
-- Limite Hobby : fonction ~60 s → ~20-25 mots-clés par run (séquentiel). Au-delà,
-  passer en batch/Pro.
+## 8. Cron de suivi (Vercel)
+
+- `vercel.json` planifie `GET /api/cron/check-ranks` tous les jours a 06:00 UTC.
+- La route relance `checkAll()` -> un SERP frais payant par mot-cle suivi.
+- Protection obligatoire : definir `CRON_SECRET` dans les env Vercel.
+- Limite Hobby : fonction environ 60 s -> ~20-25 mots-cles par run sequentiel.
+  Au-dela, passer en batch ou Pro.
 
 ---
 
-## 10. Limites connues & feuille de route
-Voir la section « Manques, faiblesses, bugs » du suivi (résumé) :
-- **Sécurité/coût** : garde anti-abus en place (`lib/guard.ts` — contrôle
-  d'origine + rate-limit IP 25/min & 300/jour, adossé Postgres) sur toutes les
-  routes payantes ; cron protégé par `CRON_SECRET`. Reste : vraie auth + isolation user.
-- **Suivi de positions** : cron quotidien en place (§9) — reste à isoler par user.
-- **Difficulté = 0** quand le top 10 est 100 % plateformes (à afficher « N/A »).
-- **Multi-utilisateur** non isolé (tous partagent `demo-user`).
-- **Appareil** cosmétique sur les volumes (seul le SERP l'utilise).
-- **Bank** quasi vide tant que le warmup n'est pas lancé.
-- **GSC** non intégré (données exactes du propre domaine).
+## 9. Limites connues & feuille de route
 
-_Dernière mise à jour : 2026-07-08._
+- OAuth Google/Auth.js et verification email non integres.
+- Les anciennes lignes `rank_tracking` sans user explicite sont migrees sur `demo-user`.
+- Difficulte = 0 quand le top 10 est 100 % plateformes ; afficher plutot N/A.
+- Appareil cosmetique sur les volumes ; seul le SERP l'utilise vraiment.
+- Bank quasi vide tant que le warmup n'est pas lance.
+- GSC non integre (donnees exactes du propre domaine).
+- Multi-pays pour le tracking a exposer cote UI.
+
+Derniere mise a jour : 2026-07-08.

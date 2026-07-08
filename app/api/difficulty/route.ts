@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { guard } from '@/lib/guard'
 import { computeKeywordDifficulty, LOCATION_MOROCCO } from '@/lib/dataforseo'
 import { getCachedMeta, setCached, cacheKey } from '@/lib/cache'
+import { jsonError, numberParam, readJson, stringParam } from '@/lib/api'
 
 export const runtime = 'nodejs'
 
@@ -11,16 +12,16 @@ const TTL_DAYS = 14
 export async function POST(req: Request) {
   const blocked = await guard(req)
   if (blocked) return blocked
-  const body = await req.json().catch(() => ({}))
-  const keyword: string = (body.keyword || '').toString().trim().toLowerCase()
-  const location: number = Number(body.location) || LOCATION_MOROCCO
-  const language: string = (body.language || 'fr').toString()
+  const body = await readJson(req)
+  const keyword = stringParam(body, 'keyword').toLowerCase()
+  const location = numberParam(body, 'location', LOCATION_MOROCCO)
+  const language = stringParam(body, 'language', 'fr') || 'fr'
 
   if (!keyword) {
     return NextResponse.json({ error: 'keyword requis' }, { status: 400 })
   }
 
-  // gcom: SERP behind the difficulty is now google.com (was google.co.ma).
+  // gcom: SERP behind the difficulty is google.com with geo-targeting.
   const key = cacheKey('kd', 'gcom', keyword, location, language)
 
   const hit = await getCachedMeta(key, TTL_DAYS)
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
     const result = await computeKeywordDifficulty(keyword, { location, language })
     await setCached(key, result)
     return NextResponse.json({ cached: false, fetchedAt: new Date().toISOString(), keyword, result })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })
+  } catch (e: unknown) {
+    return jsonError(e, 500, 'Erreur DataForSEO')
   }
 }

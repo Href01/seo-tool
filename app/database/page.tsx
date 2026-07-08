@@ -3,6 +3,9 @@
 import { useEffect, useState, useMemo } from 'react'
 import { usePT, useT } from '@/lib/i18n'
 import { Page, WorkspaceHeader, Card, Button, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
+import { errorMessage } from '@/lib/errors'
+
+type DifficultyFilter = 'all' | 'easy' | 'medium' | 'hard'
 
 interface BankEntry {
   keyword: string
@@ -29,7 +32,7 @@ export default function DatabasePage() {
   const [error, setError] = useState('')
   const [sortBy, setSortBy] = useState<'volume' | 'difficulty' | 'cpc' | 'timesSearched'>('volume')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
-  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all')
+  const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>('all')
   const [minVolume, setMinVolume] = useState('')
 
   async function load(q = '') {
@@ -40,9 +43,16 @@ export default function DatabasePage() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
       setItems(data.items || [])
       setCount(data.count ?? 0)
-    } catch (e: any) { setError(e.message || 'Erreur') }
+    } catch (e: unknown) { setError(errorMessage(e)) }
   }
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [])
+
+  function setDifficulty(value: string) {
+    if (value === 'all' || value === 'easy' || value === 'medium' || value === 'hard') {
+      setDifficultyFilter(value)
+    }
+  }
 
   const filtered = useMemo(() => {
     let result = items
@@ -122,7 +132,7 @@ export default function DatabasePage() {
             <Button type="submit">{p.searchBtn}</Button>
           </div>
           <div className="flex flex-wrap gap-2">
-            <select value={difficultyFilter} onChange={(e) => setDifficultyFilter(e.target.value as any)} className="rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-sm outline-none focus:border-[var(--crimson)]">
+            <select value={difficultyFilter} onChange={(e) => setDifficulty(e.target.value)} className="rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-sm outline-none focus:border-[var(--crimson)]">
               <option value="all">{p.allDiff}</option>
               <option value="easy">{t.easy} (&lt;30)</option>
               <option value="medium">{t.medium} (30-60)</option>

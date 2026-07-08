@@ -68,13 +68,15 @@ export async function deleteProject(id: string, userId: string): Promise<void> {
   await p.query(`DELETE FROM projects WHERE id = $1 AND user_id = $2`, [id, userId])
 }
 
-export async function getProject(id: string): Promise<Project | null> {
+export async function getProject(id: string, userId?: string): Promise<Project | null> {
   const p = getPool()
   if (!p) return null
   await ready()
   const r = await p.query(
-    `SELECT id, user_id, name, domain, created_at FROM projects WHERE id = $1`,
-    [id]
+    `SELECT id, user_id, name, domain, created_at
+     FROM projects
+     WHERE id = $1 AND ($2::text IS NULL OR user_id = $2)`,
+    [id, userId ?? null]
   )
   const row = r.rows[0]
   if (!row) return null

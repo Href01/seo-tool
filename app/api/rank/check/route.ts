@@ -1,22 +1,26 @@
 import { NextResponse } from 'next/server'
 import { guard } from '@/lib/guard'
-import { checkRank, checkAll } from '@/lib/tracking'
+import { checkRank } from '@/lib/tracking'
+import { jsonError, positiveIntParam, readJson } from '@/lib/api'
+import { authJsonError, requireUser } from '@/lib/auth'
 
 export const runtime = 'nodejs'
 
-// Re-check a single tracked keyword ({ id }) or all of them (no body).
+// Re-check one tracked keyword. Bulk checks are cron-only.
 export async function POST(req: Request) {
   const blocked = await guard(req)
   if (blocked) return blocked
-  const body = await req.json().catch(() => ({}))
   try {
-    if (body.id) {
-      const position = await checkRank(Number(body.id))
-      return NextResponse.json({ position })
+    const user = await requireUser(req)
+    const body = await readJson(req)
+    const id = positiveIntParam(body, 'id')
+    if (!id) {
+      return NextResponse.json({ error: 'id requis' }, { status: 400 })
     }
-    await checkAll()
-    return NextResponse.json({ ok: true })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Erreur' }, { status: 500 })
+    const result = await checkRank(id, { userId: user.id })
+    return NextResponse.json(result)
+  } catch (e: unknown) {
+    if (e instanceof Error && e.name === 'AuthError') return authJsonError(e)
+    return jsonError(e)
   }
 }

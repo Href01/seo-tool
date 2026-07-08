@@ -2,6 +2,8 @@
 
 import { useState, useMemo } from 'react'
 
+type DifficultyFilter = 'all' | 'easy' | 'medium' | 'hard'
+
 export interface KeywordRow {
   keyword: string
   volume: number | null
@@ -41,7 +43,13 @@ export function KeywordTable({
   const [sortBy, setSortBy] = useState<'volume' | 'difficulty' | 'cpc'>('volume')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [filter, setFilter] = useState('')
-  const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all')
+  const [difficultyFilter, setDifficultyFilter] = useState<DifficultyFilter>('all')
+
+  function setDifficulty(value: string) {
+    if (value === 'all' || value === 'easy' || value === 'medium' || value === 'hard') {
+      setDifficultyFilter(value)
+    }
+  }
 
   const filtered = useMemo(() => {
     let result = keywords.filter((k) => k.keyword.toLowerCase().includes(filter.toLowerCase()))
@@ -90,7 +98,7 @@ export function KeywordTable({
         />
         <select
           value={difficultyFilter}
-          onChange={(e) => setDifficultyFilter(e.target.value as any)}
+          onChange={(e) => setDifficulty(e.target.value)}
           className="rounded-xl border border-[var(--line)] bg-[var(--card)] px-3 py-2 text-sm outline-none focus:border-[var(--crimson)]"
         >
           <option value="all">Toutes difficultés</option>

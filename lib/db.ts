@@ -35,6 +35,21 @@ export function ready(): Promise<void> {
           count      integer NOT NULL DEFAULT 0,
           expires_at timestamptz NOT NULL
         );
+        CREATE TABLE IF NOT EXISTS dataforseo_usage (
+          id          bigserial PRIMARY KEY,
+          endpoint    text NOT NULL,
+          cost        numeric NOT NULL DEFAULT 0,
+          task_count  integer NOT NULL DEFAULT 0,
+          status_code integer,
+          created_at  timestamptz NOT NULL DEFAULT now()
+        );
+        CREATE TABLE IF NOT EXISTS cache_events (
+          id         bigserial PRIMARY KEY,
+          prefix     text NOT NULL,
+          cache_key  text NOT NULL,
+          hit        boolean NOT NULL,
+          created_at timestamptz NOT NULL DEFAULT now()
+        );
         CREATE TABLE IF NOT EXISTS rank_tracking (
           id         serial PRIMARY KEY,
           keyword    text NOT NULL,
@@ -70,6 +85,7 @@ export function ready(): Promise<void> {
           email_verified timestamptz,
           image         text,
           role          text NOT NULL DEFAULT 'user',
+          password_hash text,
           created_at    timestamptz NOT NULL DEFAULT now()
         );
         CREATE TABLE IF NOT EXISTS accounts (
@@ -107,8 +123,20 @@ export function ready(): Promise<void> {
           created_at timestamptz NOT NULL DEFAULT now()
         );
         ALTER TABLE rank_tracking ADD COLUMN IF NOT EXISTS project_id text;
+        ALTER TABLE rank_tracking ADD COLUMN IF NOT EXISTS user_id text NOT NULL DEFAULT 'demo-user';
+        ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
         ALTER TABLE projects DROP CONSTRAINT IF EXISTS projects_user_id_fkey;
         ALTER TABLE rank_tracking DROP CONSTRAINT IF EXISTS rank_tracking_project_id_fkey;
+        ALTER TABLE rank_tracking DROP CONSTRAINT IF EXISTS rank_tracking_keyword_domain_location_language_key;
+        CREATE UNIQUE INDEX IF NOT EXISTS rank_tracking_user_keyword_domain_location_language_idx
+          ON rank_tracking (user_id, keyword, domain, location, language);
+        CREATE INDEX IF NOT EXISTS rank_tracking_user_idx ON rank_tracking (user_id);
+        CREATE INDEX IF NOT EXISTS rank_history_tracking_checked_idx ON rank_history (tracking_id, checked_at DESC);
+        CREATE INDEX IF NOT EXISTS projects_user_idx ON projects (user_id);
+        CREATE INDEX IF NOT EXISTS dataforseo_usage_created_idx ON dataforseo_usage (created_at DESC);
+        CREATE INDEX IF NOT EXISTS dataforseo_usage_endpoint_idx ON dataforseo_usage (endpoint);
+        CREATE INDEX IF NOT EXISTS cache_events_created_idx ON cache_events (created_at DESC);
+        CREATE INDEX IF NOT EXISTS cache_events_prefix_idx ON cache_events (prefix);
       `)
       .then(() => undefined)
   }

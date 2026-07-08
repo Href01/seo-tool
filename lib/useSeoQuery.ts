@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { errorMessage } from './errors'
 
 /** Human freshness label for a cache timestamp, e.g. "il y a 3 jours". */
 export function timeAgo(iso: string | null): string {
@@ -42,8 +43,8 @@ export function useSeoQuery<T>(endpoint: string) {
       setData((json.results ?? json.result) as T)
       setCached(!!json.cached)
       setFetchedAt(json.fetchedAt ?? null)
-    } catch (e: any) {
-      setError(e.message || 'Erreur')
+    } catch (e: unknown) {
+      setError(errorMessage(e))
     } finally {
       setLoading(false)
     }

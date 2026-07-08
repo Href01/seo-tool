@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePT } from '@/lib/i18n'
-import { Page, WorkspaceHeader, Card, Button, Spinner, EmptyState } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, EmptyState, ErrorBox } from '@/components/ui'
+import { errorMessage } from '@/lib/errors'
 
 interface Project { id: string; name: string; domain: string; createdAt?: string }
 
@@ -13,14 +14,18 @@ export default function AppPage() {
   const [name, setName] = useState('')
   const [domain, setDomain] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function load() {
+    setError('')
     try {
       const res = await fetch('/api/projects')
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
       setProjects(data.projects || [])
-    } catch (e) { console.error(e) }
+    } catch (e: unknown) { setError(errorMessage(e)) }
   }
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load() }, [])
 
   async function create(e: React.FormEvent) {
@@ -33,7 +38,7 @@ export default function AppPage() {
       if (!res.ok) { alert(data.error || 'Erreur'); return }
       setName(''); setDomain('')
       setTimeout(() => load(), 100)
-    } catch (e: any) { alert(e.message || 'Erreur') } finally { setLoading(false) }
+    } catch (e: unknown) { alert(errorMessage(e)) } finally { setLoading(false) }
   }
   async function remove(id: string) {
     await fetch('/api/projects', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
@@ -43,6 +48,14 @@ export default function AppPage() {
   return (
     <Page>
       <WorkspaceHeader icon="📁" title={p.appTitle} subtitle={p.appSub} />
+      {error && (
+        <div className="mb-6">
+          <ErrorBox message={error} />
+          <Link href="/login" className="mt-3 inline-block text-sm font-semibold text-[var(--crimson)]">
+            Se connecter
+          </Link>
+        </div>
+      )}
       <Card className="mb-6">
         <form onSubmit={create} className="flex flex-col gap-2 sm:flex-row">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder={p.projNamePh} className="flex-1 rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]" />

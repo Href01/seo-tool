@@ -6,6 +6,7 @@
 
 import crypto from 'crypto'
 import { getPool, ready } from './db'
+import { recordCacheEvent } from './usage'
 
 /** Deterministic cache key: `prefix:sha1(parts)`. Same inputs => same key => shared hit. */
 export function cacheKey(prefix: string, ...parts: (string | number)[]): string {
@@ -28,6 +29,7 @@ export async function getCachedMeta<T = unknown>(
       [key, String(ttlDays)]
     )
     const row = r.rows[0]
+    void recordCacheEvent(key, !!row)
     if (!row) return null
     return { payload: row.payload as T, fetchedAt: new Date(row.fetched_at).toISOString() }
   } catch (e) {

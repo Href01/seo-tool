@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { guard } from '@/lib/guard'
 import { instantPageAudit } from '@/lib/dataforseo'
 import { getCachedMeta, setCached, cacheKey } from '@/lib/cache'
+import { jsonError, readJson, stringParam } from '@/lib/api'
 
 export const runtime = 'nodejs'
 
@@ -18,8 +19,8 @@ function normalizeUrl(raw: string): string {
 export async function POST(req: Request) {
   const blocked = await guard(req)
   if (blocked) return blocked
-  const body = await req.json().catch(() => ({}))
-  const url = normalizeUrl(body.url || '')
+  const body = await readJson(req)
+  const url = normalizeUrl(stringParam(body, 'url'))
 
   if (!url || !url.includes('.')) {
     return NextResponse.json(
@@ -39,7 +40,7 @@ export async function POST(req: Request) {
     const result = await instantPageAudit(url)
     await setCached(key, result)
     return NextResponse.json({ cached: false, fetchedAt: new Date().toISOString(), url, result })
-  } catch (e: any) {
-    return NextResponse.json({ error: e?.message || 'Erreur DataForSEO' }, { status: 500 })
+  } catch (e: unknown) {
+    return jsonError(e, 500, 'Erreur DataForSEO')
   }
 }

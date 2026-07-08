@@ -2,9 +2,16 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useMode } from '@/lib/useMode'
 import { useT } from '@/lib/i18n'
-import type { ReactNode } from 'react'
+
+interface SessionUser {
+  id: string
+  email: string
+  name: string | null
+  role: 'user' | 'admin'
+}
 
 function Icon({ name }: { name: string }) {
   const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
@@ -19,11 +26,7 @@ function Icon({ name }: { name: string }) {
     db: (<><ellipse cx="8.5" cy="4" rx="5.5" ry="2.2" {...p} /><path d="M3 4v9c0 1.2 2.5 2.2 5.5 2.2S14 14.2 14 13V4" {...p} /></>),
     audit: (<><path d="M8.5 2.5A6 6 0 1 0 14.5 8.5" {...p} /><path d="M6 8.5l2 2 4-4.5" {...p} /></>),
   }
-  return (
-    <svg width="17" height="17" viewBox="0 0 17 17">
-      {icons[name] ?? icons.search}
-    </svg>
-  )
+  return <svg width="17" height="17" viewBox="0 0 17 17">{icons[name] ?? icons.search}</svg>
 }
 
 interface NavItem {
@@ -72,22 +75,39 @@ export default function Nav() {
   const pathname = usePathname()
   const [mode, setMode] = useMode()
   const { t, lang, setLang } = useT()
-  const sections = mode === 'admin' ? adminNav : userNav
+  const [user, setUser] = useState<SessionUser | null>(null)
+  const isAdmin = user?.role === 'admin'
+  const effectiveMode = isAdmin ? mode : 'user'
+  const sections = effectiveMode === 'admin' ? adminNav : userNav
+
+  useEffect(() => {
+    fetch('/api/auth/session')
+      .then((r) => r.json())
+      .then((data: { user?: SessionUser | null }) => {
+        setUser(data.user ?? null)
+        if (data.user?.role !== 'admin' && mode === 'admin') setMode('user')
+      })
+      .catch(() => setUser(null))
+  }, [mode, setMode])
+
+  async function logout() {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    setUser(null)
+    setMode('user')
+  }
 
   return (
     <aside className="sticky top-0 flex h-screen w-[246px] shrink-0 flex-col border-e border-[var(--line)] bg-[var(--card)]">
-      {/* Logo */}
       <div className="flex items-center gap-2.5 px-5 pb-4 pt-[18px]">
         <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[var(--crimson)] text-[17px] font-bold text-white">
-          س
+          S
         </div>
         <div>
-          <div className="text-sm font-bold leading-[1.1] tracking-[-0.01em]">SEO·MENA</div>
+          <div className="text-sm font-bold leading-[1.1] tracking-[-0.01em]">SEO MENA</div>
           <div className="text-[10.5px] font-medium text-[var(--text-3)]">{t.appSub}</div>
         </div>
       </div>
 
-      {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
         {sections.map((section, si) => (
           <div key={si}>
@@ -115,16 +135,23 @@ export default function Nav() {
         ))}
       </nav>
 
-      {/* Footer */}
       <div className="border-t border-[var(--line)] p-3">
-        {/* mode + language */}
         <div className="mb-2.5 flex gap-1.5 px-0.5">
-          <button
-            onClick={() => setMode(mode === 'admin' ? 'user' : 'admin')}
-            className="flex-1 rounded-[9px] border border-[var(--line)] bg-[var(--card)] py-1.5 text-[11px] font-semibold text-[var(--text-2)] transition-colors hover:text-[var(--text)]"
-          >
-            {mode === 'admin' ? 'Admin' : 'User'}
-          </button>
+          {isAdmin ? (
+            <button
+              onClick={() => setMode(effectiveMode === 'admin' ? 'user' : 'admin')}
+              className="flex-1 rounded-[9px] border border-[var(--line)] bg-[var(--card)] py-1.5 text-[11px] font-semibold text-[var(--text-2)] transition-colors hover:text-[var(--text)]"
+            >
+              {effectiveMode === 'admin' ? 'Admin' : 'User'}
+            </button>
+          ) : (
+            <Link
+              href="/login"
+              className="flex-1 rounded-[9px] border border-[var(--line)] bg-[var(--card)] py-1.5 text-center text-[11px] font-semibold text-[var(--text-2)] transition-colors hover:text-[var(--text)]"
+            >
+              {user ? 'Compte' : 'Login'}
+            </Link>
+          )}
           <button
             onClick={() => setLang('fr')}
             className={`w-9 rounded-[9px] py-1.5 text-[11px] font-semibold transition-colors ${
@@ -139,19 +166,30 @@ export default function Nav() {
               lang === 'ar' ? 'bg-[var(--ink)] text-white' : 'border border-[var(--line)] text-[var(--text-2)]'
             }`}
           >
-            ع
+            AR
           </button>
         </div>
         <div className="flex items-center gap-2.5 px-1 py-0.5">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--crimson)] to-[#ff5c8a] text-xs font-bold text-white">
-            {mode === 'admin' ? 'A' : 'U'}
+            {isAdmin ? 'A' : user ? 'U' : '?'}
           </div>
           <div className="min-w-0">
-            <div className="text-[12.5px] font-semibold leading-tight">
-              {mode === 'admin' ? 'Mode Admin' : 'Mode Utilisateur'}
+            <div className="truncate text-[12.5px] font-semibold leading-tight">
+              {user ? user.name || user.email : 'Invite'}
             </div>
-            <div className="truncate font-mono text-[10.5px] text-[var(--text-3)]">MENA · Gulf</div>
+            <div className="truncate font-mono text-[10.5px] text-[var(--text-3)]">
+              {user ? user.email : 'Connexion requise'}
+            </div>
           </div>
+          {user && (
+            <button
+              onClick={logout}
+              title="Logout"
+              className="ms-auto rounded-md px-1.5 py-1 text-[10px] font-semibold text-[var(--text-3)] hover:bg-[var(--subtle)] hover:text-[var(--text)]"
+            >
+              out
+            </button>
+          )}
         </div>
       </div>
     </aside>

@@ -1,11 +1,28 @@
-// Thin DataForSEO client. All SEO data (keywords, SERP, backlinks…) is bought
-// here at the API boundary — the product value is the layer we build on top.
-// Auth is HTTP Basic (login:password). Keys live in env, server-side only.
+// Thin DataForSEO client. All paid SEO calls cross this boundary, so it validates
+// DataForSEO task status codes and logs reported API cost for every non-free hit.
+
+import { recordDfsUsage } from './usage'
 
 const BASE = 'https://api.dataforseo.com/v3'
 
-// Morocco. See https://docs.dataforseo.com for other location codes.
+// Morocco. See DataForSEO docs for other location codes.
 export const LOCATION_MOROCCO = 2504
+
+type JsonRecord = Record<string, unknown>
+
+interface DfsTask extends JsonRecord {
+  status_code?: number
+  status_message?: string
+  cost?: number
+}
+
+interface DfsEnvelope extends JsonRecord {
+  status_code?: number
+  status_message?: string
+  tasks_error?: number
+  cost?: number
+  tasks?: DfsTask[]
+}
 
 /** Normalize any pasted URL down to a bare host: "https://www.x.com/a" -> "x.com". */
 export function cleanDomain(raw: string): string {
@@ -18,26 +35,159 @@ export function cleanDomain(raw: string): string {
     .replace(/\/.*$/, '')
 }
 
-function authHeader(): string {
-  const login = process.env.DATAFORSEO_LOGIN || ''
-  const password = process.env.DATAFORSEO_PASSWORD || ''
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+function record(value: unknown): JsonRecord {
+  return isRecord(value) ? value : {}
+}
+
+function records(value: unknown): JsonRecord[] {
+  return Array.isArray(value) ? value.filter(isRecord) : []
+}
+
+function asString(value: unknown): string {
+  if (typeof value === 'string') return value
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  return ''
+}
+
+function asNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+  return null
+}
+
+function bool(value: unknown): boolean {
+  return value === true
+}
+
+function child(parent: JsonRecord, key: string): JsonRecord {
+  return record(parent[key])
+}
+
+function firstTask(data: unknown): JsonRecord {
+  return records(record(data).tasks)[0] ?? {}
+}
+
+function firstTaskResults(data: unknown): JsonRecord[] {
+  return records(firstTask(data).result)
+}
+
+function firstTaskResult(data: unknown): JsonRecord {
+  return firstTaskResults(data)[0] ?? {}
+}
+
+function firstTaskItems(data: unknown): JsonRecord[] {
+  return records(firstTaskResult(data).items)
+}
+
+function trend12(monthly: unknown): { month: string; volume: number }[] {
+  return records(monthly)
+    .slice(-12)
+    .map((m) => {
+      const year = asNumber(m.year) ?? 0
+      const month = asNumber(m.month) ?? 0
+      return {
+        month: `${year}-${String(month).padStart(2, '0')}`,
+        volume: asNumber(m.search_volume) ?? 0,
+      }
+    })
+}
+
+function authHeader(login: string, password: string): string {
   return 'Basic ' + Buffer.from(`${login}:${password}`).toString('base64')
+}
+
+function envelope(payload: unknown): DfsEnvelope {
+  const root = record(payload)
+  const tasks = records(root.tasks).map((task) => ({
+    ...task,
+    status_code: asNumber(task.status_code) ?? undefined,
+    status_message: asString(task.status_message) || undefined,
+    cost: asNumber(task.cost) ?? undefined,
+  }))
+  return {
+    ...root,
+    status_code: asNumber(root.status_code) ?? undefined,
+    status_message: asString(root.status_message) || undefined,
+    tasks_error: asNumber(root.tasks_error) ?? undefined,
+    cost: asNumber(root.cost) ?? undefined,
+    tasks,
+  }
+}
+
+function responseCost(env: DfsEnvelope): number | null {
+  if (env.cost != null) return env.cost
+  if (!env.tasks?.length) return null
+  const total = env.tasks.reduce((sum, task) => sum + (task.cost ?? 0), 0)
+  return total > 0 ? total : null
+}
+
+function assertDfsOk(path: string, env: DfsEnvelope): void {
+  if (env.status_code != null && env.status_code !== 20000) {
+    throw new Error(`DataForSEO ${env.status_code}: ${env.status_message || path}`)
+  }
+
+  if ((env.tasks_error ?? 0) > 0) {
+    const failed = env.tasks?.find((task) => (task.status_code ?? 20000) !== 20000)
+    const taskDetail = failed
+      ? `task ${failed.status_code}: ${failed.status_message || 'erreur'}`
+      : env.status_message || 'erreur task'
+    throw new Error(`DataForSEO tasks_error=${env.tasks_error}: ${taskDetail}`)
+  }
+
+  const hardFailure = env.tasks?.find((task) => (task.status_code ?? 0) >= 40000)
+  if (hardFailure) {
+    throw new Error(
+      `DataForSEO task ${hardFailure.status_code}: ${hardFailure.status_message || path}`
+    )
+  }
 }
 
 /** POST any DataForSEO endpoint with the standard task envelope. */
 export async function dfs<T = unknown>(path: string, body: unknown): Promise<T> {
-  if (!process.env.DATAFORSEO_LOGIN) {
+  const login = process.env.DATAFORSEO_LOGIN || ''
+  const password = process.env.DATAFORSEO_PASSWORD || ''
+  if (!login || !password) {
     throw new Error('DATAFORSEO_LOGIN / DATAFORSEO_PASSWORD manquants (voir .env.local)')
   }
+
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: authHeader() },
+    headers: { 'Content-Type': 'application/json', Authorization: authHeader(login, password) },
     body: JSON.stringify(body),
   })
   if (!res.ok) {
     throw new Error(`DataForSEO ${res.status}: ${(await res.text()).slice(0, 300)}`)
   }
-  return res.json() as Promise<T>
+
+  let payload: unknown
+  try {
+    payload = await res.json()
+  } catch {
+    throw new Error(`DataForSEO ${path}: reponse JSON invalide`)
+  }
+
+  const env = envelope(payload)
+  assertDfsOk(path, env)
+
+  const cost = responseCost(env)
+  if (cost && cost > 0) {
+    console.info(`[dfs] ${path} cost=$${cost.toFixed(6)}`)
+    void recordDfsUsage({
+      endpoint: path,
+      cost,
+      taskCount: env.tasks?.length ?? 0,
+      statusCode: env.status_code ?? null,
+    })
+  }
+
+  return payload as T
 }
 
 export interface KeywordResult {
@@ -56,7 +206,7 @@ export async function keywordSuggestions(
   keyword: string,
   opts: { location?: number; language?: string; limit?: number } = {}
 ): Promise<KeywordResult[]> {
-  const data = await dfs<any>('/dataforseo_labs/google/keyword_suggestions/live', [
+  const data = await dfs('/dataforseo_labs/google/keyword_suggestions/live', [
     {
       keyword,
       location_code: opts.location ?? LOCATION_MOROCCO,
@@ -65,21 +215,22 @@ export async function keywordSuggestions(
     },
   ])
 
-  const items: any[] = data?.tasks?.[0]?.result?.[0]?.items ?? []
-  return items.map((it) => {
-    const info = it.keyword_info ?? it.keyword_data?.keyword_info ?? {}
-    const props = it.keyword_properties ?? it.keyword_data?.keyword_properties ?? {}
+  return firstTaskItems(data).map((it) => {
+    const keywordData = child(it, 'keyword_data')
+    const info = child(it, 'keyword_info')
+    const nestedInfo = child(keywordData, 'keyword_info')
+    const props = child(it, 'keyword_properties')
+    const nestedProps = child(keywordData, 'keyword_properties')
     return {
-      keyword: it.keyword ?? it.keyword_data?.keyword ?? '',
-      volume: info.search_volume ?? null,
-      cpc: info.cpc ?? null,
-      competition: info.competition ?? null,
-      difficulty: props.keyword_difficulty ?? null,
+      keyword: asString(it.keyword) || asString(keywordData.keyword),
+      volume: asNumber(info.search_volume) ?? asNumber(nestedInfo.search_volume),
+      cpc: asNumber(info.cpc) ?? asNumber(nestedInfo.cpc),
+      competition: asNumber(info.competition) ?? asNumber(nestedInfo.competition),
+      difficulty:
+        asNumber(props.keyword_difficulty) ?? asNumber(nestedProps.keyword_difficulty),
     }
   })
 }
-
-// ── SERP analysis ─────────────────────────────────────────────────────────────
 
 export interface SerpResult {
   position: number | null
@@ -89,39 +240,46 @@ export interface SerpResult {
   description: string
 }
 
-/** Top organic results (google.co.ma by default) for a keyword — who you'd compete with. */
+/** Top organic results (google.com with geo-targeting) for a keyword. */
 export async function serpOrganic(
   keyword: string,
-  opts: { location?: number; language?: string; depth?: number; device?: string } = {}
+  opts: {
+    location?: number
+    language?: string
+    depth?: number
+    device?: string
+    stopOnDomain?: string
+  } = {}
 ): Promise<SerpResult[]> {
   // Google SERP supports desktop/mobile; tablet falls back to mobile.
   const device = opts.device === 'mobile' || opts.device === 'tablet' ? 'mobile' : 'desktop'
-  const data = await dfs<any>('/serp/google/organic/live/advanced', [
-    {
-      keyword,
-      location_code: opts.location ?? LOCATION_MOROCCO,
-      language_code: opts.language ?? 'fr',
-      depth: opts.depth ?? 20,
-      device,
-      // Google deprecated ccTLDs in 2017 — everyone (incl. Morocco/Opera/Chrome)
-      // hits google.com with geo-targeting. Forcing this matches what users
-      // actually see, instead of the legacy google.co.ma SERP.
-      se_domain: 'google.com',
-    },
-  ])
-  const items: any[] = data?.tasks?.[0]?.result?.[0]?.items ?? []
-  return items
+  const task: JsonRecord = {
+    keyword,
+    location_code: opts.location ?? LOCATION_MOROCCO,
+    language_code: opts.language ?? 'fr',
+    depth: opts.depth ?? 20,
+    device,
+    // Google deprecated ccTLDs in 2017. Geo-target google.com instead of google.co.ma.
+    se_domain: 'google.com',
+  }
+  const stopOnDomain = opts.stopOnDomain ? cleanDomain(opts.stopOnDomain) : ''
+  if (stopOnDomain) {
+    task.stop_crawl_on_match = [
+      { match_value: stopOnDomain, match_type: 'with_subdomains' },
+    ]
+  }
+
+  const data = await dfs('/serp/google/organic/live/advanced', [task])
+  return firstTaskItems(data)
     .filter((it) => it.type === 'organic')
     .map((it) => ({
-      position: it.rank_absolute ?? it.rank_group ?? null,
-      title: it.title ?? '',
-      url: it.url ?? '',
-      domain: it.domain ?? '',
-      description: it.description ?? '',
+      position: asNumber(it.rank_absolute) ?? asNumber(it.rank_group),
+      title: asString(it.title),
+      url: asString(it.url),
+      domain: asString(it.domain),
+      description: asString(it.description),
     }))
 }
-
-// ── Single-keyword overview ───────────────────────────────────────────────────
 
 export interface KeywordOverview {
   keyword: string
@@ -134,17 +292,9 @@ export interface KeywordOverview {
   trend: { month: string; volume: number }[]
 }
 
-const trend12 = (monthly: any[]): { month: string; volume: number }[] =>
-  (monthly ?? []).slice(-12).map((m) => ({
-    month: `${m.year}-${String(m.month).padStart(2, '0')}`,
-    volume: m.search_volume ?? 0,
-  }))
-
 /**
  * Deep dive on one keyword: volume, difficulty, CPC, intent, 12-month trend.
- * Tries the Labs database first (richer: difficulty + intent). If Labs has no
- * entry — common for niche/long-tail keywords in Morocco — it falls back to
- * Google Ads, which returns volume/CPC for virtually any keyword.
+ * Tries Labs first, then falls back to Google Ads when Labs has no niche data.
  */
 export async function keywordOverview(
   keyword: string,
@@ -153,20 +303,21 @@ export async function keywordOverview(
   const location = opts.location ?? LOCATION_MOROCCO
   const language = opts.language ?? 'fr'
 
-  const data = await dfs<any>('/dataforseo_labs/google/keyword_overview/live', [
+  const data = await dfs('/dataforseo_labs/google/keyword_overview/live', [
     { keywords: [keyword], location_code: location, language_code: language },
   ])
-  const it = data?.tasks?.[0]?.result?.[0]?.items?.[0]
+  const it = firstTaskItems(data)[0]
   if (it) {
-    const info = it.keyword_info ?? {}
-    const props = it.keyword_properties ?? {}
+    const info = child(it, 'keyword_info')
+    const props = child(it, 'keyword_properties')
+    const searchIntent = child(it, 'search_intent_info')
     return {
-      keyword: it.keyword ?? keyword,
-      volume: info.search_volume ?? null,
-      cpc: info.cpc ?? null,
-      competition: info.competition ?? null,
-      difficulty: props.keyword_difficulty ?? null,
-      intent: it.search_intent_info?.main_intent ?? null,
+      keyword: asString(it.keyword) || keyword,
+      volume: asNumber(info.search_volume),
+      cpc: asNumber(info.cpc),
+      competition: asNumber(info.competition),
+      difficulty: asNumber(props.keyword_difficulty),
+      intent: asString(searchIntent.main_intent) || null,
       source: 'labs',
       trend: trend12(info.monthly_searches),
     }
@@ -175,29 +326,28 @@ export async function keywordOverview(
   return googleAdsVolume(keyword, { location, language })
 }
 
-/** Google Ads search volume — coverage fallback. No SEO difficulty/intent here. */
+/** Google Ads search volume fallback. No SEO difficulty/intent here. */
 async function googleAdsVolume(
   keyword: string,
   opts: { location: number; language: string }
 ): Promise<KeywordOverview | null> {
-  const data = await dfs<any>('/keywords_data/google_ads/search_volume/live', [
+  const data = await dfs('/keywords_data/google_ads/search_volume/live', [
     { keywords: [keyword], location_code: opts.location, language_code: opts.language },
   ])
-  const it = data?.tasks?.[0]?.result?.[0]
+  const it = firstTaskResults(data)[0]
   if (!it) return null
   return {
-    keyword: it.keyword ?? keyword,
-    volume: it.search_volume ?? null,
-    cpc: it.cpc ?? null,
-    competition: it.competition_index != null ? it.competition_index / 100 : null,
+    keyword: asString(it.keyword) || keyword,
+    volume: asNumber(it.search_volume),
+    cpc: asNumber(it.cpc),
+    competition:
+      asNumber(it.competition_index) != null ? (asNumber(it.competition_index) ?? 0) / 100 : null,
     difficulty: null,
     intent: null,
     source: 'google_ads',
     trend: trend12(it.monthly_searches),
   }
 }
-
-// ── Domain / competitor analysis ──────────────────────────────────────────────
 
 export interface DomainKeyword {
   keyword: string
@@ -214,7 +364,7 @@ export interface DomainOverview {
   keywords: DomainKeyword[]
 }
 
-/** A domain's organic footprint: estimated traffic, keyword count, and its top keywords. */
+/** A domain's organic footprint: estimated traffic, keyword count, and top keywords. */
 export async function domainOverview(
   domain: string,
   opts: { location?: number; language?: string; limit?: number } = {}
@@ -223,10 +373,10 @@ export async function domainOverview(
   const language = opts.language ?? 'fr'
 
   const [overviewData, rankedData] = await Promise.all([
-    dfs<any>('/dataforseo_labs/google/domain_rank_overview/live', [
+    dfs('/dataforseo_labs/google/domain_rank_overview/live', [
       { target: domain, location_code: location, language_code: language },
     ]),
-    dfs<any>('/dataforseo_labs/google/ranked_keywords/live', [
+    dfs('/dataforseo_labs/google/ranked_keywords/live', [
       {
         target: domain,
         location_code: location,
@@ -237,30 +387,29 @@ export async function domainOverview(
     ]),
   ])
 
-  const metrics = overviewData?.tasks?.[0]?.result?.[0]?.items?.[0]?.metrics?.organic ?? {}
-  const items: any[] = rankedData?.tasks?.[0]?.result?.[0]?.items ?? []
-
-  const keywords: DomainKeyword[] = items.map((it) => {
-    const kd = it.keyword_data ?? {}
-    const serp = it.ranked_serp_element?.serp_item ?? {}
+  const metrics = child(child(firstTaskItems(overviewData)[0] ?? {}, 'metrics'), 'organic')
+  const keywords: DomainKeyword[] = firstTaskItems(rankedData).map((it) => {
+    const keywordData = child(it, 'keyword_data')
+    const keywordInfo = child(keywordData, 'keyword_info')
+    const serp = child(child(it, 'ranked_serp_element'), 'serp_item')
+    const traffic = asNumber(serp.etv)
     return {
-      keyword: kd.keyword ?? '',
-      position: serp.rank_absolute ?? serp.rank_group ?? null,
-      volume: kd.keyword_info?.search_volume ?? null,
-      traffic: serp.etv != null ? Math.round(serp.etv) : null,
-      url: serp.url ?? '',
+      keyword: asString(keywordData.keyword),
+      position: asNumber(serp.rank_absolute) ?? asNumber(serp.rank_group),
+      volume: asNumber(keywordInfo.search_volume),
+      traffic: traffic != null ? Math.round(traffic) : null,
+      url: asString(serp.url),
     }
   })
 
+  const estimatedTraffic = asNumber(metrics.etv)
   return {
     domain,
-    organicKeywords: metrics.count ?? null,
-    estimatedTraffic: metrics.etv != null ? Math.round(metrics.etv) : null,
+    organicKeywords: asNumber(metrics.count),
+    estimatedTraffic: estimatedTraffic != null ? Math.round(estimatedTraffic) : null,
     keywords,
   }
 }
-
-// ── Backlinks ─────────────────────────────────────────────────────────────────
 
 export interface BacklinksSummary {
   domain: string
@@ -273,26 +422,24 @@ export interface BacklinksSummary {
   nofollow: number | null
 }
 
-/** Headline backlink profile for a domain: totals, referring domains, spam score. */
+/** Headline backlink profile for a domain. */
 export async function backlinksSummary(domain: string): Promise<BacklinksSummary> {
-  const data = await dfs<any>('/backlinks/summary/live', [
+  const data = await dfs('/backlinks/summary/live', [
     { target: domain, internal_list_limit: 10, backlinks_status_type: 'live' },
   ])
-  const r = data?.tasks?.[0]?.result?.[0] ?? {}
-  const attrs = r.referring_links_attributes ?? {}
+  const result = firstTaskResults(data)[0] ?? {}
+  const attrs = child(result, 'referring_links_attributes')
   return {
     domain,
-    backlinks: r.backlinks ?? null,
-    referringDomains: r.referring_domains ?? null,
-    referringMainDomains: r.referring_main_domains ?? null,
-    rank: r.rank ?? null,
-    spamScore: r.backlinks_spam_score ?? null,
-    dofollow: attrs.dofollow ?? null,
-    nofollow: attrs.nofollow ?? null,
+    backlinks: asNumber(result.backlinks),
+    referringDomains: asNumber(result.referring_domains),
+    referringMainDomains: asNumber(result.referring_main_domains),
+    rank: asNumber(result.rank),
+    spamScore: asNumber(result.backlinks_spam_score),
+    dofollow: asNumber(attrs.dofollow),
+    nofollow: asNumber(attrs.nofollow),
   }
 }
-
-// ── On-page audit (single URL, instant) ───────────────────────────────────────
 
 export interface PageAudit {
   url: string
@@ -308,8 +455,6 @@ export interface PageAudit {
   issues: string[]
 }
 
-// Curated on-page checks that signal a problem when `true`, with fr labels.
-// We only surface known problem checks so we never show a "good" check as an issue.
 const AUDIT_ISSUE_LABELS: Record<string, string> = {
   no_title: 'Titre manquant',
   no_description: 'Meta description manquante',
@@ -318,58 +463,58 @@ const AUDIT_ISSUE_LABELS: Record<string, string> = {
   title_too_short: 'Titre trop court',
   no_favicon: 'Favicon manquant',
   no_image_alt: 'Images sans attribut alt',
-  duplicate_meta_tags: 'Meta tags dupliqués',
-  duplicate_title_tag: 'Titre dupliqué',
-  high_loading_time: 'Temps de chargement élevé',
+  duplicate_meta_tags: 'Meta tags dupliques',
+  duplicate_title_tag: 'Titre duplique',
+  high_loading_time: 'Temps de chargement eleve',
   is_redirect: 'Page en redirection',
   is_4xx_code: 'Erreur 4xx',
   is_5xx_code: 'Erreur 5xx',
-  is_broken: 'Page cassée',
+  is_broken: 'Page cassee',
   no_content_encoding: 'Pas de compression (gzip)',
   low_content_rate: 'Peu de contenu texte',
-  small_page_size: 'Page très légère',
+  small_page_size: 'Page tres legere',
   no_doctype: 'Doctype manquant',
   no_encoding_meta_tag: 'Meta encodage manquante',
   https_to_http_links: 'Liens HTTPS vers HTTP',
 }
 
-/** Instant on-page SEO snapshot for a single URL: score, meta, and flagged issues. */
+/** Instant on-page SEO snapshot for a single URL. */
 export async function instantPageAudit(url: string): Promise<PageAudit> {
-  const data = await dfs<any>('/on_page/instant_pages', [{ url }])
-  const item = data?.tasks?.[0]?.result?.[0]?.items?.[0] ?? {}
-  const meta = item.meta ?? {}
-  const checks = item.checks ?? {}
-  const htags = meta.htags ?? {}
+  const data = await dfs('/on_page/instant_pages', [{ url }])
+  const item = firstTaskItems(data)[0] ?? {}
+  const meta = child(item, 'meta')
+  const checks = child(item, 'checks')
+  const htags = child(meta, 'htags')
+  const title = asString(meta.title)
+  const description = asString(meta.description)
+  const h1 = (Array.isArray(htags.h1) ? htags.h1 : [])
+    .map((entry) => asString(entry))
+    .filter(Boolean)
+  const content = child(meta, 'content')
   const issues = Object.entries(AUDIT_ISSUE_LABELS)
-    .filter(([key]) => checks[key] === true)
+    .filter(([key]) => bool(checks[key]))
     .map(([, label]) => label)
   return {
     url,
-    onpageScore: item.onpage_score ?? null,
-    title: meta.title ?? null,
-    titleLength: typeof meta.title === 'string' ? meta.title.length : null,
-    description: meta.description ?? null,
-    descriptionLength: typeof meta.description === 'string' ? meta.description.length : null,
-    h1: Array.isArray(htags.h1) ? htags.h1 : [],
-    wordCount: meta.content?.plain_text_word_count ?? null,
-    internalLinks: meta.internal_links_count ?? null,
-    externalLinks: meta.external_links_count ?? null,
+    onpageScore: asNumber(item.onpage_score),
+    title: title || null,
+    titleLength: title ? title.length : null,
+    description: description || null,
+    descriptionLength: description ? description.length : null,
+    h1,
+    wordCount: asNumber(content.plain_text_word_count),
+    internalLinks: asNumber(meta.internal_links_count),
+    externalLinks: asNumber(meta.external_links_count),
     issues,
   }
 }
 
-// ── Custom keyword difficulty (computed from SERP + domain authority) ──────────
-
 export interface DifficultyResult {
   keyword: string
   difficulty: number // 0-100, our own estimate
-  // `counted: false` = excluded from the score (mega-platform or duplicate domain).
   competitors: { position: number | null; domain: string; rank: number | null; counted: boolean }[]
 }
 
-// Social / video / encyclopaedia domains: they have max authority but ranking on
-// them isn't the SEO competition a merchant faces (a real product page beats them).
-// Counting them massively inflates difficulty, so we exclude them from the score.
 const MEGA_PLATFORMS = new Set([
   'instagram.com',
   'facebook.com',
@@ -387,24 +532,19 @@ const MEGA_PLATFORMS = new Set([
 /** Backlink authority rank (0-1000) for many domains in a single call. */
 async function bulkBacklinkRanks(domains: string[]): Promise<Record<string, number>> {
   if (domains.length === 0) return {}
-  const data = await dfs<any>('/backlinks/bulk_ranks/live', [{ targets: domains }])
-  const items: any[] = data?.tasks?.[0]?.result?.[0]?.items ?? []
+  const data = await dfs('/backlinks/bulk_ranks/live', [{ targets: domains }])
   const map: Record<string, number> = {}
-  for (const it of items) {
-    if (it.target) map[it.target] = it.rank ?? 0
+  for (const it of firstTaskItems(data)) {
+    const target = asString(it.target)
+    const rank = asNumber(it.rank)
+    if (target) map[target] = rank ?? 0
   }
   return map
 }
 
 /**
- * Our own keyword difficulty (0-100), computed the way big SEO tools do it: pull
- * the SERP, measure the backlink authority (rank 0-1000) of the domains that rank,
- * and aggregate — weighted by position. Works for ANY keyword, including niche ones
- * the Labs database has no difficulty for.
- *
- * Accuracy guards: domains are de-duplicated (a domain ranking twice counts once,
- * at its best position) and mega-platforms are excluded from the score, since a
- * merchant's real competition is other sites, not Instagram/YouTube.
+ * Custom keyword difficulty (0-100), computed from SERP competitors and
+ * backlink authority. Domains are de-duplicated and mega-platforms are excluded.
  */
 export async function computeKeywordDifficulty(
   keyword: string,
@@ -412,7 +552,6 @@ export async function computeKeywordDifficulty(
 ): Promise<DifficultyResult> {
   const serp = await serpOrganic(keyword, { ...opts, depth: 10 })
 
-  // De-duplicate by normalized domain, keeping the best (first-seen) position.
   const seen = new Set<string>()
   const unique: { position: number | null; domain: string; raw: string }[] = []
   for (const r of serp.slice(0, 10)) {
@@ -430,8 +569,8 @@ export async function computeKeywordDifficulty(
     const rank = ranks[u.raw] ?? null
     const counted = !MEGA_PLATFORMS.has(u.domain)
     if (counted) {
-      const weight = Math.max(1, 11 - (u.position ?? 10)) // #1 heaviest
-      weightedSum += weight * ((rank ?? 0) / 10) // rank 0-1000 -> 0-100 scale
+      const weight = Math.max(1, 11 - (u.position ?? 10))
+      weightedSum += weight * ((rank ?? 0) / 10)
       weightTotal += weight
     }
     return { position: u.position, domain: u.domain, rank, counted }

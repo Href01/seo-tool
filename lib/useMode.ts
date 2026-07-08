@@ -1,23 +1,39 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
 export type Mode = 'user' | 'admin'
 
-export function useMode(): [Mode, (m: Mode) => void] {
-  const [mode, setModeState] = useState<Mode>('user')
+function normalizeMode(value: string | null): Mode {
+  return value === 'admin' ? 'admin' : 'user'
+}
 
-  useEffect(() => {
-    const stored = localStorage.getItem('seo-mode') as Mode | null
-    if (stored === 'admin' || stored === 'user') {
-      setModeState(stored)
-    }
-  }, [])
+function getModeSnapshot(): Mode {
+  return typeof window === 'undefined'
+    ? 'user'
+    : normalizeMode(window.localStorage.getItem('seo-mode'))
+}
 
-  function setMode(m: Mode) {
-    setModeState(m)
-    localStorage.setItem('seo-mode', m)
+function subscribeMode(callback: () => void): () => void {
+  window.addEventListener('modechange', callback)
+  window.addEventListener('storage', callback)
+  return () => {
+    window.removeEventListener('modechange', callback)
+    window.removeEventListener('storage', callback)
   }
+}
+
+function getServerModeSnapshot(): Mode {
+  return 'user'
+}
+
+export function useMode(): [Mode, (m: Mode) => void] {
+  const mode = useSyncExternalStore(subscribeMode, getModeSnapshot, getServerModeSnapshot)
+
+  const setMode = useCallback((m: Mode) => {
+    window.localStorage.setItem('seo-mode', m)
+    window.dispatchEvent(new Event('modechange'))
+  }, [])
 
   return [mode, setMode]
 }

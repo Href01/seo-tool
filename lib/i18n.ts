@@ -1,26 +1,38 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useSyncExternalStore } from 'react'
 
 export type Lang = 'fr' | 'ar'
 
+function normalizeLang(value: string | null): Lang {
+  return value === 'ar' ? 'ar' : 'fr'
+}
+
+function getLangSnapshot(): Lang {
+  return typeof window === 'undefined' ? 'fr' : normalizeLang(window.localStorage.getItem('lang'))
+}
+
+function subscribeLang(callback: () => void): () => void {
+  window.addEventListener('langchange', callback)
+  window.addEventListener('storage', callback)
+  return () => {
+    window.removeEventListener('langchange', callback)
+    window.removeEventListener('storage', callback)
+  }
+}
+
+function getServerLangSnapshot(): Lang {
+  return 'fr'
+}
+
 /** localStorage-backed language, synced across components via a window event. */
 export function useLang(): [Lang, (l: Lang) => void] {
-  const [lang, setLang] = useState<Lang>('fr')
+  const lang = useSyncExternalStore(subscribeLang, getLangSnapshot, getServerLangSnapshot)
 
-  useEffect(() => {
-    const stored = (localStorage.getItem('lang') as Lang) || 'fr'
-    setLang(stored)
-    const handler = () => setLang((localStorage.getItem('lang') as Lang) || 'fr')
-    window.addEventListener('langchange', handler)
-    return () => window.removeEventListener('langchange', handler)
-  }, [])
-
-  const update = (l: Lang) => {
-    localStorage.setItem('lang', l)
-    setLang(l)
+  const update = useCallback((l: Lang) => {
+    window.localStorage.setItem('lang', l)
     window.dispatchEvent(new Event('langchange'))
-  }
+  }, [])
 
   return [lang, update]
 }

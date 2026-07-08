@@ -5,6 +5,7 @@ import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, locName, deviceName } from '@/lib/locations'
 import { DistributionBar, visibilityScore } from '@/components/ui'
+import { errorMessage } from '@/lib/errors'
 
 interface HistPoint { position: number | null; checkedAt: string }
 interface Tracked {
@@ -45,25 +46,27 @@ export default function Tracker() {
     try {
       const res = await fetch('/api/rank')
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
       const list: Tracked[] = data.items || []
       setItems(list)
       setFocusId((cur) => (cur != null && list.some((i) => i.id === cur) ? cur : list[0]?.id ?? null))
-    } catch (e: any) {
-      setError(e.message || 'Erreur')
+    } catch (e: unknown) {
+      setError(errorMessage(e))
     }
   }
-  useEffect(() => { load() }, [])
+  useEffect(() => { queueMicrotask(() => { void load() }) }, [])
 
   const focus = items.find((i) => i.id === focusId) || null
 
   // Fetch "above you" competitors for the focused keyword
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     // Rank tracking runs in French (google.co.ma) server-side; keep the
     // "above you" SERP query on the same stable language so the UI toggle
     // never triggers a fresh paid call.
     if (focus) kd.run({ keyword: focus.keyword, language: 'fr' })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusId])
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   async function add(e: React.FormEvent) {
     e.preventDefault()
@@ -75,15 +78,25 @@ export default function Tracker() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
       setKeyword(''); setDomain('')
       await load()
-    } catch (e: any) { setError(e.message || 'Erreur') } finally { setBusy(false) }
+    } catch (e: unknown) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
   async function verify(id: number) {
     setBusy(true)
-    try { await fetch('/api/rank/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); await load() } finally { setBusy(false) }
+    try {
+      const res = await fetch('/api/rank/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+      await load()
+    } catch (e: unknown) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
   async function remove(id: number) {
     setBusy(true)
-    try { await fetch('/api/rank', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); await load() } finally { setBusy(false) }
+    try {
+      const res = await fetch('/api/rank', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+      await load()
+    } catch (e: unknown) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
   function exportCSV() {
     const rows = items.map((it) => [it.keyword, it.domain, it.position ?? '> 100', dfmt(it.checkedAt)])

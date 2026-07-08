@@ -5,6 +5,7 @@ import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { usePT, useT } from '@/lib/i18n'
 import { Page, Card, Button, Spinner, EmptyState, StatCard, SectionTitle, DistributionBar, visibilityScore } from '@/components/ui'
+import { errorMessage } from '@/lib/errors'
 
 interface Project { id: string; name: string; domain: string; createdAt?: string }
 interface TrackedKeyword {
@@ -46,13 +47,21 @@ export default function ProjectDetailPage() {
       const res = await fetch(`/api/projects/${id}`)
       if (res.status === 404) { setNotFound(true); return }
       const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
       setProject(data.project)
-    } catch (e) { console.error(e) }
+    } catch (e: unknown) { setError(errorMessage(e)) }
   }
   async function loadTracking() {
-    try { const res = await fetch('/api/rank'); const data = await res.json(); setTracked(data.items || []) } catch (e) { console.error(e) }
+    try {
+      const res = await fetch('/api/rank')
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+      setTracked(data.items || [])
+    } catch (e: unknown) { setError(errorMessage(e)) }
   }
-  useEffect(() => { loadProject(); loadTracking() }, [id])
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => { queueMicrotask(() => { void loadProject(); void loadTracking() }) }, [id])
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const kws = useMemo(() => {
     if (!project) return []
@@ -70,15 +79,25 @@ export default function ProjectDetailPage() {
       if (!res.ok) throw new Error(data.error || 'Erreur')
       setKeyword('')
       await loadTracking()
-    } catch (e: any) { setError(e.message || 'Erreur') } finally { setLoading(false) }
+    } catch (e: unknown) { setError(errorMessage(e)) } finally { setLoading(false) }
   }
   async function check(kid: number) {
     setBusyId(kid)
-    try { await fetch('/api/rank/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: kid }) }); await loadTracking() } finally { setBusyId(null) }
+    try {
+      const res = await fetch('/api/rank/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: kid }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+      await loadTracking()
+    } catch (e: unknown) { setError(errorMessage(e)) } finally { setBusyId(null) }
   }
   async function remove(kid: number) {
     setBusyId(kid)
-    try { await fetch('/api/rank', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: kid }) }); await loadTracking() } finally { setBusyId(null) }
+    try {
+      const res = await fetch('/api/rank', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: kid }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Erreur')
+      await loadTracking()
+    } catch (e: unknown) { setError(errorMessage(e)) } finally { setBusyId(null) }
   }
 
   const stats = useMemo(() => {
