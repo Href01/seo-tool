@@ -3,149 +3,154 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useMode } from '@/lib/useMode'
+import { useT } from '@/lib/i18n'
+import type { ReactNode } from 'react'
+
+function Icon({ name }: { name: string }) {
+  const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 1.7, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
+  const icons: Record<string, ReactNode> = {
+    search: (<><circle cx="7" cy="7" r="5" {...p} /><line x1="10.8" y1="10.8" x2="15" y2="15" {...p} /></>),
+    folder: (<path d="M2 5.5C2 4.7 2.7 4 3.5 4H7l1.5 1.7h5c.8 0 1.5.7 1.5 1.5v5.3c0 .8-.7 1.5-1.5 1.5h-10C2.7 15 2 14.3 2 13.5z" {...p} />),
+    bars: (<><rect x="2" y="9" width="3" height="6" rx="1" {...p} /><rect x="7" y="5" width="3" height="10" rx="1" {...p} /><rect x="12" y="2" width="3" height="13" rx="1" {...p} /></>),
+    globe: (<><circle cx="8.5" cy="8.5" r="6.5" {...p} /><ellipse cx="8.5" cy="8.5" rx="2.7" ry="6.5" {...p} /><line x1="2" y1="8.5" x2="15" y2="8.5" {...p} /></>),
+    chain: (<><path d="M7 10a3 3 0 0 0 4.2 0l2.3-2.3a3 3 0 0 0-4.2-4.2l-1 1" {...p} /><path d="M10 7a3 3 0 0 0-4.2 0L3.5 9.3a3 3 0 0 0 4.2 4.2l1-1" {...p} /></>),
+    trend: (<><polyline points="2,12 6,8 9.5,10.5 15,3.5" {...p} /><polyline points="11,3.5 15,3.5 15,7.5" {...p} /></>),
+    home: (<><path d="M2.5 7.5 8.5 2.5l6 5" {...p} /><path d="M4 7v7h9V7" {...p} /></>),
+    db: (<><ellipse cx="8.5" cy="4" rx="5.5" ry="2.2" {...p} /><path d="M3 4v9c0 1.2 2.5 2.2 5.5 2.2S14 14.2 14 13V4" {...p} /></>),
+    audit: (<><path d="M8.5 2.5A6 6 0 1 0 14.5 8.5" {...p} /><path d="M6 8.5l2 2 4-4.5" {...p} /></>),
+  }
+  return (
+    <svg width="17" height="17" viewBox="0 0 17 17">
+      {icons[name] ?? icons.search}
+    </svg>
+  )
+}
 
 interface NavItem {
   href: string
-  label: string
+  key: keyof ReturnType<typeof useT>['t']
   icon: string
 }
-
-interface NavSection {
-  title: string
+interface Section {
+  titleKey: keyof ReturnType<typeof useT>['t']
   items: NavItem[]
 }
 
-const userNav: NavSection[] = [
-  {
-    title: 'Espace',
-    items: [
-      { href: '/app', label: 'Mes Projets', icon: '📁' },
-      { href: '/', label: 'Explorer mots-clés', icon: '🔍' },
-    ],
-  },
-  {
-    title: 'Concurrence',
-    items: [
-      { href: '/serp', label: 'Analyse SERP', icon: '📊' },
-      { href: '/domain', label: 'Concurrents', icon: '🌐' },
-    ],
-  },
-  {
-    title: 'Suivi',
-    items: [{ href: '/tracker', label: 'Positions', icon: '📈' }],
-  },
+const userNav: Section[] = [
+  { titleKey: 'secEspace', items: [
+    { href: '/', key: 'mExplorer', icon: 'search' },
+    { href: '/app', key: 'mProjects', icon: 'folder' },
+  ] },
+  { titleKey: 'secConc', items: [
+    { href: '/serp', key: 'mSerp', icon: 'bars' },
+    { href: '/domain', key: 'mCompetitors', icon: 'globe' },
+    { href: '/backlinks', key: 'mBacklinks', icon: 'chain' },
+  ] },
+  { titleKey: 'secSuivi', items: [
+    { href: '/tracker', key: 'mPositions', icon: 'trend' },
+  ] },
 ]
 
-const adminNav: NavSection[] = [
-  {
-    title: 'Pilotage',
-    items: [
-      { href: '/admin', label: 'Dashboard', icon: '🏠' },
-      { href: '/database', label: 'Base mots-clés', icon: '🗃️' },
-    ],
-  },
-  {
-    title: 'Analyse',
-    items: [
-      { href: '/', label: 'Explorer mots-clés', icon: '🔍' },
-      { href: '/serp', label: 'Analyse SERP', icon: '📊' },
-    ],
-  },
-  {
-    title: 'Concurrence',
-    items: [
-      { href: '/domain', label: 'Domaine', icon: '🌐' },
-      { href: '/backlinks', label: 'Backlinks', icon: '🔗' },
-      { href: '/audit', label: 'Audit on-page', icon: '🩺' },
-    ],
-  },
-  {
-    title: 'Suivi',
-    items: [{ href: '/tracker', label: 'Positions', icon: '📈' }],
-  },
+const adminNav: Section[] = [
+  { titleKey: 'secEspace', items: [
+    { href: '/admin', key: 'mProjects', icon: 'home' },
+    { href: '/database', key: 'mExplorer', icon: 'db' },
+  ] },
+  { titleKey: 'secConc', items: [
+    { href: '/', key: 'mExplorer', icon: 'search' },
+    { href: '/serp', key: 'mSerp', icon: 'bars' },
+    { href: '/domain', key: 'mCompetitors', icon: 'globe' },
+    { href: '/backlinks', key: 'mBacklinks', icon: 'chain' },
+    { href: '/audit', key: 'mSerp', icon: 'audit' },
+  ] },
+  { titleKey: 'secSuivi', items: [
+    { href: '/tracker', key: 'mPositions', icon: 'trend' },
+  ] },
 ]
 
 export default function Nav() {
   const pathname = usePathname()
   const [mode, setMode] = useMode()
+  const { t, lang, setLang } = useT()
   const sections = mode === 'admin' ? adminNav : userNav
 
   return (
-    <aside className="sticky top-0 flex h-screen w-64 shrink-0 flex-col border-r border-[var(--line)] bg-[var(--card)]">
+    <aside className="sticky top-0 flex h-screen w-[246px] shrink-0 flex-col border-e border-[var(--line)] bg-[var(--card)]">
       {/* Logo */}
-      <div className="flex items-center gap-2.5 px-5 py-5">
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[var(--crimson)] text-lg font-bold text-white">
+      <div className="flex items-center gap-2.5 px-5 pb-4 pt-[18px]">
+        <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[var(--crimson)] text-[17px] font-bold text-white">
           س
         </div>
         <div>
-          <div className="text-sm font-bold leading-tight text-[var(--text)]">SEO·MENA</div>
-          <div className="text-[10px] font-medium text-[var(--text-3)]">Analytics</div>
-        </div>
-      </div>
-
-      {/* Mode switch */}
-      <div className="px-4 pb-3">
-        <div className="flex rounded-xl bg-[var(--subtle)] p-1">
-          <button
-            onClick={() => setMode('user')}
-            className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-colors ${
-              mode === 'user' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'
-            }`}
-          >
-            Utilisateur
-          </button>
-          <button
-            onClick={() => setMode('admin')}
-            className={`flex-1 rounded-lg py-1.5 text-xs font-semibold transition-colors ${
-              mode === 'admin' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'
-            }`}
-          >
-            Admin
-          </button>
+          <div className="text-sm font-bold leading-[1.1] tracking-[-0.01em]">SEO·MENA</div>
+          <div className="text-[10.5px] font-medium text-[var(--text-3)]">{t.appSub}</div>
         </div>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-3 pb-4">
-        {sections.map((section) => (
-          <div key={section.title} className="mb-4">
-            <div className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-[var(--text-3)]">
-              {section.title}
+      <nav className="flex-1 overflow-y-auto px-3 pb-3 pt-1">
+        {sections.map((section, si) => (
+          <div key={si}>
+            <div className="px-3 pb-1.5 pt-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-[var(--text-3)]">
+              {t[section.titleKey]}
             </div>
-            <div className="space-y-0.5">
-              {section.items.map((item) => {
-                const active = pathname === item.href
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium transition-colors ${
-                      active
-                        ? 'bg-[var(--crimson)]/8 text-[var(--crimson)]'
-                        : 'text-[var(--text-2)] hover:bg-[var(--subtle)] hover:text-[var(--text)]'
-                    }`}
-                  >
-                    <span className="text-base">{item.icon}</span>
-                    {item.label}
-                  </Link>
-                )
-              })}
-            </div>
+            {section.items.map((item, ii) => {
+              const active = pathname === item.href
+              return (
+                <Link
+                  key={ii}
+                  href={item.href}
+                  className={`flex items-center gap-[11px] rounded-[11px] px-3 py-2 text-[13px] transition-colors ${
+                    active
+                      ? 'bg-[var(--crimson)]/8 font-semibold text-[var(--crimson)]'
+                      : 'font-medium text-[#52525b] hover:bg-[var(--subtle)] hover:text-[var(--text)]'
+                  }`}
+                >
+                  <Icon name={item.icon} />
+                  {t[item.key]}
+                </Link>
+              )
+            })}
           </div>
         ))}
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-[var(--line)] px-5 py-4">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--crimson)] to-[#ff5c8a] text-xs font-bold text-white">
+      <div className="border-t border-[var(--line)] p-3">
+        {/* mode + language */}
+        <div className="mb-2.5 flex gap-1.5 px-0.5">
+          <button
+            onClick={() => setMode(mode === 'admin' ? 'user' : 'admin')}
+            className="flex-1 rounded-[9px] border border-[var(--line)] bg-[var(--card)] py-1.5 text-[11px] font-semibold text-[var(--text-2)] transition-colors hover:text-[var(--text)]"
+          >
+            {mode === 'admin' ? 'Admin' : 'User'}
+          </button>
+          <button
+            onClick={() => setLang('fr')}
+            className={`w-9 rounded-[9px] py-1.5 text-[11px] font-semibold transition-colors ${
+              lang === 'fr' ? 'bg-[var(--ink)] text-white' : 'border border-[var(--line)] text-[var(--text-2)]'
+            }`}
+          >
+            FR
+          </button>
+          <button
+            onClick={() => setLang('ar')}
+            className={`w-9 rounded-[9px] py-1.5 text-[13px] font-semibold transition-colors ${
+              lang === 'ar' ? 'bg-[var(--ink)] text-white' : 'border border-[var(--line)] text-[var(--text-2)]'
+            }`}
+          >
+            ع
+          </button>
+        </div>
+        <div className="flex items-center gap-2.5 px-1 py-0.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[var(--crimson)] to-[#ff5c8a] text-xs font-bold text-white">
             {mode === 'admin' ? 'A' : 'U'}
           </div>
           <div className="min-w-0">
-            <div className="truncate text-xs font-semibold text-[var(--text)]">
+            <div className="text-[12.5px] font-semibold leading-tight">
               {mode === 'admin' ? 'Mode Admin' : 'Mode Utilisateur'}
             </div>
-            <div className="truncate text-[10px] text-[var(--text-3)]">MENA · Gulf</div>
+            <div className="truncate font-mono text-[10.5px] text-[var(--text-3)]">MENA · Gulf</div>
           </div>
         </div>
       </div>
