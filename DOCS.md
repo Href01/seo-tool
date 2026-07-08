@@ -120,8 +120,10 @@ scripts/
 - `keywordSuggestions` : 50 suggestions Labs, volume, CPC, difficulte.
 - `keywordOverview` : 1 mot-cle, Labs d'abord, fallback Google Ads pour la longue
   traine (sans intention/difficulte).
-- `serpOrganic` : top organique google.com geo-cible, desktop/mobile. Pour le
-  tracking, `stop_crawl_on_match` arrete le crawl quand le domaine cible est trouve.
+- `serpOrganic` : top organique google.com geo-cible, desktop/mobile. Optionnel
+  `coordinate` ("lat,long") -> `location_coordinate` pour un ciblage ville (sinon
+  `location_code` pays). Pour le tracking, `stop_crawl_on_match` arrete le crawl
+  quand le domaine cible est trouve.
 - `computeKeywordDifficulty` : SERP top 10 -> dedup domaines -> exclusion des
   mega-plateformes -> autorite backlinks (0-1000) ponderee par position -> score
   0-100, ou `null` si le top 10 est 100 % plateformes (terrain libre).
@@ -232,6 +234,10 @@ Deploy : push sur `main` -> Vercel build & deploy auto.
   affiche en vert "Terrain libre / opportunite" dans l'Explorer.
 - Appareil : le selecteur n'apparait plus que dans la vue Paysage SERP (ou il
   agit vraiment) ; les volumes restent independants de l'appareil.
+- Ciblage ville (SERP page + Paysage SERP de l'Explorer) via coordonnees GPS.
+  Les volumes DataForSEO n'existent qu'au niveau pays -> la ville n'affine que la
+  SERP et la difficulte. Le suivi de positions reste au niveau pays (ajouter une
+  colonne coordonnee a `rank_tracking` pour l'etendre).
 - Bank quasi vide tant que le warmup n'est pas lance.
 - GSC non integre (donnees exactes du propre domaine).
 

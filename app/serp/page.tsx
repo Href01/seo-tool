@@ -5,7 +5,7 @@ import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
-import { LocationSelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
+import { LocationSelector, CitySelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill } from '@/components/ui'
 
 interface SerpResult { position: number | null; title: string; url: string; domain: string; description: string }
@@ -18,6 +18,7 @@ export default function SerpPage() {
   const p = usePT()
   const [keyword, setKeyword] = useState('')
   const [location, setLocation] = useState(DEFAULT_LOCATION.code)
+  const [city, setCity] = useState('')
   const [device, setDevice] = useState(DEFAULT_DEVICE.id)
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE.code)
   const { loading, error, cached, fetchedAt, data, run } = useSeoQuery<SerpResult[]>('/api/serp')
@@ -25,7 +26,7 @@ export default function SerpPage() {
   function search(e: React.FormEvent) {
     e.preventDefault()
     if (!keyword.trim()) return
-    run({ keyword, location, language, device })
+    run({ keyword, location, language, device, city })
   }
 
   const insights = useMemo(() => {
@@ -50,8 +51,9 @@ export default function SerpPage() {
             <label className="mb-1.5 block text-xs font-medium text-[var(--text-2)]">{p.kwLabel}</label>
             <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={p.kwPh} className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-3 text-base outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10" />
           </div>
-          <div className="grid gap-3 md:grid-cols-3">
-            <LocationSelector value={location} onChange={setLocation} />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <LocationSelector value={location} onChange={(c) => { setLocation(c); setCity('') }} />
+            <CitySelector country={location} value={city} onChange={setCity} />
             <DeviceSelector value={device} onChange={setDevice} />
             <LanguageSelector value={language} onChange={setLanguage} />
           </div>
@@ -105,7 +107,7 @@ export default function SerpPage() {
           title={p.emptySerpT}
           hint={p.emptySerpH}
           chipsLabel={p.examples}
-          chips={KW_EXAMPLES[lang].map((ex) => ({ label: ex, onClick: () => { setKeyword(ex); run({ keyword: ex, location, language, device }) } }))}
+          chips={KW_EXAMPLES[lang].map((ex) => ({ label: ex, onClick: () => { setKeyword(ex); run({ keyword: ex, location, language, device, city }) } }))}
         />
       )}
     </Page>

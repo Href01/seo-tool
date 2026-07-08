@@ -1,6 +1,6 @@
 'use client'
 
-import { LOCATIONS, DEVICES, LANGUAGES, locName, deviceName } from '@/lib/locations'
+import { LOCATIONS, DEVICES, LANGUAGES, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { useT, usePT } from '@/lib/i18n'
 
 const selectCls =
@@ -17,6 +17,39 @@ export function LocationSelector({ value, onChange }: { value: number; onChange:
         {LOCATIONS.map((loc) => (
           <option key={loc.code} value={loc.code}>
             {loc.flag} {locName(loc, lang)}
+          </option>
+        ))}
+      </select>
+    </div>
+  )
+}
+
+/**
+ * City picker for precise SERP geo-targeting. Lists the cities of `country`
+ * (plus a "whole country" default). Renders nothing if the country has no
+ * cities, so callers can drop it in unconditionally.
+ */
+export function CitySelector({
+  country,
+  value,
+  onChange,
+}: {
+  country: number
+  value: string
+  onChange: (cityId: string) => void
+}) {
+  const { lang } = useT()
+  const p = usePT()
+  const cities = citiesForCountry(country)
+  if (cities.length === 0) return null
+  return (
+    <div>
+      <label className={labelCls}>{p.cityLabel}</label>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={selectCls} title={p.citySerpHint}>
+        <option value="">📍 {p.cityAll}</option>
+        {cities.map((c) => (
+          <option key={c.id} value={c.id}>
+            {cityName(c, lang)}
           </option>
         ))}
       </select>

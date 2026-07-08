@@ -249,18 +249,25 @@ export async function serpOrganic(
     depth?: number
     device?: string
     stopOnDomain?: string
+    // "latitude,longitude" for city-level targeting. When set, it replaces the
+    // country location_code (DataForSEO takes exactly one location parameter).
+    coordinate?: string
   } = {}
 ): Promise<SerpResult[]> {
   // Google SERP supports desktop/mobile; tablet falls back to mobile.
   const device = opts.device === 'mobile' || opts.device === 'tablet' ? 'mobile' : 'desktop'
   const task: JsonRecord = {
     keyword,
-    location_code: opts.location ?? LOCATION_MOROCCO,
     language_code: opts.language ?? 'fr',
     depth: opts.depth ?? 20,
     device,
     // Google deprecated ccTLDs in 2017. Geo-target google.com instead of google.co.ma.
     se_domain: 'google.com',
+  }
+  if (opts.coordinate) {
+    task.location_coordinate = opts.coordinate
+  } else {
+    task.location_code = opts.location ?? LOCATION_MOROCCO
   }
   const stopOnDomain = opts.stopOnDomain ? cleanDomain(opts.stopOnDomain) : ''
   if (stopOnDomain) {
@@ -550,7 +557,7 @@ async function bulkBacklinkRanks(domains: string[]): Promise<Record<string, numb
  */
 export async function computeKeywordDifficulty(
   keyword: string,
-  opts: { location?: number; language?: string } = {}
+  opts: { location?: number; language?: string; coordinate?: string } = {}
 ): Promise<DifficultyResult> {
   const serp = await serpOrganic(keyword, { ...opts, depth: 10 })
 

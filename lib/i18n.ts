@@ -328,6 +328,7 @@ export const PT: Record<Lang, Record<string, string>> = {
     emptyAuditT: 'Diagnostique une page', emptyAuditH: 'Score technique, meta, structure et problèmes détectés.',
     errorLabel: 'Erreur',
     countryLabel: 'Pays / Marché', deviceLabelTitle: 'Appareil', langLabel: 'Langue',
+    cityLabel: 'Ville', cityAll: 'Tout le pays', citySerpHint: 'Ville — affine la SERP (les volumes restent au niveau pays)',
     // Database
     dbTitle: 'Base de mots-clés MENA', dbSub: "Asset propriétaire qui s'enrichit à chaque recherche",
     totalBase: 'Total base', uniqueKw: 'Mots-clés uniques', volTotalLabel: 'Volume total', avgDiffLabel: 'Difficulté moy.', shown: 'Affichés', afterFilters: 'Après filtres',
@@ -381,6 +382,7 @@ export const PT: Record<Lang, Record<string, string>> = {
     emptyAuditT: 'شخّص صفحة', emptyAuditH: 'تقييم تقني، وسوم meta، البنية والمشاكل.',
     errorLabel: 'خطأ',
     countryLabel: 'الدولة / السوق', deviceLabelTitle: 'الجهاز', langLabel: 'اللغة',
+    cityLabel: 'المدينة', cityAll: 'كل البلد', citySerpHint: 'المدينة — تُدقّق نتائج البحث (تبقى الأحجام على مستوى البلد)',
     dbTitle: 'قاعدة كلمات MENA', dbSub: 'أصل خاصّ يتنامى مع كل عملية بحث',
     totalBase: 'إجمالي القاعدة', uniqueKw: 'كلمات فريدة', volTotalLabel: 'إجمالي الحجم', avgDiffLabel: 'متوسّط الصعوبة', shown: 'المعروضة', afterFilters: 'بعد الفلاتر',
     top3Vol: 'أعلى 3 حجمًا', searchDbPh: 'ابحث (مثال: شعر)…', searchBtn: 'ابحث',

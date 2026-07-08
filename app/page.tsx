@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT, intentLabel } from '@/lib/i18n'
-import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName } from '@/lib/locations'
+import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
 
 interface KeywordResult {
@@ -47,6 +47,7 @@ export default function Explorer() {
   const [variant, setVariant] = useState<'a' | 'b'>('a')
   const [detailOpen, setDetailOpen] = useState(true)
   const [location, setLocation] = useState(DEFAULT_LOCATION.code)
+  const [city, setCity] = useState('') // city id for SERP landscape geo-targeting ('' = whole country)
   const [device, setDevice] = useState(DEFAULT_DEVICE.id)
   // Search language is INDEPENDENT of the UI language (toggling the interface
   // must never trigger paid re-fetches). Defaults to French — the dominant
@@ -85,7 +86,7 @@ export default function Explorer() {
   function runDifficulty(kw: string) {
     const q = kw.trim()
     if (!q) return
-    kd.run({ keyword: q, location, language: searchLang, device })
+    kd.run({ keyword: q, location, language: searchLang, device, city })
   }
 
   function showLandscape() {
@@ -259,26 +260,42 @@ export default function Explorer() {
                   </span>
                 </div>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
-                  <select value={location} onChange={(e) => setLocation(Number(e.target.value))} className={selCls}>
+                  <select value={location} onChange={(e) => { setLocation(Number(e.target.value)); setCity('') }} className={selCls}>
                     {LOCATIONS.map((l) => (<option key={l.code} value={l.code}>{l.flag} {locName(l, lang)}</option>))}
                   </select>
                   <select value={searchLang} onChange={(e) => setSearchLang(e.target.value)} className={selCls} title="Langue de recherche">
                     {LANGUAGES.map((l) => (<option key={l.code} value={l.code}>{l.flag} {l.name}</option>))}
                   </select>
-                  {/* Device only affects the SERP landscape (volumes are device-agnostic),
-                      so it appears only in that view and re-runs the SERP on change. */}
+                  {/* Device + city only affect the SERP landscape (volumes are
+                      device/city-agnostic), so they appear only in that view and
+                      re-run the SERP on change. */}
                   {variant === 'b' && (
                     <select
                       value={device}
                       onChange={(e) => {
                         const dev = e.target.value
                         setDevice(dev)
-                        if (focus) kd.run({ keyword: focus, location, language: searchLang, device: dev })
+                        if (focus) kd.run({ keyword: focus, location, language: searchLang, device: dev, city })
                       }}
                       className={selCls}
                       title={t.deviceSerpHint}
                     >
                       {DEVICES.map((d) => (<option key={d.id} value={d.id}>{d.icon} {deviceName(d, lang)}</option>))}
+                    </select>
+                  )}
+                  {variant === 'b' && citiesForCountry(location).length > 0 && (
+                    <select
+                      value={city}
+                      onChange={(e) => {
+                        const c = e.target.value
+                        setCity(c)
+                        if (focus) kd.run({ keyword: focus, location, language: searchLang, device, city: c })
+                      }}
+                      className={selCls}
+                      title={p.citySerpHint}
+                    >
+                      <option value="">📍 {p.cityAll}</option>
+                      {citiesForCountry(location).map((c) => (<option key={c.id} value={c.id}>{cityName(c, lang)}</option>))}
                     </select>
                   )}
                 </div>
