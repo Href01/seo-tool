@@ -230,7 +230,8 @@ Deploy : push sur `main` -> Vercel build & deploy auto.
 - Les anciennes lignes `rank_tracking` sans user explicite sont migrees sur `demo-user`.
 - Difficulte maison : `null` (terrain libre) quand le top 10 est 100 % plateformes,
   affiche en vert "Terrain libre / opportunite" dans l'Explorer.
-- Appareil cosmetique sur les volumes ; seul le SERP l'utilise vraiment.
+- Appareil : le selecteur n'apparait plus que dans la vue Paysage SERP (ou il
+  agit vraiment) ; les volumes restent independants de l'appareil.
 - Bank quasi vide tant que le warmup n'est pas lance.
 - GSC non integre (donnees exactes du propre domaine).
 

@@ -62,7 +62,8 @@ export default function Explorer() {
     const q = kw.trim()
     if (!q) return
     setFocus(q)
-    const payload = { keyword: q, location, language: searchLang, device }
+    // Volumes are device-agnostic (only the SERP landscape uses device).
+    const payload = { keyword: q, location, language: searchLang }
     overview.run(payload)
     let seed = query.trim()
     if (full) {
@@ -101,21 +102,19 @@ export default function Explorer() {
     try {
       const s = JSON.parse(raw) as { seed?: string; focus?: string; location?: number; device?: string; searchLang?: string }
       const loc = s.location ?? location
-      const dev = s.device ?? device
       const sl = s.searchLang ?? 'fr' // never the UI language → cache stays warm on reload
       defer(() => {
         if (s.location) setLocation(s.location)
-        if (s.device) setDevice(s.device)
+        if (s.device) setDevice(s.device) // remembered for the SERP landscape
         if (s.searchLang) setSearchLang(s.searchLang)
         if (s.seed) setQuery(s.seed)
         if (s.focus) setFocus(s.focus)
       })
       if (s.seed) {
-        suggestions.run({ keyword: s.seed, location: loc, language: sl, device: dev })
+        suggestions.run({ keyword: s.seed, location: loc, language: sl })
       }
       if (s.focus) {
-        const fp = { keyword: s.focus, location: loc, language: sl, device: dev }
-        overview.run(fp)
+        overview.run({ keyword: s.focus, location: loc, language: sl })
       }
     } catch {}
   }, [])
@@ -263,12 +262,25 @@ export default function Explorer() {
                   <select value={location} onChange={(e) => setLocation(Number(e.target.value))} className={selCls}>
                     {LOCATIONS.map((l) => (<option key={l.code} value={l.code}>{l.flag} {locName(l, lang)}</option>))}
                   </select>
-                  <select value={device} onChange={(e) => setDevice(e.target.value)} className={selCls}>
-                    {DEVICES.map((d) => (<option key={d.id} value={d.id}>{d.icon} {deviceName(d, lang)}</option>))}
-                  </select>
                   <select value={searchLang} onChange={(e) => setSearchLang(e.target.value)} className={selCls} title="Langue de recherche">
                     {LANGUAGES.map((l) => (<option key={l.code} value={l.code}>{l.flag} {l.name}</option>))}
                   </select>
+                  {/* Device only affects the SERP landscape (volumes are device-agnostic),
+                      so it appears only in that view and re-runs the SERP on change. */}
+                  {variant === 'b' && (
+                    <select
+                      value={device}
+                      onChange={(e) => {
+                        const dev = e.target.value
+                        setDevice(dev)
+                        if (focus) kd.run({ keyword: focus, location, language: searchLang, device: dev })
+                      }}
+                      className={selCls}
+                      title={t.deviceSerpHint}
+                    >
+                      {DEVICES.map((d) => (<option key={d.id} value={d.id}>{d.icon} {deviceName(d, lang)}</option>))}
+                    </select>
+                  )}
                 </div>
               </div>
               <div className="flex shrink-0 items-center gap-2">

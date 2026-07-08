@@ -95,6 +95,7 @@ export interface Dict {
   hard: string
   uncontested: string
   uncontestedHint: string
+  deviceSerpHint: string
   perMonth: string
   perMonthShort: string
   outOf100: string
@@ -186,6 +187,7 @@ export const T: Record<Lang, Dict> = {
     hard: 'Difficile',
     uncontested: 'Terrain libre',
     uncontestedHint: 'Top 10 sans vrai concurrent — opportunité à saisir',
+    deviceSerpHint: 'Appareil — agit sur le paysage SERP, pas sur les volumes',
     perMonth: 'Recherches / mois',
     perMonthShort: '/ mois',
     outOf100: 'Sur 100',
@@ -263,6 +265,7 @@ export const T: Record<Lang, Dict> = {
     hard: 'صعبة',
     uncontested: 'مجال مفتوح',
     uncontestedHint: 'أفضل 10 نتائج بلا منافس حقيقي — فرصة يجب اغتنامها',
+    deviceSerpHint: 'الجهاز — يؤثّر على نتائج البحث لا على أحجام البحث',
     perMonth: 'بحث / شهر',
     perMonthShort: '/ شهر',
     outOf100: 'من 100',
