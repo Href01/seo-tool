@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { guard } from '@/lib/guard'
 import { instantPageAudit } from '@/lib/dataforseo'
 import { getCachedMeta, setCached, cacheKey } from '@/lib/cache'
 
@@ -15,6 +16,8 @@ function normalizeUrl(raw: string): string {
 }
 
 export async function POST(req: Request) {
+  const blocked = await guard(req)
+  if (blocked) return blocked
   const body = await req.json().catch(() => ({}))
   const url = normalizeUrl(body.url || '')
 

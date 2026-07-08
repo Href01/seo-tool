@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { guard } from '@/lib/guard'
 import { addTracking, listTracking, deleteTracking, checkRank } from '@/lib/tracking'
 import { cleanDomain, LOCATION_MOROCCO } from '@/lib/dataforseo'
 
@@ -14,6 +15,8 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const blocked = await guard(req)
+  if (blocked) return blocked
   const body = await req.json().catch(() => ({}))
   const keyword: string = (body.keyword || '').toString().trim().toLowerCase()
   const domain = cleanDomain(body.domain || '')

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { guard } from '@/lib/guard'
 import { keywordSuggestions, LOCATION_MOROCCO } from '@/lib/dataforseo'
 import { getCachedMeta, setCached, cacheKey } from '@/lib/cache'
 import { recordKeywords } from '@/lib/bank'
@@ -9,6 +10,8 @@ export const runtime = 'nodejs'
 const TTL_DAYS = 30
 
 export async function POST(req: Request) {
+  const blocked = await guard(req)
+  if (blocked) return blocked
   const body = await req.json().catch(() => ({}))
   const keyword: string = (body.keyword || '').toString().trim().toLowerCase()
   const location: number = Number(body.location) || LOCATION_MOROCCO

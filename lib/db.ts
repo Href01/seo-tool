@@ -30,6 +30,11 @@ export function ready(): Promise<void> {
           payload    jsonb NOT NULL,
           fetched_at timestamptz NOT NULL DEFAULT now()
         );
+        CREATE TABLE IF NOT EXISTS rate_limit (
+          bucket     text PRIMARY KEY,
+          count      integer NOT NULL DEFAULT 0,
+          expires_at timestamptz NOT NULL
+        );
         CREATE TABLE IF NOT EXISTS rank_tracking (
           id         serial PRIMARY KEY,
           keyword    text NOT NULL,

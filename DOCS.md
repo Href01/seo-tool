@@ -187,8 +187,9 @@ Déploiement : push sur `main` → Vercel build & deploy auto.
 
 ## 10. Limites connues & feuille de route
 Voir la section « Manques, faiblesses, bugs » du suivi (résumé) :
-- ⚠️ **Sécurité/coût** : pas d'auth ni de rate-limit sur les routes payantes
-  (le cron, lui, est protégé par `CRON_SECRET`).
+- **Sécurité/coût** : garde anti-abus en place (`lib/guard.ts` — contrôle
+  d'origine + rate-limit IP 25/min & 300/jour, adossé Postgres) sur toutes les
+  routes payantes ; cron protégé par `CRON_SECRET`. Reste : vraie auth + isolation user.
 - **Suivi de positions** : cron quotidien en place (§9) — reste à isoler par user.
 - **Difficulté = 0** quand le top 10 est 100 % plateformes (à afficher « N/A »).
 - **Multi-utilisateur** non isolé (tous partagent `demo-user`).
