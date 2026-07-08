@@ -165,11 +165,11 @@ export default function ProjectDetailPage() {
             <div className="text-sm text-[var(--text-2)]">Trouve de nouvelles opportunités</div>
           </Card>
         </Link>
-        <Link href="/overview">
+        <Link href="/serp">
           <Card className="transition-colors hover:border-[var(--crimson)]">
-            <div className="mb-1 text-lg">🎯</div>
-            <div className="font-semibold text-[var(--text)]">Analyser un mot-clé</div>
-            <div className="text-sm text-[var(--text-2)]">Volume, difficulté, tendances</div>
+            <div className="mb-1 text-lg">📊</div>
+            <div className="font-semibold text-[var(--text)]">Analyser le SERP</div>
+            <div className="text-sm text-[var(--text-2)]">Qui ranke sur tes mots-clés</div>
           </Card>
         </Link>
         <Card>

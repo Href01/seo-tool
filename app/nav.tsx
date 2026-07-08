@@ -20,8 +20,7 @@ const userNav: NavSection[] = [
     title: 'Espace',
     items: [
       { href: '/app', label: 'Mes Projets', icon: '📁' },
-      { href: '/', label: 'Recherche', icon: '🔍' },
-      { href: '/overview', label: 'Aperçu mot-clé', icon: '🎯' },
+      { href: '/', label: 'Explorer mots-clés', icon: '🔍' },
     ],
   },
   {
@@ -48,8 +47,7 @@ const adminNav: NavSection[] = [
   {
     title: 'Analyse',
     items: [
-      { href: '/', label: 'Recherche', icon: '🔍' },
-      { href: '/overview', label: 'Aperçu mot-clé', icon: '🎯' },
+      { href: '/', label: 'Explorer mots-clés', icon: '🔍' },
       { href: '/serp', label: 'Analyse SERP', icon: '📊' },
     ],
   },

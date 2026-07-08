@@ -27,7 +27,17 @@ function DiffBadge({ diff }: { diff: number | null }) {
   )
 }
 
-export function KeywordTable({ keywords, onExport }: { keywords: KeywordRow[]; onExport?: () => void }) {
+export function KeywordTable({
+  keywords,
+  onExport,
+  onSelect,
+  activeKeyword,
+}: {
+  keywords: KeywordRow[]
+  onExport?: () => void
+  onSelect?: (keyword: string) => void
+  activeKeyword?: string
+}) {
   const [sortBy, setSortBy] = useState<'volume' | 'difficulty' | 'cpc'>('volume')
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc')
   const [filter, setFilter] = useState('')
@@ -143,20 +153,39 @@ export function KeywordTable({ keywords, onExport }: { keywords: KeywordRow[]; o
                   </td>
                 </tr>
               ) : (
-                filtered.map((row, i) => (
-                  <tr key={i} className="transition-colors hover:bg-[var(--subtle)]">
-                    <td className="px-4 py-3 text-sm font-medium text-[var(--text)]">{row.keyword}</td>
-                    <td className="px-4 py-3 text-right text-sm text-[var(--text-2)] tnum">
-                      {row.volume !== null ? row.volume.toLocaleString('fr') : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm text-[var(--text-2)] tnum">
-                      {row.cpc !== null ? `${row.cpc.toFixed(2)} $` : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <DiffBadge diff={row.difficulty} />
-                    </td>
-                  </tr>
-                ))
+                filtered.map((row, i) => {
+                  const active = onSelect && activeKeyword === row.keyword
+                  return (
+                    <tr
+                      key={i}
+                      onClick={onSelect ? () => onSelect(row.keyword) : undefined}
+                      className={`transition-colors ${
+                        onSelect ? 'cursor-pointer' : ''
+                      } ${active ? 'bg-[var(--crimson)]/5' : 'hover:bg-[var(--subtle)]'}`}
+                    >
+                      <td className="px-4 py-3 text-sm font-medium text-[var(--text)]">
+                        <span className="flex items-center gap-1.5">
+                          {active && <span className="h-1.5 w-1.5 rounded-full bg-[var(--crimson)]" />}
+                          {row.keyword}
+                          {onSelect && (
+                            <span className="ml-1 text-[var(--text-3)] opacity-0 transition-opacity group-hover:opacity-100">
+                              →
+                            </span>
+                          )}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm text-[var(--text-2)] tnum">
+                        {row.volume !== null ? row.volume.toLocaleString('fr') : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-right text-sm text-[var(--text-2)] tnum">
+                        {row.cpc !== null ? `${row.cpc.toFixed(2)} $` : '—'}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <DiffBadge diff={row.difficulty} />
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
