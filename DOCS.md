@@ -23,7 +23,8 @@ coût via cache partagé.
 | Hébergement | **Vercel** (Hobby) — `seo-tool-ten-sooty.vercel.app` — repo `Href01/seo-tool` |
 | Auth | **Aucune** (mode User/Admin via `localStorage`, pas de comptes) |
 
-**Variables d'env** : `DATABASE_URL`, `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`.
+**Variables d'env** : `DATABASE_URL`, `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD`,
+`CRON_SECRET` (protège le cron de suivi — voir §9).
 Sans DB → l'app tourne en mode dégradé (pas de cache, pas de suivi, pas de bank).
 
 ---
@@ -125,8 +126,8 @@ scripts/
 
 ### `lib/tracking.ts`
 Par `(keyword, domain, location, language)`. `checkRank` fait un SERP **frais**
-(depth 100), écrit un point d'historique. **Manuel uniquement** (`checkAll` existe
-mais n'est pas planifié). Actuellement **Maroc/fr en dur** côté route.
+(depth 100), écrit un point d'historique. `checkAll` est planifié via **Vercel Cron
+quotidien** (§9). Actuellement **Maroc/fr en dur** côté route `/api/rank`.
 
 ### `lib/bank.ts`
 Chaque lookup enrichit `keyword_bank` (upsert, `COALESCE` des métriques,
@@ -173,10 +174,22 @@ Déploiement : push sur `main` → Vercel build & deploy auto.
 
 ---
 
-## 8. Limites connues & feuille de route
+## 9. Cron de suivi (Vercel)
+- `vercel.json` planifie `GET /api/cron/check-ranks` **tous les jours à 06:00 UTC**.
+- La route relance `checkAll()` → un SERP frais (payant) par mot-clé suivi.
+- **Protection obligatoire** : définir `CRON_SECRET` dans les env Vercel. Vercel
+  ajoute alors `Authorization: Bearer <CRON_SECRET>` ; la route **refuse de tourner**
+  si le secret est absent → jamais déclenchable par un visiteur.
+- Limite Hobby : fonction ~60 s → ~20-25 mots-clés par run (séquentiel). Au-delà,
+  passer en batch/Pro.
+
+---
+
+## 10. Limites connues & feuille de route
 Voir la section « Manques, faiblesses, bugs » du suivi (résumé) :
-- ⚠️ **Sécurité/coût** : pas d'auth ni de rate-limit sur les routes payantes.
-- **Suivi de positions** : pas de cron → l'historique ne se remplit pas seul.
+- ⚠️ **Sécurité/coût** : pas d'auth ni de rate-limit sur les routes payantes
+  (le cron, lui, est protégé par `CRON_SECRET`).
+- **Suivi de positions** : cron quotidien en place (§9) — reste à isoler par user.
 - **Difficulté = 0** quand le top 10 est 100 % plateformes (à afficher « N/A »).
 - **Multi-utilisateur** non isolé (tous partagent `demo-user`).
 - **Appareil** cosmétique sur les volumes (seul le SERP l'utilise).

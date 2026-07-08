@@ -116,14 +116,24 @@ export async function checkRank(id: number): Promise<number | null> {
   return position
 }
 
-/** Re-check every tracked keyword (used by a manual "tout vérifier" or a future cron). */
-export async function checkAll(): Promise<void> {
+/**
+ * Re-check every tracked keyword (daily Vercel Cron). Sequential + best-effort:
+ * one bad keyword never aborts the batch. Returns a summary for the cron log.
+ * Note: each check is a fresh (paid, uncached) SERP depth-100 call, so on the
+ * Vercel Hobby 60s function cap this comfortably handles ~20-25 keywords.
+ */
+export async function checkAll(): Promise<{ total: number; checked: number; failed: number }> {
   const items = await listTracking()
+  let checked = 0
+  let failed = 0
   for (const item of items) {
     try {
       await checkRank(item.id)
+      checked++
     } catch (e) {
+      failed++
       console.error('[rank] check failed for', item.id, e)
     }
   }
+  return { total: items.length, checked, failed }
 }
