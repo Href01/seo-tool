@@ -24,7 +24,7 @@ interface KeywordOverview {
   trend: { month: string; volume: number }[]
 }
 interface Competitor { position: number | null; domain: string; rank: number | null; counted: boolean }
-interface DifficultyResult { keyword: string; difficulty: number; competitors: Competitor[] }
+interface DifficultyResult { keyword: string; difficulty: number | null; competitors: Competitor[] }
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : n.toLocaleString('fr-FR'))
 
@@ -133,8 +133,12 @@ export default function Explorer() {
   const loc = getLocationByCode(location) ?? DEFAULT_LOCATION
 
   // Focus difficulty (from overview or computed)
-  const focusKd = ov?.difficulty ?? (kd.data?.keyword === focus ? kd.data.difficulty : null)
+  const kdForFocus = kd.data?.keyword === focus ? kd.data : null
+  const focusKd = ov?.difficulty ?? kdForFocus?.difficulty ?? null
   const dcfg = focusKd != null ? diffCfg(focusKd, t) : null
+  // Uncontested: our SERP difficulty was computed and came back null (top 10 is
+  // 100% mega-platforms) and the overview offers no number either -> "terrain libre".
+  const focusUncontested = ov?.difficulty == null && kdForFocus != null && kdForFocus.difficulty == null
 
   // Trend
   const maxTrend = ov?.trend.length ? Math.max(...ov.trend.map((x) => x.volume)) : 1
@@ -289,11 +293,17 @@ export default function Explorer() {
                 <StatCard label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} />
                 <StatCard label={t.competition} value={ov.competition != null ? ov.competition.toFixed(2) : '—'} />
                 <StatCard label={t.intent} value={intentLabel(ov.intent, lang)} small />
-                <div className="rounded-[14px] border bg-[var(--card)] px-3.5 py-3" style={{ borderColor: focusKd != null && focusKd < 30 ? '#16a34a' : 'var(--line)' }}>
+                <div className="rounded-[14px] border bg-[var(--card)] px-3.5 py-3" style={{ borderColor: focusUncontested || (focusKd != null && focusKd < 30) ? '#16a34a' : 'var(--line)' }}>
                   <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{t.difficulty}</div>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
-                    <span className="text-[22px] font-bold tracking-[-0.02em] tnum" style={{ color: dcfg?.c }}>{focusKd ?? (kd.loading ? '…' : '—')}</span>
-                    {dcfg && <span className="text-xs font-semibold" style={{ color: dcfg.c }}>{dcfg.l}</span>}
+                    {focusUncontested ? (
+                      <span className="text-[16px] font-bold tracking-[-0.01em] text-[#16a34a]">{t.uncontested}</span>
+                    ) : (
+                      <>
+                        <span className="text-[22px] font-bold tracking-[-0.02em] tnum" style={{ color: dcfg?.c }}>{focusKd ?? (kd.loading ? '…' : '—')}</span>
+                        {dcfg && <span className="text-xs font-semibold" style={{ color: dcfg.c }}>{dcfg.l}</span>}
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -411,7 +421,7 @@ export default function Explorer() {
                 <Row label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} />
                 <Row label={t.competition} value={ov.competition != null ? `${ov.competition.toFixed(2)} / 1.00` : '—'} />
                 <Row label={t.intent} value={intentLabel(ov.intent, lang)} />
-                <Row label={t.difficulty} value={focusKd != null ? `${focusKd} · ${dcfg?.l}` : '—'} color={dcfg?.c} last />
+                <Row label={t.difficulty} value={focusUncontested ? t.uncontested : (focusKd != null ? `${focusKd} · ${dcfg?.l}` : '—')} color={focusUncontested ? '#16a34a' : dcfg?.c} last />
               </div>
 
               {/* difficulté maison */}
@@ -420,17 +430,27 @@ export default function Explorer() {
                   <div className="text-[13.5px] font-bold">{t.diffMaison}</div>
                   <button onClick={() => runDifficulty(focus)} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[var(--crimson)]">↻ {t.recalc}</button>
                 </div>
-                {kd.data?.keyword === focus && dcfg ? (
-                  <div className="mt-3 flex items-center gap-3.5">
-                    <div className="flex h-[66px] w-[66px] shrink-0 flex-col items-center justify-center rounded-2xl" style={{ color: diffCfg(kd.data.difficulty, t).c, background: diffCfg(kd.data.difficulty, t).bg }}>
-                      <div className="text-2xl font-bold leading-none tnum">{kd.data.difficulty}</div>
-                      <div className="text-[9px] opacity-60">/100</div>
+                {kdForFocus ? (
+                  kdForFocus.difficulty == null ? (
+                    <div className="mt-3 flex items-center gap-3.5">
+                      <div className="flex h-[66px] w-[66px] shrink-0 flex-col items-center justify-center rounded-2xl text-2xl font-bold" style={{ color: '#16a34a', background: '#dcfce7' }}>✓</div>
+                      <div>
+                        <div className="text-sm font-bold text-[#16a34a]">{t.uncontested}</div>
+                        <div className="mt-0.5 text-[11.5px] text-[var(--text-2)]">{t.uncontestedHint}</div>
+                      </div>
                     </div>
-                    <div>
-                      <div className="text-sm font-bold" style={{ color: diffCfg(kd.data.difficulty, t).c }}>{diffCfg(kd.data.difficulty, t).l}</div>
-                      <div className="mt-0.5 text-[11.5px] text-[var(--text-2)]">{t.diffFromPre}{counted.length}{t.diffFromPost}</div>
+                  ) : (
+                    <div className="mt-3 flex items-center gap-3.5">
+                      <div className="flex h-[66px] w-[66px] shrink-0 flex-col items-center justify-center rounded-2xl" style={{ color: diffCfg(kdForFocus.difficulty, t).c, background: diffCfg(kdForFocus.difficulty, t).bg }}>
+                        <div className="text-2xl font-bold leading-none tnum">{kdForFocus.difficulty}</div>
+                        <div className="text-[9px] opacity-60">/100</div>
+                      </div>
+                      <div>
+                        <div className="text-sm font-bold" style={{ color: diffCfg(kdForFocus.difficulty, t).c }}>{diffCfg(kdForFocus.difficulty, t).l}</div>
+                        <div className="mt-0.5 text-[11.5px] text-[var(--text-2)]">{t.diffFromPre}{counted.length}{t.diffFromPost}</div>
+                      </div>
                     </div>
-                  </div>
+                  )
                 ) : (
                   <div className="mt-3 text-[12px] text-[var(--text-3)]">{kd.loading ? t.computing : '—'}</div>
                 )}

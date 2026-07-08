@@ -22,7 +22,8 @@ export async function POST(req: Request) {
   }
 
   // gcom: SERP behind the difficulty is google.com with geo-targeting.
-  const key = cacheKey('kd', 'gcom', keyword, location, language)
+  // v2: uncontested SERPs now return difficulty=null ("terrain libre"), not 0.
+  const key = cacheKey('kd', 'gcom', 'v2', keyword, location, language)
 
   const hit = await getCachedMeta(key, TTL_DAYS)
   if (hit) {

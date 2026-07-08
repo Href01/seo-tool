@@ -511,7 +511,9 @@ export async function instantPageAudit(url: string): Promise<PageAudit> {
 
 export interface DifficultyResult {
   keyword: string
-  difficulty: number // 0-100, our own estimate
+  // 0-100 (our own estimate), or null when the top 10 is 100% mega-platforms
+  // (nothing to outrank on authority) -> "terrain libre / opportunite".
+  difficulty: number | null
   competitors: { position: number | null; domain: string; rank: number | null; counted: boolean }[]
 }
 
@@ -576,6 +578,6 @@ export async function computeKeywordDifficulty(
     return { position: u.position, domain: u.domain, rank, counted }
   })
 
-  const difficulty = weightTotal > 0 ? Math.round(weightedSum / weightTotal) : 0
+  const difficulty = weightTotal > 0 ? Math.round(weightedSum / weightTotal) : null
   return { keyword, difficulty, competitors }
 }

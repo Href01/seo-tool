@@ -124,7 +124,7 @@ scripts/
   tracking, `stop_crawl_on_match` arrete le crawl quand le domaine cible est trouve.
 - `computeKeywordDifficulty` : SERP top 10 -> dedup domaines -> exclusion des
   mega-plateformes -> autorite backlinks (0-1000) ponderee par position -> score
-  0-100.
+  0-100, ou `null` si le top 10 est 100 % plateformes (terrain libre).
 - `domainOverview` : ranked keywords limit 200, tries par trafic `etv` desc.
 - `backlinksSummary`, `instantPageAudit`, `bulkBacklinkRanks`.
 
@@ -144,8 +144,9 @@ Par `(user_id, keyword, domain, location, language)`. Ajouter un mot-cle ne decl
 de SERP payant : l'historique commence quand l'utilisateur clique **Verifier**.
 `checkRank` throttle les checks manuels (6 h par defaut) et renvoie le dernier
 point si la donnee est encore fraiche. `checkAll` est reserve au Vercel Cron
-quotidien et force un SERP frais. Actuellement Maroc/fr en dur cote route
-`/api/rank`.
+quotidien et force un SERP frais. `/api/rank` accepte maintenant le pays et la
+langue de recherche exposes dans le tracker global et les pages projet ; les
+checks et le bloc "above you" utilisent le marche stocke pour le mot-cle suivi.
 
 ### `lib/auth.ts`
 - Signup/login email+password, hash `scrypt`, cookie `seo_session` httpOnly.
@@ -227,10 +228,10 @@ Deploy : push sur `main` -> Vercel build & deploy auto.
 
 - OAuth Google/Auth.js et verification email non integres.
 - Les anciennes lignes `rank_tracking` sans user explicite sont migrees sur `demo-user`.
-- Difficulte = 0 quand le top 10 est 100 % plateformes ; afficher plutot N/A.
+- Difficulte maison : `null` (terrain libre) quand le top 10 est 100 % plateformes,
+  affiche en vert "Terrain libre / opportunite" dans l'Explorer.
 - Appareil cosmetique sur les volumes ; seul le SERP l'utilise vraiment.
 - Bank quasi vide tant que le warmup n'est pas lance.
 - GSC non integre (donnees exactes du propre domaine).
-- Multi-pays pour le tracking a exposer cote UI.
 
 Derniere mise a jour : 2026-07-08.

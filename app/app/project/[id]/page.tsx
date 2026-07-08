@@ -4,6 +4,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { usePT, useT } from '@/lib/i18n'
+import { DEFAULT_LANGUAGE, DEFAULT_LOCATION, getLanguageByCode, getLocationByCode, locName } from '@/lib/locations'
+import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
 import { Page, Card, Button, Spinner, EmptyState, StatCard, SectionTitle, DistributionBar, visibilityScore } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 
@@ -12,6 +14,8 @@ interface TrackedKeyword {
   id: number
   keyword: string
   domain: string
+  location: number
+  language: string
   position: number | null
   checkedAt: string | null
   history: { position: number | null; checkedAt: string }[]
@@ -27,16 +31,23 @@ function posBadge(position: number | null) {
 }
 const norm = (d: string) => d.toLowerCase().replace(/^www\./, '')
 const clamp = (p: number | null) => (p == null ? CLAMP : Math.min(p, CLAMP))
+function marketLabel(location: number, language: string, uiLang: string) {
+  const loc = getLocationByCode(location) ?? DEFAULT_LOCATION
+  const searchLang = getLanguageByCode(language) ?? DEFAULT_LANGUAGE
+  return `${loc.flag} ${locName(loc, uiLang)} · ${searchLang.name}`
+}
 
 export default function ProjectDetailPage() {
   const params = useParams()
   const id = params.id as string
   const p = usePT()
-  const { t } = useT()
+  const { t, lang } = useT()
 
   const [project, setProject] = useState<Project | null>(null)
   const [tracked, setTracked] = useState<TrackedKeyword[]>([])
   const [keyword, setKeyword] = useState('')
+  const [location, setLocation] = useState(DEFAULT_LOCATION.code)
+  const [searchLang, setSearchLang] = useState(DEFAULT_LANGUAGE.code)
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState<number | null>(null)
   const [error, setError] = useState('')
@@ -74,7 +85,7 @@ export default function ProjectDetailPage() {
     if (!keyword.trim() || !project) return
     setLoading(true); setError('')
     try {
-      const res = await fetch('/api/rank', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyword, domain: project.domain }) })
+      const res = await fetch('/api/rank', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyword, domain: project.domain, location, language: searchLang }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur')
       setKeyword('')
@@ -177,9 +188,11 @@ export default function ProjectDetailPage() {
 
       <Card className="mb-6">
         <h2 className="mb-3 text-sm font-semibold text-[var(--text)]">{p.trackForSite}</h2>
-        <form onSubmit={addKeyword} className="flex flex-col gap-2 sm:flex-row">
-          <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t.kwPlaceholder} className="flex-1 rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]" />
-          <Button type="submit" disabled={loading || !project}>{loading ? <><Spinner /> …</> : t.add}</Button>
+        <form onSubmit={addKeyword} className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_180px_180px_auto]">
+          <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t.kwPlaceholder} className="self-end rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]" />
+          <LocationSelector value={location} onChange={setLocation} />
+          <LanguageSelector value={searchLang} onChange={setSearchLang} />
+          <Button type="submit" disabled={loading || !project} className="self-end">{loading ? <><Spinner /> …</> : t.add}</Button>
         </form>
         {error && <div className="mt-3 text-sm text-[var(--down)]">{error}</div>}
       </Card>
@@ -205,6 +218,7 @@ export default function ProjectDetailPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium text-[var(--text)]">{it.keyword}</div>
+                      <div className="text-xs text-[var(--text-3)]">{marketLabel(it.location, it.language, lang)}</div>
                       {it.checkedAt && <div className="text-xs text-[var(--text-3)]">{new Date(it.checkedAt).toLocaleDateString('fr')}</div>}
                     </div>
                     <svg width="56" height="22" viewBox="0 0 56 22" fill="none" className="shrink-0"><polyline points={spark || '0,11 56,11'} stroke={dcol} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>

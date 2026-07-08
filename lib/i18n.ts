@@ -93,6 +93,8 @@ export interface Dict {
   easy: string
   medium: string
   hard: string
+  uncontested: string
+  uncontestedHint: string
   perMonth: string
   perMonthShort: string
   outOf100: string
@@ -182,6 +184,8 @@ export const T: Record<Lang, Dict> = {
     easy: 'Facile',
     medium: 'Moyen',
     hard: 'Difficile',
+    uncontested: 'Terrain libre',
+    uncontestedHint: 'Top 10 sans vrai concurrent — opportunité à saisir',
     perMonth: 'Recherches / mois',
     perMonthShort: '/ mois',
     outOf100: 'Sur 100',
@@ -257,6 +261,8 @@ export const T: Record<Lang, Dict> = {
     easy: 'سهلة',
     medium: 'متوسّطة',
     hard: 'صعبة',
+    uncontested: 'مجال مفتوح',
+    uncontestedHint: 'أفضل 10 نتائج بلا منافس حقيقي — فرصة يجب اغتنامها',
     perMonth: 'بحث / شهر',
     perMonthShort: '/ شهر',
     outOf100: 'من 100',
