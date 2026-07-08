@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useMode } from '@/lib/useMode'
-import { useT } from '@/lib/i18n'
+import { useT, usePT } from '@/lib/i18n'
 
 interface SessionUser {
   id: string
@@ -56,25 +56,39 @@ const userNav: Section[] = [
 
 const adminNav: Section[] = [
   { titleKey: 'secEspace', items: [
-    { href: '/admin', key: 'mProjects', icon: 'home' },
-    { href: '/database', key: 'mExplorer', icon: 'db' },
+    { href: '/admin', key: 'mAdminHome', icon: 'home' },
+    { href: '/database', key: 'mDatabase', icon: 'db' },
   ] },
   { titleKey: 'secConc', items: [
     { href: '/', key: 'mExplorer', icon: 'search' },
     { href: '/serp', key: 'mSerp', icon: 'bars' },
     { href: '/domain', key: 'mCompetitors', icon: 'globe' },
     { href: '/backlinks', key: 'mBacklinks', icon: 'chain' },
-    { href: '/audit', key: 'mSerp', icon: 'audit' },
+    { href: '/audit', key: 'mAudit', icon: 'audit' },
   ] },
   { titleKey: 'secSuivi', items: [
     { href: '/tracker', key: 'mPositions', icon: 'trend' },
   ] },
 ]
 
+// Plain-language tooltip per destination (reuses the page-guidance strings).
+const HELP_KEY: Record<string, string> = {
+  '/': 'helpExplorer',
+  '/app': 'helpProjects',
+  '/serp': 'helpSerp',
+  '/domain': 'helpDomain',
+  '/backlinks': 'helpBacklinks',
+  '/tracker': 'helpTracker',
+  '/audit': 'helpAudit',
+  '/admin': 'helpAdmin',
+  '/database': 'helpDatabase',
+}
+
 export default function Nav() {
   const pathname = usePathname()
   const [mode, setMode] = useMode()
   const { t, lang, setLang } = useT()
+  const p = usePT()
   const [user, setUser] = useState<SessionUser | null>(null)
   const isAdmin = user?.role === 'admin'
   const effectiveMode = isAdmin ? mode : 'user'
@@ -120,6 +134,7 @@ export default function Nav() {
                 <Link
                   key={ii}
                   href={item.href}
+                  title={p[HELP_KEY[item.href]] ?? undefined}
                   className={`flex items-center gap-[11px] rounded-[11px] px-3 py-2 text-[13px] transition-colors ${
                     active
                       ? 'bg-[var(--crimson)]/8 font-semibold text-[var(--crimson)]'

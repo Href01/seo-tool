@@ -31,6 +31,54 @@ export function WorkspaceHeader({
   )
 }
 
+/* InfoTip — a small "?" that reveals a plain-language explanation on hover/focus.
+   CSS-only (no JS lib), keyboard-accessible, works in LTR and RTL. Use it to
+   demystify jargon metrics (volume, difficulté, CPC…) for non-experts. */
+export function InfoTip({ text }: { text: string }) {
+  return (
+    <span className="group relative inline-flex align-middle">
+      <span
+        tabIndex={0}
+        role="note"
+        aria-label={text}
+        className="ms-1 inline-flex h-[15px] w-[15px] cursor-help items-center justify-center rounded-full border border-[var(--text-3)] text-[9px] font-bold leading-none text-[var(--text-3)] transition-colors hover:border-[var(--crimson)] hover:text-[var(--crimson)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--crimson)]/30"
+      >
+        ?
+      </span>
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-max max-w-[240px] -translate-x-1/2 rounded-lg bg-[var(--ink)] px-3 py-2 text-start text-[11.5px] font-medium leading-snug text-white shadow-lg group-hover:block group-focus-within:block"
+      >
+        {text}
+      </span>
+    </span>
+  )
+}
+
+/* Callout — a soft guidance banner for the top of a page: one clear sentence on
+   what the page does and how to use it. Keeps the tool understandable for
+   non-experts without cluttering the workspace. */
+export function Callout({
+  children,
+  icon = '💡',
+  tone = 'info',
+}: {
+  children: ReactNode
+  icon?: string
+  tone?: 'info' | 'tip'
+}) {
+  const tones: Record<string, string> = {
+    info: 'border-[var(--line)] bg-[var(--subtle)]',
+    tip: 'border-[var(--crimson)]/25 bg-[var(--crimson)]/5',
+  }
+  return (
+    <div className={`mb-5 flex items-start gap-2.5 rounded-xl border px-4 py-3 ${tones[tone]}`}>
+      <span className="shrink-0 text-base leading-none">{icon}</span>
+      <div className="text-[13px] leading-relaxed text-[var(--text-2)]">{children}</div>
+    </div>
+  )
+}
+
 /* DistributionBar — a stacked ratio bar with legend (position spread, etc.) */
 export function DistributionBar({ segments }: { segments: { label: string; value: number; color: string }[] }) {
   const total = segments.reduce((s, x) => s + x.value, 0) || 1
@@ -125,6 +173,7 @@ export function StatCard({
   value,
   trend,
   sub,
+  info,
   accent = false,
   dark = false,
 }: {
@@ -132,6 +181,7 @@ export function StatCard({
   value: ReactNode
   trend?: number
   sub?: string
+  info?: string
   accent?: boolean
   dark?: boolean
 }) {
@@ -144,6 +194,7 @@ export function StatCard({
     <div className={`rounded-2xl border p-5 ${base}`}>
       <div className={`text-xs font-medium ${dark ? 'text-white/60' : 'text-[var(--text-2)]'}`}>
         {label}
+        {info && <InfoTip text={info} />}
       </div>
       <div className="mt-2 flex items-end gap-2">
         <div className={`text-2xl font-bold tracking-tight tnum ${dark ? 'text-white' : 'text-[var(--text)]'}`}>

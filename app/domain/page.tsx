@@ -6,7 +6,7 @@ import { usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
 import { DOMAIN_EXAMPLES } from '@/lib/examples'
-import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle, Callout } from '@/components/ui'
 
 interface DomainKeyword { keyword: string; position: number | null; volume: number | null; traffic: number | null; url: string }
 interface DomainOverview { domain: string; organicKeywords: number | null; estimatedTraffic: number | null; keywords: DomainKeyword[] }
@@ -34,7 +34,7 @@ export default function DomainPage() {
   return (
     <Page>
       <WorkspaceHeader icon="🌐" title={p.domTitle} subtitle={p.domSub} />
-      <div className="mb-4 rounded-xl border border-[var(--line)] bg-[var(--subtle)] px-4 py-2.5 text-xs text-[var(--text-2)]">💡 {p.domHint}</div>
+      <Callout>{p.helpDomain}</Callout>
       <Card className="mb-6">
         <form onSubmit={search} className="space-y-4">
           <div>
@@ -62,7 +62,7 @@ export default function DomainPage() {
         <div className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2">
             <StatCard label={p.orgKeywords} value={data.organicKeywords?.toLocaleString('fr') ?? '—'} sub={p.orgKeywordsSub} />
-            <StatCard label={p.estTraffic} value={data.estimatedTraffic?.toLocaleString('fr') ?? '—'} sub={p.estTrafficSub} accent />
+            <StatCard label={p.estTraffic} value={data.estimatedTraffic?.toLocaleString('fr') ?? '—'} sub={p.estTrafficSub} info={p.gTraffic} accent />
           </div>
 
           {data.keywords.length > 0 && (

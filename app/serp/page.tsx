@@ -6,7 +6,7 @@ import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
 import { LocationSelector, CitySelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
-import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill, Callout } from '@/components/ui'
 
 interface SerpResult { position: number | null; title: string; url: string; domain: string; description: string }
 
@@ -45,6 +45,7 @@ export default function SerpPage() {
   return (
     <Page>
       <WorkspaceHeader icon="📊" title={p.serpTitle} subtitle={p.serpSub} />
+      <Callout>{p.helpSerp}</Callout>
       <Card className="mb-6">
         <form onSubmit={search} className="space-y-4">
           <div>

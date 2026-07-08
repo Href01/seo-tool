@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePT } from '@/lib/i18n'
-import { Page, WorkspaceHeader, Card, Button, Spinner, EmptyState, ErrorBox } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, EmptyState, ErrorBox, Callout } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 
 interface Project { id: string; name: string; domain: string; createdAt?: string }
@@ -48,6 +48,7 @@ export default function AppPage() {
   return (
     <Page>
       <WorkspaceHeader icon="📁" title={p.appTitle} subtitle={p.appSub} />
+      <Callout>{p.helpProjects}</Callout>
       {error && (
         <div className="mb-6">
           <ErrorBox message={error} />

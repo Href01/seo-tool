@@ -5,6 +5,7 @@ import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT, intentLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
+import { InfoTip } from '@/components/ui'
 
 interface KeywordResult {
   keyword: string
@@ -318,12 +319,12 @@ export default function Explorer() {
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-7 pt-5">
               {/* stat headline */}
               <div className="mb-4 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(112px,1fr))]">
-                <StatCard label={t.volume} value={fmt(ov.volume)} />
-                <StatCard label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} />
-                <StatCard label={t.competition} value={ov.competition != null ? ov.competition.toFixed(2) : '—'} />
-                <StatCard label={t.intent} value={intentLabel(ov.intent, lang)} small />
+                <StatCard label={t.volume} value={fmt(ov.volume)} info={p.gVolume} />
+                <StatCard label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} info={p.gCpc} />
+                <StatCard label={t.competition} value={ov.competition != null ? ov.competition.toFixed(2) : '—'} info={p.gCompetition} />
+                <StatCard label={t.intent} value={intentLabel(ov.intent, lang)} small info={p.gIntent} />
                 <div className="rounded-[14px] border bg-[var(--card)] px-3.5 py-3" style={{ borderColor: focusUncontested || (focusKd != null && focusKd < 30) ? '#16a34a' : 'var(--line)' }}>
-                  <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{t.difficulty}</div>
+                  <div className="flex items-center truncate text-[11px] font-medium text-[var(--text-2)]"><span className="truncate">{t.difficulty}</span><InfoTip text={p.gDifficulty} /></div>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
                     {focusUncontested ? (
                       <span className="text-[16px] font-bold tracking-[-0.01em] text-[#16a34a]">{t.uncontested}</span>
@@ -446,11 +447,11 @@ export default function Explorer() {
               <div className="mt-0.5 text-xs text-[var(--text-3)]">{ov.source === 'labs' ? 'Labs' : 'Google Ads'} · {loc.flag} {locName(loc, lang)}</div>
 
               <div className="mt-4 flex flex-col">
-                <Row label={t.volume} value={`${fmt(ov.volume)} ${t.perMonthShort}`} />
-                <Row label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} />
-                <Row label={t.competition} value={ov.competition != null ? `${ov.competition.toFixed(2)} / 1.00` : '—'} />
-                <Row label={t.intent} value={intentLabel(ov.intent, lang)} />
-                <Row label={t.difficulty} value={focusUncontested ? t.uncontested : (focusKd != null ? `${focusKd} · ${dcfg?.l}` : '—')} color={focusUncontested ? '#16a34a' : dcfg?.c} last />
+                <Row label={t.volume} value={`${fmt(ov.volume)} ${t.perMonthShort}`} info={p.gVolume} />
+                <Row label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} info={p.gCpc} />
+                <Row label={t.competition} value={ov.competition != null ? `${ov.competition.toFixed(2)} / 1.00` : '—'} info={p.gCompetition} />
+                <Row label={t.intent} value={intentLabel(ov.intent, lang)} info={p.gIntent} />
+                <Row label={t.difficulty} value={focusUncontested ? t.uncontested : (focusKd != null ? `${focusKd} · ${dcfg?.l}` : '—')} color={focusUncontested ? '#16a34a' : dcfg?.c} info={p.gDifficulty} last />
               </div>
 
               {/* difficulté maison */}
@@ -523,10 +524,10 @@ export default function Explorer() {
   )
 }
 
-function StatCard({ label, value, small }: { label: string; value: React.ReactNode; small?: boolean }) {
+function StatCard({ label, value, small, info }: { label: string; value: React.ReactNode; small?: boolean; info?: string }) {
   return (
     <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card)] px-3.5 py-3">
-      <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{label}</div>
+      <div className="flex items-center text-[11px] font-medium text-[var(--text-2)]"><span className="truncate">{label}</span>{info && <InfoTip text={info} />}</div>
       <div className={`mt-1.5 truncate font-bold tracking-[-0.02em] tnum ${small ? 'text-[15px]' : 'text-[22px]'}`}>{value}</div>
     </div>
   )
@@ -542,10 +543,10 @@ function InsightCard({ label, value, hint, color, border }: { label: string; val
   )
 }
 
-function Row({ label, value, color, last }: { label: string; value: string; color?: string; last?: boolean }) {
+function Row({ label, value, color, last, info }: { label: string; value: string; color?: string; last?: boolean; info?: string }) {
   return (
     <div className={`flex items-center justify-between py-[9px] ${last ? '' : 'border-b border-[var(--subtle)]'}`}>
-      <span className="text-[12.5px] text-[var(--text-2)]">{label}</span>
+      <span className="text-[12.5px] text-[var(--text-2)]">{label}{info && <InfoTip text={info} />}</span>
       <span className="text-[12.5px] font-semibold tnum" style={{ color }}>{value}</span>
     </div>
   )
