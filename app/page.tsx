@@ -102,7 +102,7 @@ export default function Explorer() {
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--page)]">
       {/* ── LEFT: ideas ── */}
-      <section className="flex w-[336px] shrink-0 flex-col border-e border-[var(--line)] bg-[var(--card)]">
+      <section className="flex w-[264px] shrink-0 flex-col border-e border-[var(--line)] bg-[var(--card)] lg:w-[300px]">
         <div className="border-b border-[var(--line)] px-[18px] pb-3 pt-4">
           <div className="mb-3 flex items-center justify-between">
             <div className="text-[14.5px] font-bold tracking-[-0.01em]">
@@ -174,15 +174,15 @@ export default function Explorer() {
       <main className="flex min-w-0 flex-1 flex-col bg-[var(--page)]">
         {ov ? (
           <>
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[var(--line)] px-6 py-4">
-              <div>
-                <div className="flex items-center gap-2.5">
-                  <h1 className="m-0 text-[19px] font-bold tracking-[-0.02em]">« {ov.keyword} »</h1>
-                  <span className="rounded-full bg-[var(--subtle)] px-2 py-[3px] text-[10px] font-semibold text-[var(--text-2)]">
+            <div className="flex flex-wrap items-start justify-between gap-3 border-b border-[var(--line)] px-5 py-3.5">
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center gap-2">
+                  <h1 className="m-0 min-w-0 break-words text-[17px] font-bold leading-tight tracking-[-0.02em]">« {ov.keyword} »</h1>
+                  <span className="shrink-0 rounded-full bg-[var(--subtle)] px-2 py-[3px] text-[10px] font-semibold text-[var(--text-2)]">
                     {ov.source === 'labs' ? 'Labs' : 'Google Ads'}
                   </span>
                 </div>
-                <div className="mt-1 flex items-center gap-2">
+                <div className="mt-1.5 flex flex-wrap gap-1.5">
                   <select value={location} onChange={(e) => setLocation(Number(e.target.value))} className={selCls}>
                     {LOCATIONS.map((l) => (<option key={l.code} value={l.code}>{l.flag} {l.name}</option>))}
                   </select>
@@ -191,21 +191,21 @@ export default function Explorer() {
                   </select>
                 </div>
               </div>
-              <div className="flex gap-1.5 rounded-xl bg-[#e9e9ec] p-1">
-                <button onClick={() => setVariant('a')} className={`rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-colors ${variant === 'a' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>📈 {t.trendView}</button>
-                <button onClick={() => setVariant('b')} className={`rounded-[9px] px-3 py-1.5 text-xs font-semibold transition-colors ${variant === 'b' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>🗺️ {t.landscape}</button>
+              <div className="flex shrink-0 gap-1 rounded-xl bg-[#e9e9ec] p-1">
+                <button onClick={() => setVariant('a')} className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${variant === 'a' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>📈 {t.trendView}</button>
+                <button onClick={() => setVariant('b')} className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${variant === 'b' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>🗺️ {t.landscape}</button>
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 pb-7 pt-5">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-7 pt-5">
               {/* stat headline */}
-              <div className="mb-[18px] grid grid-cols-5 gap-3">
+              <div className="mb-4 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(112px,1fr))]">
                 <StatCard label={t.volume} value={fmt(ov.volume)} />
                 <StatCard label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} />
                 <StatCard label={t.competition} value={ov.competition != null ? ov.competition.toFixed(2) : '—'} />
                 <StatCard label={t.intent} value={ov.intent || '—'} small />
-                <div className="rounded-[14px] border bg-[var(--card)] px-4 py-3.5" style={{ borderColor: focusKd != null && focusKd < 30 ? '#16a34a' : 'var(--line)' }}>
-                  <div className="text-[11px] font-medium text-[var(--text-2)]">{t.difficulty}</div>
+                <div className="rounded-[14px] border bg-[var(--card)] px-3.5 py-3" style={{ borderColor: focusKd != null && focusKd < 30 ? '#16a34a' : 'var(--line)' }}>
+                  <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{t.difficulty}</div>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
                     <span className="text-[22px] font-bold tracking-[-0.02em] tnum" style={{ color: dcfg?.c }}>{focusKd ?? (kd.loading ? '…' : '—')}</span>
                     {dcfg && <span className="text-xs font-semibold" style={{ color: dcfg.c }}>{dcfg.l}</span>}
@@ -241,7 +241,7 @@ export default function Explorer() {
                   </div>
 
                   {/* insights */}
-                  <div className="mt-4 grid grid-cols-4 gap-3">
+                  <div className="mt-4 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(140px,1fr))]">
                     <InsightCard label={t.volTotal} value={fmt(insights.volTotal)} hint={t.perMonth} />
                     <InsightCard label={t.quickWins} value={insights.quickWins} hint="KD < 30 · vol > 500" color="#16a34a" border />
                     <InsightCard label={`KD ${t.avgLabel}`} value={insights.avgKd} hint={t.outOf100} />
@@ -291,7 +291,7 @@ export default function Explorer() {
       </main>
 
       {/* ── RIGHT: detail ── */}
-      <aside className="flex w-[372px] shrink-0 flex-col border-s border-[var(--line)] bg-[var(--card)]">
+      <aside className="hidden w-[340px] shrink-0 flex-col border-s border-[var(--line)] bg-[var(--card)] min-[1180px]:flex">
         {ov ? (
           <>
             <div className="flex items-center gap-[22px] border-b border-[var(--line)] px-[22px] pt-4">
@@ -371,9 +371,9 @@ export default function Explorer() {
 
 function StatCard({ label, value, small }: { label: string; value: React.ReactNode; small?: boolean }) {
   return (
-    <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card)] px-4 py-3.5">
-      <div className="text-[11px] font-medium text-[var(--text-2)]">{label}</div>
-      <div className={`mt-1.5 font-bold tracking-[-0.02em] tnum ${small ? 'text-[15px]' : 'text-[22px]'}`}>{value}</div>
+    <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card)] px-3.5 py-3">
+      <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{label}</div>
+      <div className={`mt-1.5 truncate font-bold tracking-[-0.02em] tnum ${small ? 'text-[15px]' : 'text-[22px]'}`}>{value}</div>
     </div>
   )
 }

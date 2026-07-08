@@ -134,7 +134,7 @@ export default function Tracker() {
   return (
     <div className="flex h-screen overflow-hidden bg-[var(--page)]">
       {/* ── LEFT ── */}
-      <section className="flex w-[340px] shrink-0 flex-col border-e border-[var(--line)] bg-[var(--card)]">
+      <section className="flex w-[280px] shrink-0 flex-col border-e border-[var(--line)] bg-[var(--card)] lg:w-[320px]">
         <div className="border-b border-[var(--line)] px-[18px] pb-3 pt-4">
           <div className="mb-2.5 text-[14.5px] font-bold tracking-[-0.01em]">{t.mPositions} <span className="font-medium text-[var(--text-3)]">→</span></div>
           <form onSubmit={add} className="flex flex-col gap-1.5">
@@ -180,23 +180,23 @@ export default function Tracker() {
       <main className="flex min-w-0 flex-1 flex-col bg-[var(--page)]">
         {focus ? (
           <>
-            <div className="border-b border-[var(--line)] px-6 py-4">
-              <div className="flex items-center gap-2.5">
-                <h1 className="m-0 text-[19px] font-bold tracking-[-0.02em]">{focus.keyword}</h1>
-                {fcfg && <span className="inline-flex items-center rounded-lg px-2.5 py-[3px] text-[13px] font-bold tnum" style={{ color: fcfg.c, background: fcfg.bg }}>{focus.position != null ? `#${focus.position}` : '> 100'}</span>}
-                {chart && <span className="text-xs font-bold" style={{ color: tdCol }}>{td > 0 ? '↑' : td < 0 ? '↓' : '–'} {Math.abs(td)} depuis {focus.history.length} relevés</span>}
+            <div className="border-b border-[var(--line)] px-5 py-3.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="m-0 min-w-0 truncate text-[17px] font-bold tracking-[-0.02em]">{focus.keyword}</h1>
+                {fcfg && <span className="inline-flex shrink-0 items-center rounded-lg px-2.5 py-[3px] text-[13px] font-bold tnum" style={{ color: fcfg.c, background: fcfg.bg }}>{focus.position != null ? `#${focus.position}` : '> 100'}</span>}
+                {chart && <span className="shrink-0 text-xs font-bold" style={{ color: tdCol }}>{td > 0 ? '↑' : td < 0 ? '↓' : '–'} {Math.abs(td)} relevés</span>}
               </div>
-              <div className="mt-1 font-mono text-xs text-[var(--text-3)]">{focus.domain} · 🇲🇦 Maroc · Desktop</div>
+              <div className="mt-1 truncate font-mono text-xs text-[var(--text-3)]">{focus.domain} · 🇲🇦 Maroc · Desktop</div>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 pb-7 pt-5">
-              <div className="mb-[18px] grid grid-cols-5 gap-3">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-7 pt-5">
+              <div className="mb-4 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(112px,1fr))]">
                 <Mini label={t.total} value={stats.total} />
                 <Mini label={t.top3} value={stats.top3} color="#16a34a" border />
                 <Mini label={t.top10} value={stats.top10} />
                 <Mini label={t.avgPos} value={stats.avg} />
-                <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card)] px-[15px] py-[13px]">
-                  <div className="text-[11px] font-medium text-[var(--text-2)]">{t.gainsLosses}</div>
+                <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card)] px-3.5 py-3">
+                  <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{t.gainsLosses}</div>
                   <div className="mt-1 text-xl font-bold tnum"><span className="text-[#16a34a]">↑{stats.gains}</span> <span className="text-[#e11d48]">↓{stats.losses}</span></div>
                 </div>
               </div>
@@ -249,7 +249,7 @@ export default function Tracker() {
       </main>
 
       {/* ── RIGHT ── */}
-      <aside className="flex w-[372px] shrink-0 flex-col border-s border-[var(--line)] bg-[var(--card)]">
+      <aside className="hidden w-[340px] shrink-0 flex-col border-s border-[var(--line)] bg-[var(--card)] min-[1180px]:flex">
         {focus && fcfg ? (
           <>
             <div className="flex items-center gap-[22px] border-b border-[var(--line)] px-[22px] pt-4">
@@ -323,8 +323,8 @@ export default function Tracker() {
 
 function Mini({ label, value, color, border }: { label: string; value: React.ReactNode; color?: string; border?: boolean }) {
   return (
-    <div className="rounded-[14px] border bg-[var(--card)] px-[15px] py-[13px]" style={{ borderColor: border ? '#16a34a' : 'var(--line)' }}>
-      <div className="text-[11px] font-medium text-[var(--text-2)]">{label}</div>
+    <div className="rounded-[14px] border bg-[var(--card)] px-3.5 py-3" style={{ borderColor: border ? '#16a34a' : 'var(--line)' }}>
+      <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{label}</div>
       <div className="mt-1 text-xl font-bold tnum" style={{ color }}>{value}</div>
     </div>
   )
