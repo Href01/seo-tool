@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePT, useT } from '@/lib/i18n'
 import { DEFAULT_LANGUAGE, DEFAULT_LOCATION, getLanguageByCode, getLocationByCode, locName } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
-import { Page, Card, Button, Spinner, EmptyState, StatCard, SectionTitle, DistributionBar, visibilityScore } from '@/components/ui'
+import { Page, Card, Button, Spinner, EmptyState, StatCard, SectionTitle, DistributionBar, visibilityScore, Callout, InfoTip, ErrorBox } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 
 interface Project { id: string; name: string; domain: string; createdAt?: string }
@@ -143,6 +143,8 @@ export default function ProjectDetailPage() {
     <Page>
       <Link href="/app" className="mb-4 inline-block text-sm text-[var(--text-2)] transition-colors hover:text-[var(--crimson)]">← {p.backToProjects}</Link>
 
+      <Callout>{p.helpProjectDetail}</Callout>
+
       {/* HERO */}
       <Card className="mb-6 !p-0 overflow-hidden">
         <div className="flex flex-wrap items-center justify-between gap-5 p-6">
@@ -158,7 +160,7 @@ export default function ProjectDetailPage() {
             </div>
           </div>
           <div className="text-end">
-            <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--text-3)]">{p.visibility}</div>
+            <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--text-3)]">{p.visibility}<InfoTip text={p.gVisibility} /></div>
             <div className="mt-0.5 flex items-baseline justify-end gap-1 text-4xl font-bold text-[var(--crimson)] tnum">{stats.vis}<span className="text-sm font-medium text-[var(--text-3)]">/100</span></div>
           </div>
         </div>
@@ -187,14 +189,15 @@ export default function ProjectDetailPage() {
       </div>
 
       <Card className="mb-6">
-        <h2 className="mb-3 text-sm font-semibold text-[var(--text)]">{p.trackForSite}</h2>
+        <h2 className="mb-1 text-sm font-semibold text-[var(--text)]">{p.trackForSite}</h2>
+        <p className="mb-3 text-xs text-[var(--text-3)]">💸 {p.helpTrackFree}</p>
         <form onSubmit={addKeyword} className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_180px_180px_auto]">
           <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t.kwPlaceholder} className="self-end rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]" />
           <LocationSelector value={location} onChange={setLocation} />
           <LanguageSelector value={searchLang} onChange={setSearchLang} />
           <Button type="submit" disabled={loading || !project} className="self-end">{loading ? <><Spinner /> …</> : t.add}</Button>
         </form>
-        {error && <div className="mt-3 text-sm text-[var(--down)]">{error}</div>}
+        {error && <div className="mt-3"><ErrorBox message={error} /></div>}
       </Card>
 
       {kws.length === 0 ? (

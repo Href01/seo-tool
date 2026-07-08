@@ -49,14 +49,7 @@ export default function AppPage() {
     <Page>
       <WorkspaceHeader icon="📁" title={p.appTitle} subtitle={p.appSub} />
       <Callout>{p.helpProjects}</Callout>
-      {error && (
-        <div className="mb-6">
-          <ErrorBox message={error} />
-          <Link href="/login" className="mt-3 inline-block text-sm font-semibold text-[var(--crimson)]">
-            Se connecter
-          </Link>
-        </div>
-      )}
+      {error && <div className="mb-6"><ErrorBox message={error} /></div>}
       <Card className="mb-6">
         <form onSubmit={create} className="flex flex-col gap-2 sm:flex-row">
           <input value={name} onChange={(e) => setName(e.target.value)} placeholder={p.projNamePh} className="flex-1 rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]" />

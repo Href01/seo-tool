@@ -335,7 +335,7 @@ export const PT: Record<Lang, Record<string, string>> = {
     missing: 'manquant', missingF: 'manquante', unique: 'unique',
     issuesDetected: 'Problèmes détectés', noIssues: 'Aucun problème majeur détecté !',
     emptyAuditT: 'Diagnostique une page', emptyAuditH: 'Score technique, meta, structure et problèmes détectés.',
-    errorLabel: 'Erreur',
+    errorLabel: 'Erreur', signIn: 'Se connecter',
     countryLabel: 'Pays / Marché', deviceLabelTitle: 'Appareil', langLabel: 'Langue',
     cityLabel: 'Ville', cityAll: 'Tout le pays', citySerpHint: 'Ville — affine la SERP (les volumes restent au niveau pays)',
     // Page guidance (also reused as sidebar tooltips)
@@ -348,6 +348,8 @@ export const PT: Record<Lang, Record<string, string>> = {
     helpTracker: 'Suis l\'évolution de ta position Google sur tes mots-clés dans le temps. Ajoute un mot, puis lance une vérification.',
     helpDatabase: 'Tous les mots-clés déjà recherchés, accumulés au fil du temps — l\'actif propriétaire de ton outil.',
     helpAdmin: 'Vue d\'ensemble : nombre d\'utilisateurs, usage et coûts DataForSEO, taux de cache.',
+    helpProjectDetail: 'Ajoute ici les mots-clés à surveiller pour ce site, puis clique « Vérifier » pour relever leur position sur Google. La visibilité résume l\'ensemble.',
+    helpTrackFree: 'Ajouter un mot-clé est gratuit. Seul « Vérifier » interroge Google (et peut consommer un appel).',
     // Metric glossary (plain-language, for InfoTips)
     gVolume: 'Nombre de fois que ce mot est recherché sur Google chaque mois, dans le pays choisi.',
     gCpc: 'Coût par clic : ce qu\'un annonceur paie en moyenne pour un clic sur ce mot. Indice de valeur commerciale.',
@@ -357,6 +359,13 @@ export const PT: Record<Lang, Record<string, string>> = {
     gTraffic: 'Trafic estimé : visites mensuelles que ce mot apporte à ce site, selon sa position.',
     gBacklinks: 'Liens entrants : d\'autres sites qui pointent vers celui-ci. Beaucoup de liens de qualité = plus d\'autorité pour Google.',
     gVisibility: 'Score de visibilité (0–100) résumant tes positions : proche de 100 = tu es souvent en haut de Google.',
+    gSeen: 'Nombre de fois que ce mot-clé a été recherché dans l\'outil — plus c\'est élevé, plus il est demandé.',
+    // Onboarding (first visit)
+    obTitle: 'Bienvenue 👋 Voici comment démarrer',
+    obStep1: 'Tape un mot-clé (ex : « coloration cheveux ») et lance la recherche.',
+    obStep2: 'Lis le volume (recherches/mois) et la difficulté — vise volume élevé + difficulté basse.',
+    obStep3: 'Crée un projet pour ton site et ajoute-y les mots-clés à suivre dans le temps.',
+    obDismiss: 'J\'ai compris',
     // Database
     dbTitle: 'Base de mots-clés MENA', dbSub: "Asset propriétaire qui s'enrichit à chaque recherche",
     totalBase: 'Total base', uniqueKw: 'Mots-clés uniques', volTotalLabel: 'Volume total', avgDiffLabel: 'Difficulté moy.', shown: 'Affichés', afterFilters: 'Après filtres',
@@ -408,7 +417,7 @@ export const PT: Record<Lang, Record<string, string>> = {
     missing: 'غير موجود', missingF: 'غير موجود', unique: 'فريد',
     issuesDetected: 'مشاكل مكتشَفة', noIssues: 'لا مشاكل كبيرة مكتشَفة!',
     emptyAuditT: 'شخّص صفحة', emptyAuditH: 'تقييم تقني، وسوم meta، البنية والمشاكل.',
-    errorLabel: 'خطأ',
+    errorLabel: 'خطأ', signIn: 'تسجيل الدخول',
     countryLabel: 'الدولة / السوق', deviceLabelTitle: 'الجهاز', langLabel: 'اللغة',
     cityLabel: 'المدينة', cityAll: 'كل البلد', citySerpHint: 'المدينة — تُدقّق نتائج البحث (تبقى الأحجام على مستوى البلد)',
     // إرشادات الصفحة (تُستخدم أيضًا كتلميحات في الشريط الجانبي)
@@ -421,6 +430,8 @@ export const PT: Record<Lang, Record<string, string>> = {
     helpTracker: 'تابع تطوّر مركزك في Google على كلماتك عبر الزمن. أضف كلمة ثم شغّل التحقّق.',
     helpDatabase: 'كل الكلمات التي سبق البحث عنها، تتراكم مع الوقت — الأصل الخاصّ بأداتك.',
     helpAdmin: 'نظرة عامة: عدد المستخدمين، الاستخدام وتكاليف DataForSEO، ونسبة التخزين المؤقت.',
+    helpProjectDetail: 'أضف هنا الكلمات التي تريد مراقبتها لهذا الموقع، ثم اضغط «تحقّق» لرصد مركزها في Google. مؤشّر الظهور يلخّص الكل.',
+    helpTrackFree: 'إضافة كلمة مجانية. «تحقّق» وحده يستعلم من Google (وقد يستهلك طلبًا).',
     // مسرد المقاييس (بلغة مبسّطة للتلميحات)
     gVolume: 'عدد مرات البحث عن هذه الكلمة على Google شهريًا في البلد المختار.',
     gCpc: 'تكلفة النقرة: ما يدفعه المعلن وسطيًا مقابل نقرة على هذه الكلمة. مؤشّر على القيمة التجارية.',
@@ -430,6 +441,13 @@ export const PT: Record<Lang, Record<string, string>> = {
     gTraffic: 'الزيارات الشهرية المقدّرة التي تجلبها هذه الكلمة للموقع حسب مركزه.',
     gBacklinks: 'الروابط الواردة: مواقع أخرى تشير إلى هذا الموقع. كثرة الروابط الجيّدة = سلطة أعلى لدى Google.',
     gVisibility: 'مؤشّر الظهور (0–100) يلخّص مراكزك: قريب من 100 = تظهر غالبًا في صدارة Google.',
+    gSeen: 'عدد مرات البحث عن هذه الكلمة داخل الأداة — كلما زاد زاد الطلب عليها.',
+    // الإرشاد الأول
+    obTitle: 'مرحبًا 👋 إليك كيف تبدأ',
+    obStep1: 'اكتب كلمة مفتاحية (مثال: «صباغة الشعر») وابدأ البحث.',
+    obStep2: 'اقرأ الحجم (عمليات البحث شهريًا) والصعوبة — استهدف حجمًا مرتفعًا وصعوبة منخفضة.',
+    obStep3: 'أنشئ مشروعًا لموقعك وأضف إليه الكلمات لمتابعتها عبر الزمن.',
+    obDismiss: 'فهمت',
     dbTitle: 'قاعدة كلمات MENA', dbSub: 'أصل خاصّ يتنامى مع كل عملية بحث',
     totalBase: 'إجمالي القاعدة', uniqueKw: 'كلمات فريدة', volTotalLabel: 'إجمالي الحجم', avgDiffLabel: 'متوسّط الصعوبة', shown: 'المعروضة', afterFilters: 'بعد الفلاتر',
     top3Vol: 'أعلى 3 حجمًا', searchDbPh: 'ابحث (مثال: شعر)…', searchBtn: 'ابحث',

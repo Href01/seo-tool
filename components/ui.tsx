@@ -1,6 +1,7 @@
 'use client'
 
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
+import Link from 'next/link'
 import { usePT } from '@/lib/i18n'
 
 /* WorkspaceHeader — page identity: crimson icon tile + title + subtitle + actions */
@@ -75,6 +76,59 @@ export function Callout({
     <div className={`mb-5 flex items-start gap-2.5 rounded-xl border px-4 py-3 ${tones[tone]}`}>
       <span className="shrink-0 text-base leading-none">{icon}</span>
       <div className="text-[13px] leading-relaxed text-[var(--text-2)]">{children}</div>
+    </div>
+  )
+}
+
+/* Onboarding — a dismissible "how to start" card with numbered steps, shown to
+   first-time users. Remembers dismissal in localStorage under storageKey. */
+export function Onboarding({
+  storageKey,
+  title,
+  steps,
+  dismissLabel,
+}: {
+  storageKey: string
+  title: string
+  steps: string[]
+  dismissLabel: string
+}) {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    try {
+      setShow(!localStorage.getItem(storageKey))
+    } catch {
+      setShow(true)
+    }
+  }, [storageKey])
+  if (!show) return null
+  function close() {
+    try {
+      localStorage.setItem(storageKey, '1')
+    } catch {}
+    setShow(false)
+  }
+  return (
+    <div className="mb-6 rounded-2xl border border-[var(--crimson)]/25 bg-[var(--crimson)]/5 p-5 text-start">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div className="text-sm font-bold text-[var(--text)]">{title}</div>
+        <button
+          onClick={close}
+          className="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-[var(--text-3)] transition-colors hover:bg-[var(--card)] hover:text-[var(--text)]"
+        >
+          ✕ {dismissLabel}
+        </button>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        {steps.map((s, i) => (
+          <div key={i} className="flex items-start gap-2.5 rounded-xl bg-[var(--card)] p-3">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--crimson)] text-xs font-bold text-white">
+              {i + 1}
+            </span>
+            <div className="text-[12.5px] leading-snug text-[var(--text-2)]">{s}</div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -370,11 +424,19 @@ export function CacheMeta({
   )
 }
 
-/* ErrorBox */
+/* ErrorBox — shows the error and, when it looks like an auth error, a login CTA
+   so the user knows what to do next instead of just seeing a dead end. */
 export function ErrorBox({ message }: { message: string }) {
+  const p = usePT()
+  const isAuth = /connexion|connecter|admin requis|non autoris|الدخول|تسجيل|صلاحي/i.test(message)
   return (
     <div className="rounded-2xl border border-[var(--down-bg)] bg-[var(--down-bg)]/40 px-5 py-4 text-sm text-[var(--down)]">
-      <span className="font-semibold">Erreur ·</span> {message}
+      <span className="font-semibold">{p.errorLabel} ·</span> {message}
+      {isAuth && (
+        <Link href="/login" className="ms-2 font-semibold underline underline-offset-2">
+          {p.signIn}
+        </Link>
+      )}
     </div>
   )
 }

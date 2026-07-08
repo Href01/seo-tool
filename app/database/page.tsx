@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from 'react'
 import { usePT, useT } from '@/lib/i18n'
-import { Page, WorkspaceHeader, Card, Button, ErrorBox, EmptyState, StatCard, SectionTitle } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, ErrorBox, EmptyState, StatCard, SectionTitle, Callout, InfoTip } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 
 type DifficultyFilter = 'all' | 'easy' | 'medium' | 'hard'
@@ -100,11 +100,12 @@ export default function DatabasePage() {
   return (
     <Page>
       <WorkspaceHeader icon="🗃️" title={p.dbTitle} subtitle={p.dbSub} right={<Button variant="ghost" onClick={exportCSV}>{p.exportCsv}</Button>} />
+      <Callout>{p.helpDatabase}</Callout>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-4">
         <StatCard label={p.totalBase} value={count?.toLocaleString('fr') ?? '—'} sub={p.uniqueKw} accent />
-        <StatCard label={p.volTotalLabel} value={stats.totalVolume.toLocaleString('fr')} sub={t.perMonth} />
-        <StatCard label={p.avgDiffLabel} value={stats.avgDifficulty.toFixed(0)} sub={t.outOf100} />
+        <StatCard label={p.volTotalLabel} value={stats.totalVolume.toLocaleString('fr')} sub={t.perMonth} info={p.gVolume} />
+        <StatCard label={p.avgDiffLabel} value={stats.avgDifficulty.toFixed(0)} sub={t.outOf100} info={p.gDifficulty} />
         <StatCard label={p.shown} value={filtered.length} sub={p.afterFilters} />
       </div>
 
@@ -155,10 +156,10 @@ export default function DatabasePage() {
               <thead className="border-b border-[var(--line)] bg-[var(--subtle)]">
                 <tr>
                   <th className={`${th} text-start`}>{p.kwCol}</th>
-                  <th className={`${th} text-end`} onClick={() => toggleSort('volume')}>{p.volCol} {arrow('volume')}</th>
-                  <th className={`${th} text-center`} onClick={() => toggleSort('difficulty')}>{p.diffCol} {arrow('difficulty')}</th>
-                  <th className={`${th} text-end`} onClick={() => toggleSort('cpc')}>{p.cpcCol} {arrow('cpc')}</th>
-                  <th className={`${th} text-end`} onClick={() => toggleSort('timesSearched')}>{p.seenCol} {arrow('timesSearched')}</th>
+                  <th className={`${th} text-end`} onClick={() => toggleSort('volume')}>{p.volCol}<InfoTip text={p.gVolume} /> {arrow('volume')}</th>
+                  <th className={`${th} text-center`} onClick={() => toggleSort('difficulty')}>{p.diffCol}<InfoTip text={p.gDifficulty} /> {arrow('difficulty')}</th>
+                  <th className={`${th} text-end`} onClick={() => toggleSort('cpc')}>{p.cpcCol}<InfoTip text={p.gCpc} /> {arrow('cpc')}</th>
+                  <th className={`${th} text-end`} onClick={() => toggleSort('timesSearched')}>{p.seenCol}<InfoTip text={p.gSeen} /> {arrow('timesSearched')}</th>
                   <th className={`${th} text-start`}>{p.sourceCol}</th>
                 </tr>
               </thead>

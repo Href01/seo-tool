@@ -5,7 +5,7 @@ import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT, intentLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
-import { InfoTip } from '@/components/ui'
+import { InfoTip, Onboarding } from '@/components/ui'
 
 interface KeywordResult {
   keyword: string
@@ -406,7 +406,15 @@ export default function Explorer() {
           </>
         ) : (
           <div className="flex flex-1 items-center justify-center px-6">
-            <div className="w-full max-w-md text-center">
+            <div className="w-full max-w-2xl text-center">
+              {!loading && (
+                <Onboarding
+                  storageKey="onboarding:explorer"
+                  title={p.obTitle}
+                  steps={[p.obStep1, p.obStep2, p.obStep3]}
+                  dismissLabel={p.obDismiss}
+                />
+              )}
               <div className="mb-3 text-4xl">🔍</div>
               <div className="text-base font-semibold">{loading ? t.analyzing : t.emptyExplorerTitle}</div>
               {!loading && <div className="mt-1 text-sm text-[var(--text-2)]">{t.emptyExplorerHint}</div>}

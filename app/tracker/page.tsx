@@ -13,7 +13,7 @@ import {
   deviceName,
 } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
-import { DistributionBar, visibilityScore, InfoTip } from '@/components/ui'
+import { DistributionBar, visibilityScore, InfoTip, ErrorBox } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 
 interface HistPoint { position: number | null; checkedAt: string }
@@ -302,7 +302,7 @@ export default function Tracker() {
                   <div className="py-10 text-center text-sm text-[var(--text-3)]">{t.noHistory}</div>
                 )}
               </div>
-              {error && <div className="mt-3 text-sm text-[#e11d48]">{error}</div>}
+              {error && <div className="mt-3"><ErrorBox message={error} /></div>}
             </div>
           </>
         ) : (

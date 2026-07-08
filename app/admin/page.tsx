@@ -65,14 +65,7 @@ export default function AdminPage() {
     <Page>
       <WorkspaceHeader icon="A" title={p.adminTitle} subtitle={p.adminSub} />
 
-      {error && (
-        <div className="mb-6">
-          <ErrorBox message={error} />
-          <Link href="/login" className="mt-3 inline-block text-sm font-semibold text-[var(--crimson)]">
-            Se connecter
-          </Link>
-        </div>
-      )}
+      {error && <div className="mb-6"><ErrorBox message={error} /></div>}
 
       {stats && (
         <>
