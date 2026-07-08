@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT } from '@/lib/i18n'
+import { DEFAULT_LOCATION, DEFAULT_DEVICE, locName, deviceName } from '@/lib/locations'
 
 interface HistPoint { position: number | null; checkedAt: string }
 interface Tracked {
@@ -35,6 +36,7 @@ export default function Tracker() {
   const [domain, setDomain] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [detailOpen, setDetailOpen] = useState(true)
   const kd = useSeoQuery<DifficultyResult>('/api/difficulty')
 
   async function load() {
@@ -138,9 +140,9 @@ export default function Tracker() {
         <div className="border-b border-[var(--line)] px-[18px] pb-3 pt-4">
           <div className="mb-2.5 text-[14.5px] font-bold tracking-[-0.01em]">{t.mPositions} <span className="font-medium text-[var(--text-3)]">→</span></div>
           <form onSubmit={add} className="flex flex-col gap-1.5">
-            <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder="mot-clé" className="rounded-[10px] border border-[var(--line)] bg-[var(--subtle)] px-3 py-2 text-[12.5px] outline-none focus:border-[var(--crimson)]" />
+            <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t.kwPlaceholder} className="rounded-[10px] border border-[var(--line)] bg-[var(--subtle)] px-3 py-2 text-[12.5px] outline-none focus:border-[var(--crimson)]" />
             <div className="flex gap-1.5">
-              <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder="domaine.ma" className="min-w-0 flex-1 rounded-[10px] border border-[var(--line)] bg-[var(--subtle)] px-3 py-2 text-[12.5px] outline-none focus:border-[var(--crimson)]" />
+              <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder={t.domainPlaceholder} className="min-w-0 flex-1 rounded-[10px] border border-[var(--line)] bg-[var(--subtle)] px-3 py-2 text-[12.5px] outline-none focus:border-[var(--crimson)]" />
               <button disabled={busy} className="shrink-0 rounded-[10px] bg-[var(--crimson)] px-3 py-2 text-[12.5px] font-semibold text-white disabled:opacity-50">{t.add}</button>
             </div>
           </form>
@@ -180,13 +182,22 @@ export default function Tracker() {
       <main className="flex min-w-0 flex-1 flex-col bg-[var(--page)]">
         {focus ? (
           <>
-            <div className="border-b border-[var(--line)] px-5 py-3.5">
-              <div className="flex flex-wrap items-center gap-2">
-                <h1 className="m-0 min-w-0 truncate text-[17px] font-bold tracking-[-0.02em]">{focus.keyword}</h1>
-                {fcfg && <span className="inline-flex shrink-0 items-center rounded-lg px-2.5 py-[3px] text-[13px] font-bold tnum" style={{ color: fcfg.c, background: fcfg.bg }}>{focus.position != null ? `#${focus.position}` : '> 100'}</span>}
-                {chart && <span className="shrink-0 text-xs font-bold" style={{ color: tdCol }}>{td > 0 ? '↑' : td < 0 ? '↓' : '–'} {Math.abs(td)} relevés</span>}
+            <div className="flex items-start justify-between gap-3 border-b border-[var(--line)] px-5 py-3.5">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="m-0 min-w-0 truncate text-[17px] font-bold tracking-[-0.02em]">{focus.keyword}</h1>
+                  {fcfg && <span className="inline-flex shrink-0 items-center rounded-lg px-2.5 py-[3px] text-[13px] font-bold tnum" style={{ color: fcfg.c, background: fcfg.bg }}>{focus.position != null ? `#${focus.position}` : '> 100'}</span>}
+                  {chart && <span className="shrink-0 text-xs font-bold" style={{ color: tdCol }}>{td > 0 ? '↑' : td < 0 ? '↓' : '–'} {Math.abs(td)} {t.records}</span>}
+                </div>
+                <div className="mt-1 truncate font-mono text-xs text-[var(--text-3)]">{focus.domain} · {DEFAULT_LOCATION.flag} {locName(DEFAULT_LOCATION, lang)} · {deviceName(DEFAULT_DEVICE, lang)}</div>
               </div>
-              <div className="mt-1 truncate font-mono text-xs text-[var(--text-3)]">{focus.domain} · 🇲🇦 Maroc · Desktop</div>
+              <button
+                onClick={() => setDetailOpen((v) => !v)}
+                title={t.detail}
+                className={`hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors lg:flex ${detailOpen ? 'border-[var(--crimson)] bg-[var(--crimson)]/8 text-[var(--crimson)]' : 'border-[var(--line)] text-[var(--text-2)] hover:text-[var(--text)]'}`}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="1.5" y="2.5" width="13" height="11" rx="2" /><line x1="10" y1="2.5" x2="10" y2="13.5" /></svg>
+              </button>
             </div>
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-7 pt-5">
@@ -231,7 +242,7 @@ export default function Tracker() {
                     </div>
                   </>
                 ) : (
-                  <div className="py-10 text-center text-sm text-[var(--text-3)]">Pas encore d'historique — clique « Vérifier ».</div>
+                  <div className="py-10 text-center text-sm text-[var(--text-3)]">{t.noHistory}</div>
                 )}
               </div>
               {error && <div className="mt-3 text-sm text-[#e11d48]">{error}</div>}
@@ -248,8 +259,8 @@ export default function Tracker() {
         )}
       </main>
 
-      {/* ── RIGHT ── */}
-      <aside className="hidden w-[340px] shrink-0 flex-col border-s border-[var(--line)] bg-[var(--card)] min-[1180px]:flex">
+      {/* ── RIGHT (collapsible) ── */}
+      <aside className={`hidden w-[340px] shrink-0 flex-col border-s border-[var(--line)] bg-[var(--card)] ${detailOpen ? 'lg:flex' : ''}`}>
         {focus && fcfg ? (
           <>
             <div className="flex items-center gap-[22px] border-b border-[var(--line)] px-[22px] pt-4">
@@ -263,7 +274,7 @@ export default function Tracker() {
                 <div>
                   <div className="text-[15px] font-bold">{focus.keyword}</div>
                   <div className="mt-0.5 font-mono text-xs text-[var(--text-3)]">{focus.domain}</div>
-                  {chart && <div className="mt-1.5 text-xs font-bold" style={{ color: tdCol }}>{td > 0 ? '↑' : td < 0 ? '↓' : '–'} {Math.abs(td)} places</div>}
+                  {chart && <div className="mt-1.5 text-xs font-bold" style={{ color: tdCol }}>{td > 0 ? '↑' : td < 0 ? '↓' : '–'} {Math.abs(td)} {t.places}</div>}
                 </div>
               </div>
 

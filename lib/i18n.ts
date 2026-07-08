@@ -82,8 +82,35 @@ export interface Dict {
   medium: string
   hard: string
   perMonth: string
+  perMonthShort: string
   outOf100: string
   ideasHint: string
+  diffFromPre: string
+  diffFromPost: string
+  signalPre: string
+  signalPost: string
+  whoRanksHint: string
+  tagCompetitor: string
+  tagPlatform: string
+  records: string
+  places: string
+  noHistory: string
+  trendUnavailable: string
+  detail: string
+  kwPlaceholder: string
+  domainPlaceholder: string
+}
+
+export function intentLabel(v: string | null | undefined, lang: Lang): string {
+  if (!v) return '—'
+  const map: Record<string, [string, string]> = {
+    commercial: ['Commercial', 'تجاري'],
+    informational: ['Informationnel', 'معلوماتي'],
+    transactional: ['Transactionnel', 'معاملاتي'],
+    navigational: ['Navigationnel', 'تصفّحي'],
+  }
+  const pair = map[v.toLowerCase()]
+  return pair ? (lang === 'ar' ? pair[1] : pair[0]) : v
 }
 
 export const T: Record<Lang, Dict> = {
@@ -144,68 +171,98 @@ export const T: Record<Lang, Dict> = {
     medium: 'Moyen',
     hard: 'Difficile',
     perMonth: 'Recherches / mois',
+    perMonthShort: '/ mois',
     outOf100: 'Sur 100',
     ideasHint: "Clique une idée pour l'analyser",
+    diffFromPre: "D'après l'autorité de ",
+    diffFromPost: ' domaines du SERP',
+    signalPre: 'Top 10 partagé avec ',
+    signalPost: ' plateforme(s) sociale(s) — un angle de contenu à prendre.',
+    whoRanksHint: 'Autorité /1000 · plateformes grisées',
+    tagCompetitor: 'Concurrent',
+    tagPlatform: 'Plateforme',
+    records: 'relevés',
+    places: 'places',
+    noHistory: "Pas encore d'historique — clique « Vérifier ».",
+    trendUnavailable: 'Tendance indisponible pour ce mot-clé.',
+    detail: 'Détail',
+    kwPlaceholder: 'mot-clé',
+    domainPlaceholder: 'monsite.ma',
   },
   ar: {
-    appSub: 'تحليلات',
+    appSub: 'تحليلات السيو',
     secEspace: 'مساحتي',
     secConc: 'المنافسة',
-    secSuivi: 'التتبع',
-    mExplorer: 'استكشاف الكلمات',
+    secSuivi: 'تتبّع المراكز',
+    mExplorer: 'مستكشف الكلمات',
     mProjects: 'مشاريعي',
-    mSerp: 'تحليل SERP',
+    mSerp: 'تحليل نتائج البحث',
     mCompetitors: 'المنافسون',
     mBacklinks: 'الروابط الخلفية',
-    mPositions: 'المراكز',
-    listIdeas: 'أفكار',
+    mPositions: 'مراكزي',
+    listIdeas: 'أفكار كلمات',
     searchPlaceholder: 'ابحث عن كلمة مفتاحية…',
-    volume: 'الحجم',
-    cpc: 'التكلفة',
+    volume: 'حجم البحث',
+    cpc: 'تكلفة النقرة',
     competition: 'المنافسة',
-    intent: 'النية',
+    intent: 'نية البحث',
     difficulty: 'الصعوبة',
-    trend12: 'الاتجاه · 12 شهرًا',
+    trend12: 'الاتجاه · آخر 12 شهرًا',
     trendView: 'الاتجاه',
-    landscape: 'مشهد SERP',
-    whoRanks: 'من يتصدر SERP',
-    realCompetitors: 'منافسون حقيقيون',
-    platforms: 'منصات (فرصة)',
+    landscape: 'مشهد النتائج',
+    whoRanks: 'من يتصدّر نتائج البحث',
+    realCompetitors: 'منافسون فعليون',
+    platforms: 'منصّات (فرصة)',
     volTotal: 'إجمالي الحجم',
     quickWins: 'فرص سريعة',
-    avgLabel: 'متوسط',
-    avoid: 'تجنّب',
+    avgLabel: 'متوسّطة',
+    avoid: 'يُفضّل تجنّبها',
     overview: 'نظرة عامة',
-    diffMaison: 'الصعوبة الخاصة',
+    diffMaison: 'الصعوبة المحسوبة',
     recalc: 'إعادة الحساب',
-    signals: 'إشارات',
+    signals: 'ملاحظات',
     topResult: 'أفضل نتيجة',
     add: 'إضافة',
-    total: 'إجمالي المتابعة',
+    total: 'إجمالي المتابَع',
     top3: 'أفضل 3',
     top10: 'أفضل 10',
-    avgPos: 'متوسط المركز',
-    gainsLosses: 'مكاسب / خسائر',
-    history: 'السجل',
+    avgPos: 'متوسّط المركز',
+    gainsLosses: 'تقدّم / تراجع',
+    history: 'السجلّ',
     lastCheck: 'آخر فحص',
-    verify: 'تحقّق',
+    verify: 'تحقّق الآن',
     export: 'تصدير',
-    aboveYou: 'فوقك',
-    positionOverTime: 'المركز عبر الزمن',
+    aboveYou: 'من يسبقك',
+    positionOverTime: 'تطوّر المركز',
     best: 'أفضل مركز',
     worst: 'أسوأ مركز',
-    emptyExplorerTitle: 'استكشف كلمة مفتاحية',
-    emptyExplorerHint: 'تحليل كامل + فرص حولها، في شاشة واحدة.',
-    emptyTrackerTitle: 'لا كلمات متابَعة',
-    emptyTrackerHint: 'أضف كلمة لتتبّع مركزها عبر الزمن.',
+    emptyExplorerTitle: 'ابدأ باستكشاف كلمة',
+    emptyExplorerHint: 'تحليل كامل مع فرص مجاورة، في شاشة واحدة.',
+    emptyTrackerTitle: 'لا توجد كلمات متابَعة',
+    emptyTrackerHint: 'أضف كلمة مفتاحية لتتبّع مركزها عبر الزمن.',
     analyzing: 'جارٍ التحليل…',
     computing: 'جارٍ الحساب…',
-    easy: 'سهل',
-    medium: 'متوسط',
-    hard: 'صعب',
+    easy: 'سهلة',
+    medium: 'متوسّطة',
+    hard: 'صعبة',
     perMonth: 'بحث / شهر',
+    perMonthShort: '/ شهر',
     outOf100: 'من 100',
     ideasHint: 'انقر فكرة لتحليلها',
+    diffFromPre: 'استنادًا إلى سلطة ',
+    diffFromPost: ' نطاقات في نتائج البحث',
+    signalPre: 'أفضل 10 نتائج تضمّ ',
+    signalPost: ' منصّة اجتماعية — فرصة محتوى تستحقّ الاستغلال.',
+    whoRanksHint: 'السلطة /1000 · المنصّات باهتة',
+    tagCompetitor: 'منافس',
+    tagPlatform: 'منصّة',
+    records: 'قياسات',
+    places: 'مراكز',
+    noHistory: 'لا يوجد سجلّ بعد — انقر « تحقّق الآن ».',
+    trendUnavailable: 'الاتجاه غير متاح لهذه الكلمة.',
+    detail: 'التفاصيل',
+    kwPlaceholder: 'الكلمة المفتاحية',
+    domainPlaceholder: 'مثال: monsite.ma',
   },
 }
 

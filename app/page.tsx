@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from 'react'
 import { useSeoQuery } from '@/lib/useSeoQuery'
-import { useT } from '@/lib/i18n'
-import { LOCATIONS, DEVICES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode } from '@/lib/locations'
+import { useT, intentLabel } from '@/lib/i18n'
+import { LOCATIONS, DEVICES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName } from '@/lib/locations'
 
 interface KeywordResult {
   keyword: string
@@ -38,6 +38,7 @@ export default function Explorer() {
   const [query, setQuery] = useState('')
   const [focus, setFocus] = useState('')
   const [variant, setVariant] = useState<'a' | 'b'>('a')
+  const [detailOpen, setDetailOpen] = useState(true)
   const [location, setLocation] = useState(DEFAULT_LOCATION.code)
   const [device, setDevice] = useState(DEFAULT_DEVICE.id)
 
@@ -184,16 +185,25 @@ export default function Explorer() {
                 </div>
                 <div className="mt-1.5 flex flex-wrap gap-1.5">
                   <select value={location} onChange={(e) => setLocation(Number(e.target.value))} className={selCls}>
-                    {LOCATIONS.map((l) => (<option key={l.code} value={l.code}>{l.flag} {l.name}</option>))}
+                    {LOCATIONS.map((l) => (<option key={l.code} value={l.code}>{l.flag} {locName(l, lang)}</option>))}
                   </select>
                   <select value={device} onChange={(e) => setDevice(e.target.value)} className={selCls}>
-                    {DEVICES.map((d) => (<option key={d.id} value={d.id}>{d.icon} {d.label}</option>))}
+                    {DEVICES.map((d) => (<option key={d.id} value={d.id}>{d.icon} {deviceName(d, lang)}</option>))}
                   </select>
                 </div>
               </div>
-              <div className="flex shrink-0 gap-1 rounded-xl bg-[#e9e9ec] p-1">
-                <button onClick={() => setVariant('a')} className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${variant === 'a' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>📈 {t.trendView}</button>
-                <button onClick={() => setVariant('b')} className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${variant === 'b' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>🗺️ {t.landscape}</button>
+              <div className="flex shrink-0 items-center gap-2">
+                <div className="flex gap-1 rounded-xl bg-[#e9e9ec] p-1">
+                  <button onClick={() => setVariant('a')} className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${variant === 'a' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>📈 {t.trendView}</button>
+                  <button onClick={() => setVariant('b')} className={`rounded-[9px] px-2.5 py-1.5 text-xs font-semibold transition-colors ${variant === 'b' ? 'bg-[var(--card)] text-[var(--text)] shadow-sm' : 'text-[var(--text-2)]'}`}>🗺️ {t.landscape}</button>
+                </div>
+                <button
+                  onClick={() => setDetailOpen((v) => !v)}
+                  title={t.detail}
+                  className={`hidden h-8 w-8 items-center justify-center rounded-lg border transition-colors lg:flex ${detailOpen ? 'border-[var(--crimson)] bg-[var(--crimson)]/8 text-[var(--crimson)]' : 'border-[var(--line)] text-[var(--text-2)] hover:text-[var(--text)]'}`}
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.6"><rect x="1.5" y="2.5" width="13" height="11" rx="2" /><line x1="10" y1="2.5" x2="10" y2="13.5" /></svg>
+                </button>
               </div>
             </div>
 
@@ -203,7 +213,7 @@ export default function Explorer() {
                 <StatCard label={t.volume} value={fmt(ov.volume)} />
                 <StatCard label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} />
                 <StatCard label={t.competition} value={ov.competition != null ? ov.competition.toFixed(2) : '—'} />
-                <StatCard label={t.intent} value={ov.intent || '—'} small />
+                <StatCard label={t.intent} value={intentLabel(ov.intent, lang)} small />
                 <div className="rounded-[14px] border bg-[var(--card)] px-3.5 py-3" style={{ borderColor: focusKd != null && focusKd < 30 ? '#16a34a' : 'var(--line)' }}>
                   <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{t.difficulty}</div>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
@@ -236,7 +246,7 @@ export default function Explorer() {
                         })}
                       </div>
                     ) : (
-                      <div className="py-10 text-center text-sm text-[var(--text-3)]">Tendance indisponible pour ce mot-clé.</div>
+                      <div className="py-10 text-center text-sm text-[var(--text-3)]">{t.trendUnavailable}</div>
                     )}
                   </div>
 
@@ -253,7 +263,7 @@ export default function Explorer() {
                 <div className="rounded-2xl border border-[var(--line)] bg-[var(--card)] px-[22px] py-5">
                   <div className="mb-1.5 flex items-center justify-between">
                     <div className="text-sm font-bold">{t.whoRanks}</div>
-                    <div className="text-[11px] text-[var(--text-3)]">Autorité /1000 · plateformes grisées</div>
+                    <div className="text-[11px] text-[var(--text-3)]">{t.whoRanksHint}</div>
                   </div>
                   <div className="mb-4 text-[11.5px] text-[var(--text-2)]">
                     <span className="font-semibold text-[#16a34a]">{counted.length} {t.realCompetitors}</span> · <span className="text-[var(--text-3)]">{platformCount} {t.platforms}</span>
@@ -270,7 +280,7 @@ export default function Explorer() {
                             <div className="h-full rounded-md" style={{ width: `${Math.round(((c.rank ?? 0) / maxAuth) * 100)}%`, background: c.counted ? 'var(--crimson)' : '#d4d4d8' }} />
                           </div>
                           <span className="w-10 text-end text-xs font-bold tnum">{c.rank ?? '—'}</span>
-                          <span className="w-16 text-end text-[10px] font-semibold" style={{ color: c.counted ? '#16a34a' : '#a1a1aa' }}>{c.counted ? 'Concurrent' : 'Plateforme'}</span>
+                          <span className="w-16 text-end text-[10px] font-semibold" style={{ color: c.counted ? '#16a34a' : '#a1a1aa' }}>{c.counted ? t.tagCompetitor : t.tagPlatform}</span>
                         </div>
                       ))}
                     </div>
@@ -290,8 +300,8 @@ export default function Explorer() {
         )}
       </main>
 
-      {/* ── RIGHT: detail ── */}
-      <aside className="hidden w-[340px] shrink-0 flex-col border-s border-[var(--line)] bg-[var(--card)] min-[1180px]:flex">
+      {/* ── RIGHT: detail (collapsible) ── */}
+      <aside className={`hidden w-[340px] shrink-0 flex-col border-s border-[var(--line)] bg-[var(--card)] ${detailOpen ? 'lg:flex' : ''}`}>
         {ov ? (
           <>
             <div className="flex items-center gap-[22px] border-b border-[var(--line)] px-[22px] pt-4">
@@ -299,13 +309,13 @@ export default function Explorer() {
             </div>
             <div className="flex-1 overflow-y-auto px-[22px] pb-6 pt-[18px]">
               <div className="text-[17px] font-bold tracking-[-0.01em]">{ov.keyword}</div>
-              <div className="mt-0.5 text-xs text-[var(--text-3)]">{ov.source === 'labs' ? 'Labs' : 'Google Ads'} · {loc.flag} {loc.name}</div>
+              <div className="mt-0.5 text-xs text-[var(--text-3)]">{ov.source === 'labs' ? 'Labs' : 'Google Ads'} · {loc.flag} {locName(loc, lang)}</div>
 
               <div className="mt-4 flex flex-col">
-                <Row label={t.volume} value={`${fmt(ov.volume)} / mois`} />
+                <Row label={t.volume} value={`${fmt(ov.volume)} ${t.perMonthShort}`} />
                 <Row label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} />
                 <Row label={t.competition} value={ov.competition != null ? `${ov.competition.toFixed(2)} / 1.00` : '—'} />
-                <Row label={t.intent} value={ov.intent || '—'} />
+                <Row label={t.intent} value={intentLabel(ov.intent, lang)} />
                 <Row label={t.difficulty} value={focusKd != null ? `${focusKd} · ${dcfg?.l}` : '—'} color={dcfg?.c} last />
               </div>
 
@@ -323,7 +333,7 @@ export default function Explorer() {
                     </div>
                     <div>
                       <div className="text-sm font-bold" style={{ color: diffCfg(kd.data.difficulty, t).c }}>{diffCfg(kd.data.difficulty, t).l}</div>
-                      <div className="mt-0.5 text-[11.5px] text-[var(--text-2)]">Depuis l'autorité de {counted.length} domaines SERP</div>
+                      <div className="mt-0.5 text-[11.5px] text-[var(--text-2)]">{t.diffFromPre}{counted.length}{t.diffFromPost}</div>
                     </div>
                   </div>
                 ) : (
@@ -335,7 +345,7 @@ export default function Explorer() {
               {platformCount > 0 && (
                 <div className="mt-4 rounded-xl border border-[#fed7aa] bg-[#fff7ed] px-3.5 py-3">
                   <div className="text-[11px] font-bold uppercase tracking-[0.04em] text-[#b45309]">⚠ {t.signals}</div>
-                  <div className="mt-1.5 text-[12px] leading-relaxed text-[#92400e]">Top 10 partagé avec {platformCount} plateformes — angle de contenu à exploiter.</div>
+                  <div className="mt-1.5 text-[12px] leading-relaxed text-[#92400e]">{t.signalPre}{platformCount}{t.signalPost}</div>
                 </div>
               )}
 
