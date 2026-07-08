@@ -2,44 +2,38 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { usePT, useT } from '@/lib/i18n'
 import { Page, PageHeader, Card, StatCard, SectionTitle } from '@/components/ui'
 
-interface Stats {
-  bankCount: number
-  usersCount: number
-  projectsCount: number
-}
-
-const links = [
-  { href: '/database', icon: '🗃️', title: 'Base de mots-clés', desc: 'Tous les mots-clés MENA · recherche · export' },
-  { href: '/tracker', icon: '📈', title: 'Suivi de positions', desc: 'Tracking global · historique · vérifications' },
-  { href: '/', icon: '🔍', title: 'Recherche & analyse', desc: 'Mots-clés · SERP · difficulté maison · volume' },
-  { href: '/domain', icon: '🌐', title: 'Analyse concurrence', desc: 'Domaines · backlinks · audit on-page' },
-]
+interface Stats { bankCount: number; usersCount: number; projectsCount: number }
 
 export default function AdminPage() {
+  const p = usePT()
+  const { t } = useT()
   const [stats, setStats] = useState<Stats | null>(null)
 
   useEffect(() => {
-    fetch('/api/admin/stats')
-      .then((r) => r.json())
-      .then(setStats)
-      .catch(console.error)
+    fetch('/api/admin/stats').then((r) => r.json()).then(setStats).catch(console.error)
   }, [])
+
+  const links = [
+    { href: '/database', icon: '🗃️', title: p.kwBank, desc: p.cardBankSub },
+    { href: '/tracker', icon: '📈', title: t.mPositions, desc: p.cardTrackerSub },
+    { href: '/', icon: '🔍', title: t.mExplorer, desc: p.cardSearchSub },
+    { href: '/domain', icon: '🌐', title: t.mCompetitors, desc: p.cardCompSub },
+  ]
 
   return (
     <Page>
-      <PageHeader title="Dashboard Admin" subtitle="Vue omnisciente · tous les projets, stats et données" />
-
+      <PageHeader title={p.adminTitle} subtitle={p.adminSub} />
       {stats && (
         <div className="mb-6 grid gap-3 sm:grid-cols-3">
-          <StatCard label="Base de mots-clés" value={stats.bankCount.toLocaleString('fr')} sub="Mots-clés MENA accumulés" accent />
-          <StatCard label="Utilisateurs" value={stats.usersCount.toLocaleString('fr')} sub="Comptes actifs" />
-          <StatCard label="Projets" value={stats.projectsCount.toLocaleString('fr')} sub="Sites suivis" />
+          <StatCard label={p.kwBank} value={stats.bankCount.toLocaleString('fr')} sub={p.kwBankSub} accent />
+          <StatCard label={p.usersN} value={stats.usersCount.toLocaleString('fr')} sub={p.usersSub} />
+          <StatCard label={p.projectsN} value={stats.projectsCount.toLocaleString('fr')} sub={p.projectsSub} />
         </div>
       )}
-
-      <SectionTitle>Accès rapides</SectionTitle>
+      <SectionTitle>{p.quickAccess}</SectionTitle>
       <div className="grid gap-3 sm:grid-cols-2">
         {links.map((l) => (
           <Link key={l.href} href={l.href}>
