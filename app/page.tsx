@@ -138,6 +138,9 @@ export default function Explorer() {
   // and is often 0 for niche keywords (no Labs data), which contradicted the
   // maison score shown just below.
   const kdForFocus = kd.data?.keyword === focus ? kd.data : null
+  // Defensive: older/cached difficulty payloads may lack these arrays.
+  const focusPaa = kdForFocus?.peopleAlsoAsk ?? []
+  const focusRelated = kdForFocus?.relatedSearches ?? []
   const focusKd = kdForFocus?.difficulty ?? ov?.difficulty ?? null
   const dcfg = focusKd != null ? diffCfg(focusKd, t) : null
   // Uncontested ("terrain libre"): the maison SERP came back null (top 10 = 100%
@@ -251,27 +254,27 @@ export default function Explorer() {
           {suggestions.data && !kdForFocus && focus && (
             <div className="border-t border-[var(--line)] px-4 py-3 text-[11.5px] leading-snug text-[var(--text-3)]">💡 {p.paaPrompt}</div>
           )}
-          {kdForFocus && kdForFocus.peopleAlsoAsk.length > 0 && (
+          {focusPaa.length > 0 && (
             <div className="border-t border-[var(--line)] px-4 py-3.5">
               <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--text-3)]">❓ {p.paaTitle}</div>
               <ul className="flex flex-col gap-1.5">
-                {kdForFocus.peopleAlsoAsk.slice(0, 6).map((q, i) => (
+                {focusPaa.slice(0, 6).map((q, i) => (
                   <li key={i} className="flex gap-1.5 text-[12px] leading-snug text-[var(--text-2)]"><span className="shrink-0 text-[var(--crimson)]">›</span>{q}</li>
                 ))}
               </ul>
             </div>
           )}
-          {kdForFocus && kdForFocus.relatedSearches.length > 0 && (
+          {focusRelated.length > 0 && (
             <div className="border-t border-[var(--line)] px-4 py-3.5">
               <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--text-3)]">🔎 {p.relatedTitle}</div>
               <div className="flex flex-wrap gap-1.5">
-                {kdForFocus.relatedSearches.slice(0, 8).map((s, i) => (
+                {focusRelated.slice(0, 8).map((s, i) => (
                   <button key={i} onClick={() => analyze(s, true)} className="rounded-full border border-[var(--line)] bg-[var(--card)] px-2.5 py-1 text-[11.5px] font-medium text-[var(--text)] transition-colors hover:border-[var(--crimson)] hover:text-[var(--crimson)]">{s}</button>
                 ))}
               </div>
             </div>
           )}
-          {kdForFocus && kdForFocus.peopleAlsoAsk.length === 0 && kdForFocus.relatedSearches.length === 0 && (
+          {kdForFocus && focusPaa.length === 0 && focusRelated.length === 0 && (
             <div className="border-t border-[var(--line)] px-4 py-3 text-[11.5px] leading-snug text-[var(--text-3)]">ℹ️ {p.paaNone}</div>
           )}
 
