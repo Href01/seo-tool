@@ -19,7 +19,7 @@ export function WorkspaceHeader({
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[var(--crimson)]/10 text-[19px] text-[var(--crimson)]">
+        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--crimson)]/15 to-[var(--crimson)]/[0.04] text-[19px] text-[var(--crimson)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--crimson)]/10">
           {icon}
         </div>
         <div className="min-w-0">
@@ -174,12 +174,46 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-2xl border border-[var(--line)] bg-[var(--card)] ${
+      className={`rounded-2xl border border-[var(--line)] bg-[var(--card)] shadow-[var(--shadow-sm)] transition-shadow duration-200 hover:shadow-[var(--shadow-md)] ${
         padded ? 'p-5' : ''
       } ${className}`}
     >
       {children}
     </div>
+  )
+}
+
+/* Sparkline — a tiny inline trend line with a soft gradient area fill. */
+export function Sparkline({
+  data,
+  color = 'var(--crimson)',
+  width = 72,
+  height = 24,
+}: {
+  data: number[]
+  color?: string
+  width?: number
+  height?: number
+}) {
+  if (!data || data.length < 2) return null
+  const max = Math.max(...data)
+  const min = Math.min(...data)
+  const span = max - min || 1
+  const stepX = width / (data.length - 1)
+  const y = (v: number) => height - 2 - ((v - min) / span) * (height - 4)
+  const pts = data.map((v, i) => `${(i * stepX).toFixed(1)},${y(v).toFixed(1)}`)
+  const gid = `sl${Math.round(data[0])}_${data.length}_${Math.round(max)}`
+  return (
+    <svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} fill="none" className="overflow-visible">
+      <defs>
+        <linearGradient id={gid} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <polygon points={`0,${height} ${pts.join(' ')} ${width},${height}`} fill={`url(#${gid})`} />
+      <polyline points={pts.join(' ')} stroke={color} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   )
 }
 
@@ -228,6 +262,7 @@ export function StatCard({
   trend,
   sub,
   info,
+  spark,
   accent = false,
   dark = false,
 }: {
@@ -236,18 +271,21 @@ export function StatCard({
   trend?: number
   sub?: string
   info?: string
+  spark?: number[]
   accent?: boolean
   dark?: boolean
 }) {
   const base = dark
-    ? 'bg-[var(--ink)] text-white border-transparent'
+    ? 'bg-gradient-to-br from-[#26262b] to-[var(--ink)] text-white border-transparent'
     : accent
-    ? 'bg-[var(--card)] border-[var(--crimson)]'
-    : 'bg-[var(--card)] border-[var(--line)]'
+    ? 'bg-gradient-to-br from-[var(--crimson)]/[0.06] to-[var(--card)] border-[var(--crimson)]/40'
+    : 'bg-gradient-to-br from-white to-[#fafafb] border-[var(--line)]'
   return (
-    <div className={`rounded-2xl border p-5 ${base}`}>
-      <div className={`text-xs font-medium ${dark ? 'text-white/60' : 'text-[var(--text-2)]'}`}>
-        {label}
+    <div
+      className={`relative overflow-hidden rounded-2xl border p-5 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] ${base}`}
+    >
+      <div className={`flex items-center text-xs font-medium ${dark ? 'text-white/60' : 'text-[var(--text-2)]'}`}>
+        <span className="truncate">{label}</span>
         {info && <InfoTip text={info} />}
       </div>
       <div className="mt-2 flex items-end gap-2">
@@ -257,6 +295,11 @@ export function StatCard({
         {trend !== undefined && <TrendPill value={trend} />}
       </div>
       {sub && <div className={`mt-1 text-xs ${dark ? 'text-white/50' : 'text-[var(--text-3)]'}`}>{sub}</div>}
+      {spark && spark.length > 1 && (
+        <div className="mt-2 -mb-1">
+          <Sparkline data={spark} color={accent ? 'var(--crimson)' : dark ? '#ffffff' : 'var(--text-3)'} width={120} height={26} />
+        </div>
+      )}
     </div>
   )
 }
@@ -288,8 +331,8 @@ export function Button({
   className?: string
 }) {
   const variants: Record<string, string> = {
-    primary: 'bg-[var(--crimson)] text-white hover:bg-[var(--crimson-dark)] shadow-sm',
-    ink: 'bg-[var(--ink)] text-white hover:bg-black',
+    primary: 'bg-[var(--crimson)] text-white hover:bg-[var(--crimson-dark)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)]',
+    ink: 'bg-[var(--ink)] text-white hover:bg-black shadow-[var(--shadow-sm)]',
     ghost: 'bg-[var(--subtle)] text-[var(--text)] hover:bg-[var(--line)]',
   }
   return (
@@ -297,7 +340,7 @@ export function Button({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-150 active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 ${variants[variant]} ${className}`}
     >
       {children}
     </button>
@@ -348,8 +391,8 @@ export function EmptyState({
   chips?: { label: string; onClick: () => void }[]
 }) {
   return (
-    <div className="rounded-2xl border border-dashed border-[var(--line)] bg-[var(--card)] px-10 py-14 text-center">
-      <div className="mb-3 text-4xl">{icon}</div>
+    <div className="rounded-2xl border border-dashed border-[var(--line)] bg-[var(--card)] px-10 py-14 text-center shadow-[var(--shadow-sm)]">
+      <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-[var(--crimson)]/12 to-[var(--crimson)]/[0.03] text-3xl ring-1 ring-[var(--crimson)]/10">{icon}</div>
       <h3 className="mb-1 text-base font-semibold text-[var(--text)]">{title}</h3>
       <p className="text-sm text-[var(--text-2)]">{hint}</p>
       {chips && chips.length > 0 && (
@@ -389,9 +432,9 @@ export function PageHeader({
   )
 }
 
-/* Page — consistent outer padding wrapper */
+/* Page — consistent outer padding wrapper (with a subtle content reveal) */
 export function Page({ children }: { children: ReactNode }) {
-  return <main className="mx-auto max-w-6xl px-6 py-8 sm:px-8">{children}</main>
+  return <main className="animate-in mx-auto max-w-6xl px-6 py-8 sm:px-8">{children}</main>
 }
 
 /* CacheMeta — the "⚡ cache / 💳 API · maj X" line */

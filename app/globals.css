@@ -24,6 +24,12 @@
   --up-bg: #dcfce7;
   --down: #e11d48;
   --down-bg: #ffe4e6;
+
+  /* Depth — soft, layered shadows for a less flat, more premium feel */
+  --shadow-sm: 0 1px 2px rgba(16, 16, 18, 0.04), 0 1px 3px rgba(16, 16, 18, 0.03);
+  --shadow-md: 0 2px 8px rgba(16, 16, 18, 0.06), 0 6px 20px rgba(16, 16, 18, 0.05);
+  --shadow-lg: 0 10px 34px rgba(16, 16, 18, 0.12);
+  --ring: rgba(236, 11, 67, 0.12);
 }
 
 @theme inline {
@@ -37,7 +43,13 @@ body {
 }
 
 body {
-  background: var(--page);
+  /* Subtle tinted depth instead of a flat grey — crimson glow top-right,
+     ink haze bottom-left, both very faint. Fixed so it stays put on scroll. */
+  background:
+    radial-gradient(1100px 560px at 100% -8%, rgba(236, 11, 67, 0.055), transparent 60%),
+    radial-gradient(900px 520px at -8% 112%, rgba(16, 16, 18, 0.04), transparent 55%),
+    var(--page);
+  background-attachment: fixed;
   color: var(--text);
   font-family: var(--font-geist-sans), -apple-system, system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -46,6 +58,39 @@ body {
 /* Numeric alignment for metric-heavy tables */
 .tnum {
   font-variant-numeric: tabular-nums;
+}
+
+/* Micro-animations — content reveal + bar/number growth. Kept short & subtle. */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(7px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-in {
+  animation: fadeInUp 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes growBar {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+.grow-bar {
+  transform-origin: bottom;
+  animation: growBar 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-in,
+  .grow-bar {
+    animation: none;
+  }
 }
 
 /* Subtle custom scrollbars to match the clean SaaS look */

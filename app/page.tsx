@@ -5,7 +5,7 @@ import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT, intentLabel, competitionLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
-import { InfoTip, Onboarding } from '@/components/ui'
+import { InfoTip, Onboarding, Sparkline } from '@/components/ui'
 
 interface KeywordResult {
   keyword: string
@@ -319,7 +319,7 @@ export default function Explorer() {
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-7 pt-5">
               {/* stat headline */}
               <div className="mb-4 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(112px,1fr))]">
-                <StatCard label={t.volume} value={fmt(ov.volume)} info={p.gVolume} />
+                <StatCard label={t.volume} value={fmt(ov.volume)} info={p.gVolume} spark={ov.trend?.map((x) => x.volume)} />
                 <StatCard label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} info={p.gCpc} />
                 <StatCard label={t.competition} value={competitionLabel(ov.competition, lang)} small info={p.gCompetition} />
                 <StatCard label={t.intent} value={intentLabel(ov.intent, lang, ov.keyword)} small info={p.gIntent} />
@@ -354,7 +354,7 @@ export default function Explorer() {
                           return (
                             <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
                               <span className="text-[10px] font-semibold text-[var(--text-3)] tnum">{b.volume >= 1000 ? `${(b.volume / 1000).toFixed(1)}k` : b.volume}</span>
-                              <div className="w-full rounded-t-md transition-all" style={{ height: `${h}px`, background: isMax ? 'var(--crimson)' : 'rgba(236,11,67,0.22)' }} />
+                              <div className="grow-bar w-full rounded-t-md transition-opacity hover:opacity-80" style={{ height: `${h}px`, background: isMax ? 'linear-gradient(to top, var(--crimson-dark), var(--crimson))' : 'linear-gradient(to top, rgba(236,11,67,0.10), rgba(236,11,67,0.30))', animationDelay: `${i * 28}ms` }} />
                               <span className="text-[10px] text-[var(--text-3)]">{b.month.slice(5)}</span>
                             </div>
                           )
@@ -532,11 +532,12 @@ export default function Explorer() {
   )
 }
 
-function StatCard({ label, value, small, info }: { label: string; value: React.ReactNode; small?: boolean; info?: string }) {
+function StatCard({ label, value, small, info, spark }: { label: string; value: React.ReactNode; small?: boolean; info?: string; spark?: number[] }) {
   return (
-    <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card)] px-3.5 py-3">
+    <div className="rounded-[14px] border border-[var(--line)] bg-gradient-to-br from-white to-[#fafafb] px-3.5 py-3 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
       <div className="flex items-center text-[11px] font-medium text-[var(--text-2)]"><span className="truncate">{label}</span>{info && <InfoTip text={info} />}</div>
       <div className={`mt-1.5 truncate font-bold tracking-[-0.02em] tnum ${small ? 'text-[15px]' : 'text-[22px]'}`}>{value}</div>
+      {spark && spark.length > 1 && <div className="mt-1 -mb-0.5"><Sparkline data={spark} width={110} height={20} /></div>}
     </div>
   )
 }
