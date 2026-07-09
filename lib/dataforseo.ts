@@ -309,6 +309,32 @@ export interface SerpPage {
   ads: { title: string; domain: string; url: string }[]
 }
 
+/** People-Also-Ask questions from raw SERP items. */
+function paaFrom(items: JsonRecord[]): string[] {
+  const set = new Set<string>()
+  for (const it of items.filter((x) => x.type === 'people_also_ask')) {
+    for (const q of records(it.items)) {
+      const question = asString(q.title) || asString(q.seed_question)
+      if (question) set.add(question)
+    }
+  }
+  return [...set]
+}
+
+/** Related search queries from raw SERP items. */
+function relatedFrom(items: JsonRecord[]): string[] {
+  const set = new Set<string>()
+  for (const it of items.filter((x) => x.type === 'related_searches')) {
+    if (Array.isArray(it.items)) {
+      for (const s of it.items) {
+        if (typeof s === 'string' && s.trim()) set.add(s.trim())
+        else if (isRecord(s) && asString(s.title)) set.add(asString(s.title))
+      }
+    }
+  }
+  return [...set]
+}
+
 /** Full SERP: organic results PLUS the features Google shows around them
  * (featured snippet, People-Also-Ask, local pack, related searches, ads).
  * Same single paid call as serpOrganic — we were discarding the rest. */
@@ -320,28 +346,10 @@ export async function serpPage(keyword: string, opts: SerpOpts = {}): Promise<Se
     ? { title: asString(fs.title), description: asString(fs.description), url: asString(fs.url), domain: asString(fs.domain) }
     : null
 
-  const paa = new Set<string>()
-  for (const it of items.filter((x) => x.type === 'people_also_ask')) {
-    for (const q of records(it.items)) {
-      const question = asString(q.title) || asString(q.seed_question)
-      if (question) paa.add(question)
-    }
-  }
-
   const localPack = items
     .filter((it) => it.type === 'local_pack')
     .map((it) => ({ title: asString(it.title), rating: asNumber(child(it, 'rating').value), address: asString(it.address) }))
     .filter((l) => l.title)
-
-  const related = new Set<string>()
-  for (const it of items.filter((x) => x.type === 'related_searches')) {
-    if (Array.isArray(it.items)) {
-      for (const s of it.items) {
-        if (typeof s === 'string' && s.trim()) related.add(s.trim())
-        else if (isRecord(s) && asString(s.title)) related.add(asString(s.title))
-      }
-    }
-  }
 
   const ads = items
     .filter((it) => it.type === 'paid')
@@ -351,9 +359,9 @@ export async function serpPage(keyword: string, opts: SerpOpts = {}): Promise<Se
   return {
     organic: organicFrom(items),
     featuredSnippet,
-    peopleAlsoAsk: [...paa],
+    peopleAlsoAsk: paaFrom(items),
     localPack,
-    relatedSearches: [...related],
+    relatedSearches: relatedFrom(items),
     ads,
   }
 }
@@ -593,6 +601,10 @@ export interface DifficultyResult {
   // (nothing to outrank on authority) -> "terrain libre / opportunite".
   difficulty: number | null
   competitors: { position: number | null; domain: string; rank: number | null; counted: boolean }[]
+  // SERP features from the SAME fetch (no extra paid call): questions people ask
+  // and related searches — surfaced as content/keyword ideas in the Explorer.
+  peopleAlsoAsk: string[]
+  relatedSearches: string[]
 }
 
 
@@ -617,7 +629,9 @@ export async function computeKeywordDifficulty(
   keyword: string,
   opts: { location?: number; language?: string; coordinate?: string } = {}
 ): Promise<DifficultyResult> {
-  const serp = await serpOrganic(keyword, { ...opts, depth: 10 })
+  // One SERP fetch, reused for both the difficulty AND the SERP features.
+  const items = await serpItems(keyword, { ...opts, depth: 10 })
+  const serp = organicFrom(items)
 
   const seen = new Set<string>()
   const unique: { position: number | null; domain: string; raw: string }[] = []
@@ -644,5 +658,11 @@ export async function computeKeywordDifficulty(
   })
 
   const difficulty = weightTotal > 0 ? Math.round(weightedSum / weightTotal) : null
-  return { keyword, difficulty, competitors }
+  return {
+    keyword,
+    difficulty,
+    competitors,
+    peopleAlsoAsk: paaFrom(items),
+    relatedSearches: relatedFrom(items),
+  }
 }

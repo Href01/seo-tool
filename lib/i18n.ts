@@ -421,6 +421,7 @@ const PT_FR = {
     serpLocalPack: 'Pack local (Google Maps)', serpLocalHint: 'Google affiche une carte : une fiche Google Business bien remplie est un vrai atout ici.',
     serpPaa: 'Questions posées par les internautes', serpPaaHint: 'Autant d\'idées de contenu à traiter dans tes pages pour capter ces recherches.',
     serpRelated: 'Recherches associées', serpAds: 'Annonceurs sur ce mot-clé', serpAdsHint: 'Des marques paient pour ce mot-clé : signe d\'une vraie valeur commerciale.',
+    paaTitle: 'Questions posées', relatedTitle: 'Recherches associées', paaPrompt: 'Questions & recherches associées : lance le Paysage SERP',
     recent: 'Dernières recherches', visitSite: 'Visiter', fullTracking: 'Suivi complet', examples: 'Exemples à essayer',
 }
 
@@ -514,6 +515,7 @@ const PT_AR: Record<keyof typeof PT_FR, string> = {
     serpLocalPack: 'الحزمة المحلية (خرائط Google)', serpLocalHint: 'يعرض Google خريطة: بطاقة Google Business جيّدة تمثّل ميزة حقيقية هنا.',
     serpPaa: 'أسئلة يطرحها الباحثون', serpPaaHint: 'أفكار محتوى جاهزة لمعالجتها في صفحاتك لالتقاط هذه العمليات.',
     serpRelated: 'عمليات بحث ذات صلة', serpAds: 'المعلنون على هذه الكلمة', serpAdsHint: 'علامات تدفع مقابل هذه الكلمة: مؤشّر على قيمة تجارية حقيقية.',
+    paaTitle: 'أسئلة الباحثين', relatedTitle: 'عمليات بحث ذات صلة', paaPrompt: 'الأسئلة والعمليات ذات الصلة: شغّل مشهد النتائج',
     recent: 'عمليات بحث أخيرة', visitSite: 'زيارة', fullTracking: 'التتبّع الكامل', examples: 'أمثلة للتجربة',
 }
 

@@ -26,7 +26,7 @@ interface KeywordOverview {
   trend: { month: string; volume: number }[]
 }
 interface Competitor { position: number | null; domain: string; rank: number | null; counted: boolean }
-interface DifficultyResult { keyword: string; difficulty: number | null; competitors: Competitor[] }
+interface DifficultyResult { keyword: string; difficulty: number | null; competitors: Competitor[]; peopleAlsoAsk: string[]; relatedSearches: string[] }
 
 const fmt = (n: number | null | undefined) => (n == null ? '—' : n.toLocaleString('fr-FR'))
 
@@ -242,6 +242,33 @@ export default function Explorer() {
               )
             })
           )}
+
+          {/* SERP features — pulled from the difficulty SERP (no extra cost),
+              shown as content/keyword ideas next to the suggestions. */}
+          {suggestions.data && !kdForFocus && focus && (
+            <div className="border-t border-[var(--line)] px-4 py-3 text-[11.5px] leading-snug text-[var(--text-3)]">💡 {p.paaPrompt}</div>
+          )}
+          {kdForFocus && kdForFocus.peopleAlsoAsk.length > 0 && (
+            <div className="border-t border-[var(--line)] px-4 py-3.5">
+              <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--text-3)]">❓ {p.paaTitle}</div>
+              <ul className="flex flex-col gap-1.5">
+                {kdForFocus.peopleAlsoAsk.slice(0, 6).map((q, i) => (
+                  <li key={i} className="flex gap-1.5 text-[12px] leading-snug text-[var(--text-2)]"><span className="shrink-0 text-[var(--crimson)]">›</span>{q}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {kdForFocus && kdForFocus.relatedSearches.length > 0 && (
+            <div className="border-t border-[var(--line)] px-4 py-3.5">
+              <div className="mb-2 text-[11px] font-bold uppercase tracking-[0.04em] text-[var(--text-3)]">🔎 {p.relatedTitle}</div>
+              <div className="flex flex-wrap gap-1.5">
+                {kdForFocus.relatedSearches.slice(0, 8).map((s, i) => (
+                  <button key={i} onClick={() => analyze(s, true)} className="rounded-full border border-[var(--line)] bg-[var(--card)] px-2.5 py-1 text-[11.5px] font-medium text-[var(--text)] transition-colors hover:border-[var(--crimson)] hover:text-[var(--crimson)]">{s}</button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {!suggestions.data && !suggestions.loading && (
             <div className="px-6 py-12 text-center text-[13px] text-[var(--text-3)]">{t.ideasHint} ↑</div>
           )}

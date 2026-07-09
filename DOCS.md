@@ -126,7 +126,9 @@ scripts/
   quand le domaine cible est trouve.
 - `computeKeywordDifficulty` : SERP top 10 -> dedup domaines -> exclusion des
   mega-plateformes -> autorite backlinks (0-1000) ponderee par position -> score
-  0-100, ou `null` si le top 10 est 100 % plateformes (terrain libre).
+  0-100, ou `null` si le top 10 est 100 % plateformes (terrain libre). Remonte
+  aussi les questions (PAA) et recherches associees de la MEME SERP (0 appel en
+  plus) -> affichees comme idees dans l'Explorer.
 - `domainOverview` : ranked keywords limit 200, tries par trafic `etv` desc.
 - `backlinksSummary`, `instantPageAudit`, `bulkBacklinkRanks`.
 
@@ -311,8 +313,12 @@ Etat apres passage architecte / engineer / UX.
   `toLocaleString('fr')` dans les cellules de tableaux (chiffres latins, faible
   impact).
 
+**Fait — feature :**
+- Apercu SERP-features dans l'Explorer : questions (PAA) + recherches associees
+  dans le panneau d'idees, tirees de la SERP de la difficulte (0 appel en plus,
+  visibles apres Paysage SERP). Recherches associees = chips cliquables.
+
 **A faire (features) :**
 - GSC (donnees exactes du domaine), OAuth, reset password.
-- Apercu SERP-features dans l'Explorer.
 
 Derniere mise a jour : 2026-07-09.
