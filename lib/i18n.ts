@@ -119,16 +119,39 @@ export interface Dict {
   domainPlaceholder: string
 }
 
-export function intentLabel(v: string | null | undefined, lang: Lang): string {
-  if (!v) return '—'
+/** Heuristic intent from the keyword text, used when the API returns none
+ * (e.g. Google Ads fallback keywords carry no intent). Multilingual patterns. */
+export function guessIntent(keyword: string): string {
+  const k = ` ${keyword.toLowerCase()} `
+  const has = (arr: string[]) => arr.some((w) => k.includes(w))
+  if (has(['comment', 'pourquoi', "c'est quoi", 'c est quoi', 'définition', 'definition', 'kifach', 'كيف', 'ما هو', 'ما هي', 'لماذا', 'معنى', 'how', 'what', 'why', 'guide', 'tuto', 'astuce', 'recette']))
+    return 'informational'
+  if (has(['prix', 'acheter', 'achat', 'commander', 'commande', 'livraison', 'pas cher', 'promo', 'solde', 'boutique', 'en ligne', 'سعر', 'ثمن', 'شراء', 'اشتري', 'توصيل', 'رخيص', 'تخفيض', 'buy', 'price', 'cheap', 'order', 'shop', 'deal']))
+    return 'transactional'
+  if (has(['meilleur', 'meilleure', 'avis', 'comparatif', 'comparaison', ' vs ', 'top ', 'test', 'classement', 'أفضل', 'مقارنة', 'رأي', 'تقييم', 'best', 'review', 'compare']))
+    return 'commercial'
+  return 'commercial'
+}
+
+export function intentLabel(v: string | null | undefined, lang: Lang, keyword?: string): string {
+  const val = v || (keyword ? guessIntent(keyword) : null)
+  if (!val) return '—'
   const map: Record<string, [string, string]> = {
     commercial: ['Commercial', 'تجاري'],
     informational: ['Informationnel', 'معلوماتي'],
     transactional: ['Transactionnel', 'معاملاتي'],
     navigational: ['Navigationnel', 'تصفّحي'],
   }
-  const pair = map[v.toLowerCase()]
-  return pair ? (lang === 'ar' ? pair[1] : pair[0]) : v
+  const pair = map[val.toLowerCase()]
+  return pair ? (lang === 'ar' ? pair[1] : pair[0]) : val
+}
+
+/** Plain-language label for the 0–1 Google Ads competition score. */
+export function competitionLabel(v: number | null | undefined, lang: Lang): string {
+  if (v == null) return '—'
+  if (v < 0.34) return lang === 'ar' ? 'منخفضة' : 'Faible'
+  if (v < 0.67) return lang === 'ar' ? 'متوسّطة' : 'Moyenne'
+  return lang === 'ar' ? 'مرتفعة' : 'Forte'
 }
 
 export const T: Record<Lang, Dict> = {

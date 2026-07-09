@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { useSeoQuery } from '@/lib/useSeoQuery'
-import { useT, usePT, intentLabel } from '@/lib/i18n'
+import { useT, usePT, intentLabel, competitionLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
 import { InfoTip, Onboarding } from '@/components/ui'
@@ -321,8 +321,8 @@ export default function Explorer() {
               <div className="mb-4 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(112px,1fr))]">
                 <StatCard label={t.volume} value={fmt(ov.volume)} info={p.gVolume} />
                 <StatCard label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} info={p.gCpc} />
-                <StatCard label={t.competition} value={ov.competition != null ? ov.competition.toFixed(2) : '—'} info={p.gCompetition} />
-                <StatCard label={t.intent} value={intentLabel(ov.intent, lang)} small info={p.gIntent} />
+                <StatCard label={t.competition} value={competitionLabel(ov.competition, lang)} small info={p.gCompetition} />
+                <StatCard label={t.intent} value={intentLabel(ov.intent, lang, ov.keyword)} small info={p.gIntent} />
                 <div className="rounded-[14px] border bg-[var(--card)] px-3.5 py-3" style={{ borderColor: focusUncontested || (focusKd != null && focusKd < 30) ? '#16a34a' : 'var(--line)' }}>
                   <div className="flex items-center truncate text-[11px] font-medium text-[var(--text-2)]"><span className="truncate">{t.difficulty}</span><InfoTip text={p.gDifficulty} /></div>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
@@ -457,8 +457,8 @@ export default function Explorer() {
               <div className="mt-4 flex flex-col">
                 <Row label={t.volume} value={`${fmt(ov.volume)} ${t.perMonthShort}`} info={p.gVolume} />
                 <Row label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} info={p.gCpc} />
-                <Row label={t.competition} value={ov.competition != null ? `${ov.competition.toFixed(2)} / 1.00` : '—'} info={p.gCompetition} />
-                <Row label={t.intent} value={intentLabel(ov.intent, lang)} info={p.gIntent} />
+                <Row label={t.competition} value={ov.competition != null ? `${competitionLabel(ov.competition, lang)} · ${ov.competition.toFixed(2)}` : '—'} info={p.gCompetition} />
+                <Row label={t.intent} value={intentLabel(ov.intent, lang, ov.keyword)} info={p.gIntent} />
                 <Row label={t.difficulty} value={focusUncontested ? t.uncontested : (focusKd != null ? `${focusKd} · ${dcfg?.l}` : '—')} color={focusUncontested ? '#16a34a' : dcfg?.c} info={p.gDifficulty} last />
               </div>
 
