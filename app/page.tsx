@@ -5,7 +5,7 @@ import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT, intentLabel, competitionLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
-import { InfoTip, Onboarding, Sparkline, RingGauge, AnimatedNumber } from '@/components/ui'
+import { InfoTip, Onboarding, Sparkline, RingGauge, AnimatedNumber, ErrorBox } from '@/components/ui'
 import { difficultyTone } from '@/lib/status'
 
 interface KeywordResult {
@@ -468,6 +468,9 @@ export default function Explorer() {
                   steps={[p.obStep1, p.obStep2, p.obStep3]}
                   dismissLabel={p.obDismiss}
                 />
+              )}
+              {!loading && (overview.error || suggestions.error) && (
+                <div className="mb-5 text-start"><ErrorBox message={overview.error || suggestions.error} /></div>
               )}
               <div className="mb-3 text-4xl">🔍</div>
               <div className="text-base font-semibold">{loading ? t.analyzing : t.emptyExplorerTitle}</div>
