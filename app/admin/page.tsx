@@ -70,16 +70,16 @@ export default function AdminPage() {
       {stats && (
         <>
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
-            <StatCard label={p.kwBank} value={stats.bankCount.toLocaleString('fr')} sub={p.kwBankSub} accent />
-            <StatCard label={p.usersN} value={stats.usersCount.toLocaleString('fr')} sub={p.usersSub} />
-            <StatCard label={p.projectsN} value={stats.projectsCount.toLocaleString('fr')} sub={p.projectsSub} />
+            <StatCard label={p.kwBank} value="—" num={stats.bankCount} sub={p.kwBankSub} tone="pink" />
+            <StatCard label={p.usersN} value="—" num={stats.usersCount} sub={p.usersSub} tone="blue" />
+            <StatCard label={p.projectsN} value="—" num={stats.projectsCount} sub={p.projectsSub} tone="violet" />
           </div>
 
           <SectionTitle>Cost cockpit</SectionTitle>
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
-            <StatCard label="Aujourd'hui" value={money(stats.usage.today.cost)} sub={`${stats.usage.today.calls} appels`} dark />
-            <StatCard label="7 jours" value={money(stats.usage.last7d.cost)} sub={`${stats.usage.last7d.calls} appels`} />
-            <StatCard label="30 jours" value={money(stats.usage.last30d.cost)} sub={`${stats.usage.last30d.calls} appels`} />
+            <StatCard label="Aujourd'hui" value={money(stats.usage.today.cost)} num={stats.usage.today.cost} format={money} sub={`${stats.usage.today.calls} appels`} dark />
+            <StatCard label="7 jours" value={money(stats.usage.last7d.cost)} num={stats.usage.last7d.cost} format={money} sub={`${stats.usage.last7d.calls} appels`} tone="teal" />
+            <StatCard label="30 jours" value={money(stats.usage.last30d.cost)} num={stats.usage.last30d.cost} format={money} sub={`${stats.usage.last30d.calls} appels`} tone="indigo" />
           </div>
 
           <div className="mb-6 grid gap-4 lg:grid-cols-2">

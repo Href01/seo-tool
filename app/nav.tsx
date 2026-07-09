@@ -113,7 +113,7 @@ export default function Nav() {
   return (
     <aside className="sticky top-0 flex h-screen w-[246px] shrink-0 flex-col border-e border-[var(--line)] bg-[var(--card)]">
       <div className="flex items-center gap-2.5 px-5 pb-4 pt-[18px]">
-        <div className="flex h-[34px] w-[34px] items-center justify-center rounded-[11px] bg-[var(--crimson)] text-[17px] font-bold text-white">
+        <div className="brand-grad brand-anim flex h-[34px] w-[34px] items-center justify-center rounded-[11px] text-[17px] font-bold text-white shadow-[var(--shadow-md)]">
           S
         </div>
         <div>

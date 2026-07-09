@@ -177,10 +177,10 @@ export default function ProjectDetailPage() {
       </Card>
 
       <div className="mb-6 grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(130px,1fr))]">
-        <StatCard label={p.trackedKw} value={kws.length} accent />
-        <StatCard label={t.top3} value={stats.top3} />
-        <StatCard label={t.top10} value={stats.top10} />
-        <StatCard label={t.avgPos} value={kws.length ? stats.avg : '—'} />
+        <StatCard label={p.trackedKw} value="—" num={kws.length} tone="blue" />
+        <StatCard label={t.top3} value="—" num={stats.top3} tone="teal" />
+        <StatCard label={t.top10} value="—" num={stats.top10} tone="violet" />
+        <StatCard label={t.avgPos} value={kws.length ? stats.avg : '—'} num={kws.length ? stats.avg : undefined} tone="pink" />
       </div>
 
       {/* QUICK ACTIONS */}

@@ -17,8 +17,6 @@ interface BacklinksSummary {
   nofollow: number | null
 }
 
-const fmt = (n: number | null) => (n != null ? n.toLocaleString('fr') : '—')
-
 export default function BacklinksPage() {
   const p = usePT()
   const [domain, setDomain] = useState('')
@@ -67,10 +65,10 @@ export default function BacklinksPage() {
       {data && (
         <div className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <StatCard label={p.backlinks} value={fmt(data.backlinks)} />
-            <StatCard label={p.refDomains} value={fmt(data.referringDomains)} accent />
-            <StatCard label={p.mainDomains} value={fmt(data.referringMainDomains)} />
-            <StatCard label={p.authRank} value={fmt(data.rank)} />
+            <StatCard label={p.backlinks} value="—" num={data.backlinks ?? undefined} info={p.gBacklinks} tone="indigo" />
+            <StatCard label={p.refDomains} value="—" num={data.referringDomains ?? undefined} tone="violet" />
+            <StatCard label={p.mainDomains} value="—" num={data.referringMainDomains ?? undefined} tone="blue" />
+            <StatCard label={p.authRank} value="—" num={data.rank ?? undefined} tone="teal" />
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

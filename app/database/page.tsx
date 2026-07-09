@@ -103,10 +103,10 @@ export default function DatabasePage() {
       <Callout>{p.helpDatabase}</Callout>
 
       <div className="mb-6 grid gap-3 sm:grid-cols-4">
-        <StatCard label={p.totalBase} value={count?.toLocaleString('fr') ?? '—'} sub={p.uniqueKw} accent />
-        <StatCard label={p.volTotalLabel} value={stats.totalVolume.toLocaleString('fr')} sub={t.perMonth} info={p.gVolume} />
-        <StatCard label={p.avgDiffLabel} value={stats.avgDifficulty.toFixed(0)} sub={t.outOf100} info={p.gDifficulty} />
-        <StatCard label={p.shown} value={filtered.length} sub={p.afterFilters} />
+        <StatCard label={p.totalBase} value="—" num={count ?? undefined} sub={p.uniqueKw} tone="pink" />
+        <StatCard label={p.volTotalLabel} value="—" num={stats.totalVolume} sub={t.perMonth} info={p.gVolume} tone="blue" />
+        <StatCard label={p.avgDiffLabel} value="—" num={Math.round(stats.avgDifficulty)} sub={t.outOf100} info={p.gDifficulty} tone="violet" />
+        <StatCard label={p.shown} value="—" num={filtered.length} sub={p.afterFilters} tone="teal" />
       </div>
 
       {stats.topKeywords.length > 0 && (

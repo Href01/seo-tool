@@ -30,6 +30,18 @@
   --shadow-md: 0 2px 8px rgba(16, 16, 18, 0.06), 0 6px 20px rgba(16, 16, 18, 0.05);
   --shadow-lg: 0 10px 34px rgba(16, 16, 18, 0.12);
   --ring: rgba(236, 11, 67, 0.12);
+
+  /* Signature brand gradient (crimson -> magenta -> coral) */
+  --brand-grad: linear-gradient(135deg, #ec0b43 0%, #ff2d6f 52%, #ff7a45 100%);
+
+  /* Decorative accent palette — for UI identity / categorizing tiles.
+     Kept DISTINCT from the reserved data-status colors (green/amber/red)
+     so status semantics are never diluted. */
+  --violet: #7c3aed;
+  --teal: #0d9488;
+  --blue: #2563eb;
+  --pink: #db2777;
+  --indigo: #4f46e5;
 }
 
 @theme inline {
@@ -86,9 +98,27 @@ body {
   transform-origin: bottom;
   animation: growBar 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
+/* Animated sheen for the signature gradient (logo, hero marks). */
+@keyframes sheen {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+.brand-grad {
+  background: var(--brand-grad);
+  background-size: 180% 180%;
+}
+.brand-anim {
+  animation: sheen 5s ease-in-out infinite alternate;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-in,
-  .grow-bar {
+  .grow-bar,
+  .brand-anim {
     animation: none;
   }
 }

@@ -4,7 +4,41 @@ import { ReactNode, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePT } from '@/lib/i18n'
 
-/* WorkspaceHeader — page identity: crimson icon tile + title + subtitle + actions */
+/* AnimatedNumber — counts up from 0 to value on mount (motivating micro-motion).
+   Renders the final value instantly under prefers-reduced-motion. */
+export function AnimatedNumber({
+  value,
+  format,
+  duration = 900,
+}: {
+  value: number
+  format?: (n: number) => string
+  duration?: number
+}) {
+  const [n, setN] = useState(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return value
+    return 0
+  })
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      setN(value)
+      return
+    }
+    let raf = 0
+    const start = performance.now()
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - start) / duration)
+      setN(value * (1 - Math.pow(1 - p, 3)))
+      if (p < 1) raf = requestAnimationFrame(tick)
+      else setN(value)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [value, duration])
+  return <span className="tnum">{format ? format(n) : Math.round(n).toLocaleString('fr')}</span>
+}
+
+/* WorkspaceHeader — page identity: gradient icon tile + title + subtitle + actions */
 export function WorkspaceHeader({
   icon,
   title,
@@ -19,7 +53,7 @@ export function WorkspaceHeader({
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--crimson)]/15 to-[var(--crimson)]/[0.04] text-[19px] text-[var(--crimson)] shadow-[var(--shadow-sm)] ring-1 ring-[var(--crimson)]/10">
+        <div className="brand-grad flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-[19px] text-white shadow-[var(--shadow-md)]">
           {icon}
         </div>
         <div className="min-w-0">
@@ -122,7 +156,7 @@ export function Onboarding({
       <div className="grid gap-3 sm:grid-cols-3">
         {steps.map((s, i) => (
           <div key={i} className="flex items-start gap-2.5 rounded-xl bg-[var(--card)] p-3">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[var(--crimson)] text-xs font-bold text-white">
+            <span className="brand-grad flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white shadow-[var(--shadow-sm)]">
               {i + 1}
             </span>
             <div className="text-[12.5px] leading-snug text-[var(--text-2)]">{s}</div>
@@ -319,27 +353,46 @@ export function Pill({
 }
 
 /* StatCard — label, big number, optional trend pill + subtitle */
+const STAT_TONES: Record<string, { grad: string; bar: string; dot: string }> = {
+  crimson: { grad: 'from-[var(--crimson)]/[0.06]', bar: 'bg-[var(--crimson)]', dot: 'bg-[var(--crimson)]' },
+  violet: { grad: 'from-[var(--violet)]/[0.08]', bar: 'bg-[var(--violet)]', dot: 'bg-[var(--violet)]' },
+  teal: { grad: 'from-[var(--teal)]/[0.08]', bar: 'bg-[var(--teal)]', dot: 'bg-[var(--teal)]' },
+  blue: { grad: 'from-[var(--blue)]/[0.08]', bar: 'bg-[var(--blue)]', dot: 'bg-[var(--blue)]' },
+  pink: { grad: 'from-[var(--pink)]/[0.08]', bar: 'bg-[var(--pink)]', dot: 'bg-[var(--pink)]' },
+  indigo: { grad: 'from-[var(--indigo)]/[0.08]', bar: 'bg-[var(--indigo)]', dot: 'bg-[var(--indigo)]' },
+}
+export type StatTone = keyof typeof STAT_TONES
+
 export function StatCard({
   label,
   value,
+  num,
+  format,
   trend,
   sub,
   info,
   spark,
+  tone,
   accent = false,
   dark = false,
 }: {
   label: string
-  value: ReactNode
+  value?: ReactNode
+  num?: number
+  format?: (n: number) => string
   trend?: number
   sub?: string
   info?: string
   spark?: number[]
+  tone?: StatTone
   accent?: boolean
   dark?: boolean
 }) {
+  const ts = tone ? STAT_TONES[tone] : null
   const base = dark
     ? 'bg-gradient-to-br from-[#26262b] to-[var(--ink)] text-white border-transparent'
+    : ts
+    ? `bg-gradient-to-br ${ts.grad} to-[var(--card)] border-[var(--line)]`
     : accent
     ? 'bg-gradient-to-br from-[var(--crimson)]/[0.06] to-[var(--card)] border-[var(--crimson)]/40'
     : 'bg-gradient-to-br from-white to-[#fafafb] border-[var(--line)]'
@@ -347,13 +400,15 @@ export function StatCard({
     <div
       className={`relative overflow-hidden rounded-2xl border p-5 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] ${base}`}
     >
+      {ts && <div className={`absolute inset-x-0 top-0 h-1 ${ts.bar}`} />}
       <div className={`flex items-center text-xs font-medium ${dark ? 'text-white/60' : 'text-[var(--text-2)]'}`}>
+        {ts && <span className={`me-1.5 inline-block h-1.5 w-1.5 rounded-full ${ts.dot}`} />}
         <span className="truncate">{label}</span>
         {info && <InfoTip text={info} />}
       </div>
       <div className="mt-2 flex items-end gap-2">
         <div className={`text-2xl font-bold tracking-tight tnum ${dark ? 'text-white' : 'text-[var(--text)]'}`}>
-          {value}
+          {num != null ? <AnimatedNumber value={num} format={format} /> : value}
         </div>
         {trend !== undefined && <TrendPill value={trend} />}
       </div>
@@ -394,7 +449,7 @@ export function Button({
   className?: string
 }) {
   const variants: Record<string, string> = {
-    primary: 'bg-[var(--crimson)] text-white hover:bg-[var(--crimson-dark)] shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)]',
+    primary: 'brand-grad text-white shadow-[var(--shadow-sm)] hover:shadow-[var(--shadow-md)] hover:brightness-105',
     ink: 'bg-[var(--ink)] text-white hover:bg-black shadow-[var(--shadow-sm)]',
     ghost: 'bg-[var(--subtle)] text-[var(--text)] hover:bg-[var(--line)]',
   }

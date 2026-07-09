@@ -71,8 +71,8 @@ export default function DomainPage() {
       {data && (
         <div className="space-y-6">
           <div className="grid gap-3 sm:grid-cols-2">
-            <StatCard label={p.orgKeywords} value={data.organicKeywords?.toLocaleString('fr') ?? '—'} sub={p.orgKeywordsSub} />
-            <StatCard label={p.estTraffic} value={data.estimatedTraffic?.toLocaleString('fr') ?? '—'} sub={p.estTrafficSub} info={p.gTraffic} accent />
+            <StatCard label={p.orgKeywords} value="—" num={data.organicKeywords ?? undefined} sub={p.orgKeywordsSub} tone="blue" />
+            <StatCard label={p.estTraffic} value="—" num={data.estimatedTraffic ?? undefined} sub={p.estTrafficSub} info={p.gTraffic} tone="teal" />
           </div>
 
           {dist && (

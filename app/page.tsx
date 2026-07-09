@@ -5,7 +5,7 @@ import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT, intentLabel, competitionLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
-import { InfoTip, Onboarding, Sparkline, RingGauge } from '@/components/ui'
+import { InfoTip, Onboarding, Sparkline, RingGauge, AnimatedNumber } from '@/components/ui'
 
 interface KeywordResult {
   keyword: string
@@ -319,10 +319,10 @@ export default function Explorer() {
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-7 pt-5">
               {/* stat headline */}
               <div className="mb-4 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(112px,1fr))]">
-                <StatCard label={t.volume} value={fmt(ov.volume)} info={p.gVolume} spark={ov.trend?.map((x) => x.volume)} />
-                <StatCard label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} info={p.gCpc} />
-                <StatCard label={t.competition} value={competitionLabel(ov.competition, lang)} small info={p.gCompetition} />
-                <StatCard label={t.intent} value={intentLabel(ov.intent, lang, ov.keyword)} small info={p.gIntent} />
+                <StatCard label={t.volume} value={fmt(ov.volume)} num={ov.volume ?? undefined} info={p.gVolume} spark={ov.trend?.map((x) => x.volume)} tone="blue" />
+                <StatCard label={t.cpc} value={ov.cpc != null ? `${ov.cpc.toFixed(2)} $` : '—'} num={ov.cpc ?? undefined} format={(n) => `${n.toFixed(2)} $`} info={p.gCpc} tone="teal" />
+                <StatCard label={t.competition} value={competitionLabel(ov.competition, lang)} small info={p.gCompetition} tone="violet" />
+                <StatCard label={t.intent} value={intentLabel(ov.intent, lang, ov.keyword)} small info={p.gIntent} tone="pink" />
                 <div className="rounded-[14px] border bg-[var(--card)] px-3.5 py-3" style={{ borderColor: focusUncontested || (focusKd != null && focusKd < 30) ? '#16a34a' : 'var(--line)' }}>
                   <div className="flex items-center truncate text-[11px] font-medium text-[var(--text-2)]"><span className="truncate">{t.difficulty}</span><InfoTip text={p.gDifficulty} /></div>
                   <div className="mt-1.5 flex items-baseline gap-1.5">
@@ -366,12 +366,11 @@ export default function Explorer() {
                               <div className="grow-bar w-full rounded-t-md transition-opacity hover:opacity-80" style={{ height: `${h}px`, background: isMax ? 'linear-gradient(to top, var(--crimson-dark), var(--crimson))' : 'linear-gradient(to top, rgba(236,11,67,0.10), rgba(236,11,67,0.30))', animationDelay: `${i * 28}ms` }} />
                               {(() => {
                                 const [yy, mm] = b.month.split('-')
-                                const mLabel = new Intl.DateTimeFormat(lang === 'ar' ? 'ar' : 'fr-FR', { month: 'short' }).format(new Date(Number(yy), Number(mm) - 1, 1)).replace('.', '')
                                 const showYear = mm === '01' || i === 0
                                 return (
-                                  <span className="text-center text-[10px] leading-tight text-[var(--text-3)]">
-                                    {mLabel}
-                                    {showYear && <span className="block text-[9px] font-semibold text-[var(--text-2)] tnum">{`'${yy.slice(2)}`}</span>}
+                                  <span className="flex flex-col items-center text-[10px] leading-tight text-[var(--text-3)] tnum">
+                                    <span>{mm}</span>
+                                    {showYear && <span className="text-[9px] font-bold text-[var(--crimson)]">{yy}</span>}
                                   </span>
                                 )
                               })()}
@@ -548,11 +547,17 @@ export default function Explorer() {
   )
 }
 
-function StatCard({ label, value, small, info, spark }: { label: string; value: React.ReactNode; small?: boolean; info?: string; spark?: number[] }) {
+const LTONE: Record<string, string> = { blue: 'var(--blue)', teal: 'var(--teal)', violet: 'var(--violet)', pink: 'var(--pink)', indigo: 'var(--indigo)' }
+function StatCard({ label, value, small, info, spark, tone, num, format }: { label: string; value?: React.ReactNode; small?: boolean; info?: string; spark?: number[]; tone?: string; num?: number; format?: (n: number) => string }) {
+  const tc = tone ? LTONE[tone] : null
   return (
-    <div className="rounded-[14px] border border-[var(--line)] bg-gradient-to-br from-white to-[#fafafb] px-3.5 py-3 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
-      <div className="flex items-center text-[11px] font-medium text-[var(--text-2)]"><span className="truncate">{label}</span>{info && <InfoTip text={info} />}</div>
-      <div className={`mt-1.5 truncate font-bold tracking-[-0.02em] tnum ${small ? 'text-[15px]' : 'text-[22px]'}`}>{value}</div>
+    <div className="relative overflow-hidden rounded-[14px] border border-[var(--line)] bg-gradient-to-br from-white to-[#fafafb] px-3.5 py-3 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
+      {tc && <span className="absolute inset-x-0 top-0 h-0.5" style={{ background: tc }} />}
+      <div className="flex items-center text-[11px] font-medium text-[var(--text-2)]">
+        {tc && <span className="me-1.5 inline-block h-1.5 w-1.5 rounded-full" style={{ background: tc }} />}
+        <span className="truncate">{label}</span>{info && <InfoTip text={info} />}
+      </div>
+      <div className={`mt-1.5 truncate font-bold tracking-[-0.02em] tnum ${small ? 'text-[15px]' : 'text-[22px]'}`}>{num != null ? <AnimatedNumber value={num} format={format} /> : value}</div>
       {spark && spark.length > 1 && <div className="mt-1 -mb-0.5"><Sparkline data={spark} width={110} height={20} /></div>}
     </div>
   )
