@@ -630,7 +630,10 @@ export async function computeKeywordDifficulty(
   opts: { location?: number; language?: string; coordinate?: string } = {}
 ): Promise<DifficultyResult> {
   // One SERP fetch, reused for both the difficulty AND the SERP features.
-  const items = await serpItems(keyword, { ...opts, depth: 10 })
+  // depth 30 (same DataForSEO price tier as 10) so we also capture the
+  // related-searches block, which sits at the BOTTOM of the page. Difficulty
+  // still only uses the top 10 organic below.
+  const items = await serpItems(keyword, { ...opts, depth: 30 })
   const serp = organicFrom(items)
 
   const seen = new Set<string>()

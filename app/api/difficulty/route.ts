@@ -26,9 +26,9 @@ export async function POST(req: Request) {
   }
 
   // gcom: SERP behind the difficulty is google.com with geo-targeting.
-  // v4: result now also carries SERP features (PAA + related searches).
+  // v5: depth 30 so the bottom-of-page related-searches block is captured too.
   const geo = coordinate ? `c:${city!.id}` : location
-  const key = cacheKey('kd', 'gcom', 'v4', keyword, geo, language)
+  const key = cacheKey('kd', 'gcom', 'v5', keyword, geo, language)
 
   const hit = await getCachedMeta(key, TTL_DAYS)
   if (hit) {
