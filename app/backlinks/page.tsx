@@ -5,6 +5,7 @@ import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { usePT } from '@/lib/i18n'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle, Callout, DistributionBar } from '@/components/ui'
 import { DOMAIN_EXAMPLES } from '@/lib/examples'
+import { spamTone } from '@/lib/status'
 
 interface BacklinksSummary {
   domain: string
@@ -23,9 +24,13 @@ export default function BacklinksPage() {
   const { loading, error, cached, fetchedAt, data, run } = useSeoQuery<BacklinksSummary>('/api/backlinks')
 
   function spamLevel(score: number) {
-    if (score < 15) return { l: p.spamHealthy, c: 'text-[var(--up)]', bar: 'bg-[var(--up)]', hint: p.spamHealthyHint }
-    if (score < 40) return { l: p.spamModerate, c: 'text-amber-700', bar: 'bg-amber-500', hint: p.spamModHint }
-    return { l: p.spamRisky, c: 'text-[var(--down)]', bar: 'bg-[var(--down)]', hint: p.spamRiskyHint }
+    const t = spamTone(score)
+    const labels = {
+      healthy: { l: p.spamHealthy, hint: p.spamHealthyHint },
+      moderate: { l: p.spamModerate, hint: p.spamModHint },
+      risky: { l: p.spamRisky, hint: p.spamRiskyHint },
+    }
+    return { ...labels[t.tier], c: t.c }
   }
 
   function search(e: React.FormEvent) {
@@ -72,21 +77,24 @@ export default function BacklinksPage() {
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">
-            {data.spamScore != null && (
-              <Card>
-                <SectionTitle>{p.spamScore}</SectionTitle>
-                <div className="flex items-center gap-5">
-                  <div className={`text-4xl font-bold tnum ${spamLevel(data.spamScore).c}`}>{data.spamScore}%</div>
-                  <div>
-                    <div className={`text-lg font-bold ${spamLevel(data.spamScore).c}`}>{spamLevel(data.spamScore).l}</div>
-                    <div className="text-sm text-[var(--text-2)]">{spamLevel(data.spamScore).hint}</div>
+            {data.spamScore != null && (() => {
+              const spam = spamLevel(data.spamScore)
+              return (
+                <Card>
+                  <SectionTitle>{p.spamScore}</SectionTitle>
+                  <div className="flex items-center gap-5">
+                    <div className="text-4xl font-bold tnum" style={{ color: spam.c }}>{data.spamScore}%</div>
+                    <div>
+                      <div className="text-lg font-bold" style={{ color: spam.c }}>{spam.l}</div>
+                      <div className="text-sm text-[var(--text-2)]">{spam.hint}</div>
+                    </div>
                   </div>
-                </div>
-                <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[var(--subtle)]">
-                  <div className={`h-full rounded-full ${spamLevel(data.spamScore).bar}`} style={{ width: `${Math.min(100, data.spamScore)}%` }} />
-                </div>
-              </Card>
-            )}
+                  <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-[var(--subtle)]">
+                    <div className="h-full rounded-full" style={{ background: spam.c, width: `${Math.min(100, data.spamScore)}%` }} />
+                  </div>
+                </Card>
+              )
+            })()}
 
             {dofollowPct != null && (
               <Card>

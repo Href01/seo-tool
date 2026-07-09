@@ -7,16 +7,11 @@ import { DEFAULT_LOCATION, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
 import { DOMAIN_EXAMPLES } from '@/lib/examples'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle, Callout, DistributionBar } from '@/components/ui'
+import { positionTone } from '@/lib/status'
 
 interface DomainKeyword { keyword: string; position: number | null; volume: number | null; traffic: number | null; url: string }
 interface DomainOverview { domain: string; organicKeywords: number | null; estimatedTraffic: number | null; keywords: DomainKeyword[] }
 
-function posClass(p: number | null) {
-  if (p == null) return 'bg-[var(--subtle)] text-[var(--text-2)]'
-  if (p <= 3) return 'bg-[var(--up-bg)] text-[var(--up)]'
-  if (p <= 10) return 'bg-amber-100 text-amber-700'
-  return 'bg-[var(--subtle)] text-[var(--text-2)]'
-}
 
 export default function DomainPage() {
   const p = usePT()
@@ -108,7 +103,7 @@ export default function DomainPage() {
                             {k.url ? <a href={k.url} target="_blank" rel="noreferrer" className="font-medium text-[var(--text)] hover:text-[var(--crimson)]">{k.keyword}</a> : <span className="font-medium text-[var(--text)]">{k.keyword}</span>}
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <span className={`inline-flex rounded-full px-2.5 py-1 text-xs font-semibold tnum ${posClass(k.position)}`}>{k.position != null ? `#${k.position}` : '—'}</span>
+                            <span className="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold tnum" style={{ color: positionTone(k.position).c, background: positionTone(k.position).bg }}>{k.position != null ? `#${k.position}` : '—'}</span>
                           </td>
                           <td className="px-4 py-3 text-end text-sm text-[var(--text-2)] tnum">{k.volume?.toLocaleString('fr') ?? '—'}</td>
                           <td className="px-4 py-3 text-end text-sm font-semibold text-[var(--text)] tnum">{k.traffic != null ? k.traffic.toLocaleString('fr') : '—'}</td>

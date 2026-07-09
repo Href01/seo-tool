@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from 'react'
 import { usePT, useT } from '@/lib/i18n'
 import { Page, WorkspaceHeader, Card, Button, ErrorBox, EmptyState, StatCard, SectionTitle, Callout, InfoTip } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
+import { difficultyTone } from '@/lib/status'
 
 type DifficultyFilter = 'all' | 'easy' | 'medium' | 'hard'
 
@@ -19,8 +20,8 @@ interface BankEntry {
 
 function DiffBadge({ diff }: { diff: number | null }) {
   if (!diff) return <span className="text-[var(--text-3)]">—</span>
-  const cfg = diff < 30 ? 'bg-[var(--up-bg)] text-[var(--up)]' : diff < 60 ? 'bg-amber-100 text-amber-700' : 'bg-[var(--down-bg)] text-[var(--down)]'
-  return <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold tnum ${cfg}`}>{diff}</span>
+  const t = difficultyTone(diff)
+  return <span className="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold tnum" style={{ color: t.c, background: t.bg }}>{diff}</span>
 }
 
 export default function DatabasePage() {

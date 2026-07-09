@@ -14,6 +14,7 @@ import {
 } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
 import { DistributionBar, visibilityScore, InfoTip, ErrorBox, RingGauge } from '@/components/ui'
+import { positionTone } from '@/lib/status'
 import { errorMessage } from '@/lib/errors'
 
 interface HistPoint { position: number | null; checkedAt: string }
@@ -31,13 +32,7 @@ interface Competitor { position: number | null; domain: string; rank: number | n
 interface DifficultyResult { keyword: string; difficulty: number; competitors: Competitor[] }
 
 const CLAMP = 30
-function posCfg(p: number | null) {
-  if (p == null) return { c: '#71717a', bg: '#f4f4f5' }
-  if (p <= 3) return { c: '#16a34a', bg: '#dcfce7' }
-  if (p <= 10) return { c: '#b45309', bg: '#fef3c7' }
-  if (p <= 20) return { c: '#ec0b43', bg: 'rgba(236,11,67,0.1)' }
-  return { c: '#71717a', bg: '#f4f4f5' }
-}
+const posCfg = positionTone
 const clamp = (p: number | null) => (p == null ? CLAMP : Math.min(p, CLAMP))
 const dfmt = (s: string | null) => (s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '—')
 function marketLabel(location: number, language: string, uiLang: string) {

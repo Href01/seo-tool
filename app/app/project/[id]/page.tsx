@@ -8,6 +8,7 @@ import { DEFAULT_LANGUAGE, DEFAULT_LOCATION, getLanguageByCode, getLocationByCod
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
 import { Page, Card, Button, Spinner, EmptyState, StatCard, SectionTitle, DistributionBar, visibilityScore, Callout, InfoTip, ErrorBox, RingGauge } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
+import { positionTone } from '@/lib/status'
 
 interface Project { id: string; name: string; domain: string; createdAt?: string }
 interface TrackedKeyword {
@@ -23,11 +24,8 @@ interface TrackedKeyword {
 
 const CLAMP = 30
 function posBadge(position: number | null) {
-  if (position == null) return { label: '>100', c: 'text-[var(--text-2)]', b: 'bg-[var(--subtle)]' }
-  if (position <= 3) return { label: `#${position}`, c: 'text-[var(--up)]', b: 'bg-[var(--up-bg)]' }
-  if (position <= 10) return { label: `#${position}`, c: 'text-amber-700', b: 'bg-amber-100' }
-  if (position <= 20) return { label: `#${position}`, c: 'text-[var(--crimson)]', b: 'bg-[var(--crimson)]/10' }
-  return { label: `#${position}`, c: 'text-[var(--text-2)]', b: 'bg-[var(--subtle)]' }
+  const t = positionTone(position)
+  return { label: position == null ? '>100' : `#${position}`, c: t.c, b: t.bg }
 }
 const norm = (d: string) => d.toLowerCase().replace(/^www\./, '')
 // Score color: high visibility is good (green), low is weak (crimson).
@@ -228,7 +226,7 @@ export default function ProjectDetailPage() {
                     </div>
                     <svg width="56" height="22" viewBox="0 0 56 22" fill="none" className="shrink-0"><polyline points={spark || '0,11 56,11'} stroke={dcol} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                     <span className="w-8 text-end text-[11px] font-bold tnum" style={{ color: dcol }}>{delta > 0 ? `↑${delta}` : delta < 0 ? `↓${Math.abs(delta)}` : '–'}</span>
-                    <div className={`flex items-center rounded-lg px-3 py-1.5 ${badge.b}`}><span className={`text-base font-bold tnum ${badge.c}`}>{badge.label}</span></div>
+                    <div className="flex items-center rounded-lg px-3 py-1.5" style={{ background: badge.b }}><span className="text-base font-bold tnum" style={{ color: badge.c }}>{badge.label}</span></div>
                     <div className="flex gap-2">
                       <button onClick={() => check(it.id)} disabled={busyId === it.id} className="rounded-xl border border-[var(--line)] px-3 py-2 text-sm font-medium text-[var(--text-2)] transition-colors hover:text-[var(--text)] disabled:opacity-50">{busyId === it.id ? '…' : t.verify}</button>
                       <button onClick={() => remove(it.id)} disabled={busyId === it.id} className="rounded-xl border border-[var(--line)] px-3 py-2 text-sm font-medium text-[var(--down)] transition-colors hover:bg-[var(--down-bg)] disabled:opacity-50">{p.del}</button>

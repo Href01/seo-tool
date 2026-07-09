@@ -6,6 +6,7 @@ import { useT, usePT, intentLabel, competitionLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
 import { InfoTip, Onboarding, Sparkline, RingGauge, AnimatedNumber } from '@/components/ui'
+import { difficultyTone } from '@/lib/status'
 
 interface KeywordResult {
   keyword: string
@@ -30,9 +31,8 @@ interface DifficultyResult { keyword: string; difficulty: number | null; competi
 const fmt = (n: number | null | undefined) => (n == null ? '—' : n.toLocaleString('fr-FR'))
 
 function diffCfg(s: number, t: { easy: string; medium: string; hard: string }) {
-  if (s < 30) return { c: '#16a34a', bg: '#dcfce7', l: t.easy }
-  if (s < 60) return { c: '#b45309', bg: '#fef3c7', l: t.medium }
-  return { c: '#e11d48', bg: '#ffe4e6', l: t.hard }
+  const d = difficultyTone(s)
+  return { c: d.c, bg: d.bg, l: t[d.tier] }
 }
 
 function defer(callback: () => void) {

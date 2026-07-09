@@ -6,6 +6,7 @@ import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
 import { MEGA_PLATFORMS } from '@/lib/platforms'
+import { positionTone } from '@/lib/status'
 import { LocationSelector, CitySelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill, Callout, DistributionBar, SectionTitle } from '@/components/ui'
 
@@ -50,11 +51,6 @@ export default function SerpPage() {
     return { uniqueDomains: domains.size, platforms, realCompetitors: rows.length - platforms }
   }, [data])
 
-  function posClass(pos: number | null) {
-    if ((pos ?? 99) <= 3) return 'bg-[var(--up-bg)] text-[var(--up)]'
-    if ((pos ?? 99) <= 10) return 'bg-amber-100 text-amber-700'
-    return 'bg-[var(--subtle)] text-[var(--text-2)]'
-  }
 
   return (
     <Page>
@@ -177,7 +173,7 @@ export default function SerpPage() {
             return (
               <div key={i} className={`rounded-2xl border bg-[var(--card)] p-4 transition-colors ${isPlatform ? 'border-[var(--line)] opacity-70' : 'border-[var(--line)] hover:border-[var(--text-3)]'}`}>
                 <div className="flex items-start gap-3">
-                  <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold tnum ${posClass(r.position)}`}>{r.position ?? '—'}</div>
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold tnum" style={{ color: positionTone(r.position).c, background: positionTone(r.position).bg }}>{r.position ?? '—'}</div>
                   <div className="min-w-0 flex-1">
                     <a href={r.url} target="_blank" rel="noreferrer" className="block truncate font-medium text-[var(--text)] hover:text-[var(--crimson)]">{r.title || r.url}</a>
                     <div className="mt-0.5 flex items-center gap-2">
