@@ -343,7 +343,16 @@ export default function Explorer() {
                   {/* TREND */}
                   <div className="rounded-2xl border border-[var(--line)] bg-[var(--card)] px-[22px] py-5">
                     <div className="mb-[18px] flex items-center justify-between">
-                      <div className="text-sm font-bold">{t.trend12}</div>
+                      <div>
+                        <div className="text-sm font-bold">{t.trend12}</div>
+                        {ov.trend.length > 0 && (
+                          <div className="mt-0.5 text-[11px] text-[var(--text-3)] tnum">
+                            {ov.trend[0].month.slice(0, 4) === ov.trend[ov.trend.length - 1].month.slice(0, 4)
+                              ? ov.trend[0].month.slice(0, 4)
+                              : `${ov.trend[0].month.slice(0, 4)} – ${ov.trend[ov.trend.length - 1].month.slice(0, 4)}`}
+                          </div>
+                        )}
+                      </div>
                       <div className="text-[11px] text-[var(--text-3)]">{t.perMonth}</div>
                     </div>
                     {ov.trend.length && ov.trend.some((x) => x.volume > 0) ? (
@@ -355,7 +364,17 @@ export default function Explorer() {
                             <div key={i} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
                               <span className="text-[10px] font-semibold text-[var(--text-3)] tnum">{b.volume >= 1000 ? `${(b.volume / 1000).toFixed(1)}k` : b.volume}</span>
                               <div className="grow-bar w-full rounded-t-md transition-opacity hover:opacity-80" style={{ height: `${h}px`, background: isMax ? 'linear-gradient(to top, var(--crimson-dark), var(--crimson))' : 'linear-gradient(to top, rgba(236,11,67,0.10), rgba(236,11,67,0.30))', animationDelay: `${i * 28}ms` }} />
-                              <span className="text-[10px] text-[var(--text-3)]">{b.month.slice(5)}</span>
+                              {(() => {
+                                const [yy, mm] = b.month.split('-')
+                                const mLabel = new Intl.DateTimeFormat(lang === 'ar' ? 'ar' : 'fr-FR', { month: 'short' }).format(new Date(Number(yy), Number(mm) - 1, 1)).replace('.', '')
+                                const showYear = mm === '01' || i === 0
+                                return (
+                                  <span className="text-center text-[10px] leading-tight text-[var(--text-3)]">
+                                    {mLabel}
+                                    {showYear && <span className="block text-[9px] font-semibold text-[var(--text-2)] tnum">{`'${yy.slice(2)}`}</span>}
+                                  </span>
+                                )
+                              })()}
                             </div>
                           )
                         })}
