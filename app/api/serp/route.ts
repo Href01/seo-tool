@@ -28,8 +28,9 @@ export async function POST(req: Request) {
   }
 
   // gcom: SERP is pinned to se_domain=google.com. Geo part = city coord or country.
+  // rg: positions are organic rank (rank_group), not absolute.
   const geo = coordinate ? `c:${city!.id}` : location
-  const key = cacheKey('serp', 'gcom', keyword, geo, language, serpDevice)
+  const key = cacheKey('serp', 'gcom', 'rg', keyword, geo, language, serpDevice)
 
   const hit = await getCachedMeta(key, TTL_DAYS)
   if (hit) {

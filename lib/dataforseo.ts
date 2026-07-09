@@ -283,7 +283,10 @@ export async function serpOrganic(
   return firstTaskItems(data)
     .filter((it) => it.type === 'organic')
     .map((it) => ({
-      position: asNumber(it.rank_absolute) ?? asNumber(it.rank_group),
+      // Organic rank (rank_group), NOT rank_absolute — the latter counts ads /
+      // featured snippets / PAA and, on an organic-only list, yields gapped,
+      // inflated positions (organic #5 shown as #8).
+      position: asNumber(it.rank_group) ?? asNumber(it.rank_absolute),
       title: asString(it.title),
       url: asString(it.url),
       domain: asString(it.domain),
@@ -405,7 +408,8 @@ export async function domainOverview(
     const traffic = asNumber(serp.etv)
     return {
       keyword: asString(keywordData.keyword),
-      position: asNumber(serp.rank_absolute) ?? asNumber(serp.rank_group),
+      // Organic rank (see serpOrganic) rather than absolute SERP position.
+      position: asNumber(serp.rank_group) ?? asNumber(serp.rank_absolute),
       volume: asNumber(keywordInfo.search_volume),
       traffic: traffic != null ? Math.round(traffic) : null,
       url: asString(serp.url),

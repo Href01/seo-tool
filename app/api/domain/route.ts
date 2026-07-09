@@ -21,8 +21,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'domaine requis (ex : monsite.ma)' }, { status: 400 })
   }
 
-  // v2: ranked-keywords limit raised to 200 + per-keyword traffic (etv).
-  const key = cacheKey('domain', 'v2', domain, location, language)
+  // v3: organic rank (rank_group) for positions (v2: limit 200 + traffic).
+  const key = cacheKey('domain', 'v3', domain, location, language)
 
   const hit = await getCachedMeta(key, TTL_DAYS)
   if (hit) {
