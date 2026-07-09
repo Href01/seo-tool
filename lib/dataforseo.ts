@@ -87,16 +87,19 @@ function firstTaskItems(data: unknown): JsonRecord[] {
 }
 
 function trend12(monthly: unknown): { month: string; volume: number }[] {
+  // DataForSEO returns monthly_searches newest-first, so a blind slice(-12)
+  // grabbed the OLDEST months (e.g. 2019-2020). Sort chronologically and keep
+  // the 12 MOST RECENT, in ascending order for the chart.
   return records(monthly)
+    .map((m) => ({
+      year: asNumber(m.year) ?? 0,
+      month: asNumber(m.month) ?? 0,
+      volume: asNumber(m.search_volume) ?? 0,
+    }))
+    .filter((m) => m.year > 0 && m.month >= 1 && m.month <= 12)
+    .sort((a, b) => a.year * 12 + a.month - (b.year * 12 + b.month))
     .slice(-12)
-    .map((m) => {
-      const year = asNumber(m.year) ?? 0
-      const month = asNumber(m.month) ?? 0
-      return {
-        month: `${year}-${String(month).padStart(2, '0')}`,
-        volume: asNumber(m.search_volume) ?? 0,
-      }
-    })
+    .map((m) => ({ month: `${m.year}-${String(m.month).padStart(2, '0')}`, volume: m.volume }))
 }
 
 function authHeader(login: string, password: string): string {
