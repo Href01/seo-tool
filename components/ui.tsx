@@ -178,12 +178,13 @@ export function DistributionBar({ segments }: { segments: { label: string; value
       <div className="flex h-3 overflow-hidden rounded-full bg-[var(--subtle)]">
         {visible.map((s, i) => (
           // 2px surface separator between adjacent fills (data-viz mark spec).
+          // Logical border so it flips correctly in RTL.
           <div
             key={i}
             style={{
               width: `${(s.value / total) * 100}%`,
               background: s.color,
-              boxShadow: i < visible.length - 1 ? 'inset -2px 0 0 var(--card)' : undefined,
+              borderInlineEnd: i < visible.length - 1 ? '2px solid var(--card)' : undefined,
             }}
             title={`${s.label}: ${s.value}`}
           />
@@ -400,9 +401,9 @@ export function StatCard({
     : 'bg-gradient-to-br from-white to-[#fafafb] border-[var(--line)]'
   return (
     <div
-      className={`relative overflow-hidden rounded-2xl border p-5 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] ${base}`}
+      className={`relative rounded-2xl border p-5 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] ${base}`}
     >
-      {ts && <div className={`absolute inset-x-0 top-0 h-1 ${ts.bar}`} />}
+      {ts && <div className={`absolute inset-x-0 top-0 h-1 rounded-t-2xl ${ts.bar}`} />}
       <div className={`flex items-center text-xs font-medium ${dark ? 'text-white/60' : 'text-[var(--text-2)]'}`}>
         {ts && <span className={`me-1.5 inline-block h-1.5 w-1.5 rounded-full ${ts.dot}`} />}
         <span className="truncate">{label}</span>

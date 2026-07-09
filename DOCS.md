@@ -275,13 +275,16 @@ Etat apres passage architecte / engineer / UX.
 - Login : bilingue FR/AR + identite (etait FR/EN code en dur).
 - Projets : erreurs inline (etait `alert()`).
 
-**A faire — P1 (visuel / coherence, 0 credit) :**
-- Uniformiser les tuiles `tone` partout (Tracker minis encore neutres).
-- Standardiser les couleurs de statut : remplacer les `amber-100/700` Tailwind
-  epars par des tokens (`--warn`?).
-- InfoTip : eviter le clignotement en bord d'ecran (clamp position).
-- Verifier le RTL fin (separateurs physiques `inset -2px`, ordre des barres de
-  tendance en arabe).
+**Fait — P1 (visuel / coherence) :**
+- Tuiles `tone` uniformisees (y compris les minis du Tracker).
+- Couleurs de statut standardisees via `lib/status.ts` (plus de `amber-100/700`
+  epars dans les helpers).
+- **Bug corrige** : `StatCard` avait `overflow-hidden` -> les tooltips `InfoTip`
+  etaient coupes sur la plupart des pages. `overflow-hidden` retire, barre
+  d'accent arrondie a la place.
+- RTL : separateur de `DistributionBar` passe en `border-inline-end` (logique,
+  flip correct en arabe). Ordre des barres de tendance laisse au flip RTL naturel
+  (axe temps de droite a gauche en arabe = lecture attendue).
 
 **Fait — P2 (architecture / dette) :**
 - `PT` est desormais **type strictement** (`PtKey` = cles de `PT_FR` ; `PT_AR`

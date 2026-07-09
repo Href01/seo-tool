@@ -551,8 +551,8 @@ const LTONE: Record<string, string> = { blue: 'var(--blue)', teal: 'var(--teal)'
 function StatCard({ label, value, small, info, spark, tone, num, format }: { label: string; value?: React.ReactNode; small?: boolean; info?: string; spark?: number[]; tone?: string; num?: number; format?: (n: number) => string }) {
   const tc = tone ? LTONE[tone] : null
   return (
-    <div className="relative overflow-hidden rounded-[14px] border border-[var(--line)] bg-gradient-to-br from-white to-[#fafafb] px-3.5 py-3 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
-      {tc && <span className="absolute inset-x-0 top-0 h-0.5" style={{ background: tc }} />}
+    <div className="relative rounded-[14px] border border-[var(--line)] bg-gradient-to-br from-white to-[#fafafb] px-3.5 py-3 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
+      {tc && <span className="absolute inset-x-0 top-0 h-0.5 rounded-t-[14px]" style={{ background: tc }} />}
       <div className="flex items-center text-[11px] font-medium text-[var(--text-2)]">
         {tc && <span className="me-1.5 inline-block h-1.5 w-1.5 rounded-full" style={{ background: tc }} />}
         <span className="truncate">{label}</span>{info && <InfoTip text={info} />}
