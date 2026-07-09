@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Page, WorkspaceHeader, Card, Button, Spinner, ErrorBox } from '@/components/ui'
+import { usePT } from '@/lib/i18n'
 import { errorMessage } from '@/lib/errors'
 
 type AuthMode = 'login' | 'signup'
@@ -14,6 +15,7 @@ interface AuthResponse {
 
 export default function LoginPage() {
   const router = useRouter()
+  const p = usePT()
   const [mode, setMode] = useState<AuthMode>('login')
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
@@ -46,25 +48,25 @@ export default function LoginPage() {
     <Page>
       <WorkspaceHeader
         icon="S"
-        title={mode === 'login' ? 'Connexion' : 'Creation de compte'}
-        subtitle="Compte requis pour les projets, le tracking et le dashboard admin."
+        title={mode === 'login' ? p.authLoginTitle : p.authSignupTitle}
+        subtitle={p.authSub}
       />
 
       <Card className="mx-auto max-w-md">
-        <div className="mb-4 inline-flex rounded-xl bg-[var(--subtle)] p-1">
+        <div className="mb-4 grid grid-cols-2 gap-1 rounded-xl bg-[var(--subtle)] p-1">
           <button
             type="button"
             onClick={() => setMode('login')}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${mode === 'login' ? 'bg-[var(--ink)] text-white' : 'text-[var(--text-2)]'}`}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${mode === 'login' ? 'brand-grad text-white shadow-[var(--shadow-sm)]' : 'text-[var(--text-2)] hover:text-[var(--text)]'}`}
           >
-            Login
+            {p.authTabLogin}
           </button>
           <button
             type="button"
             onClick={() => setMode('signup')}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold ${mode === 'signup' ? 'bg-[var(--ink)] text-white' : 'text-[var(--text-2)]'}`}
+            className={`rounded-lg px-3 py-2 text-xs font-semibold transition-colors ${mode === 'signup' ? 'brand-grad text-white shadow-[var(--shadow-sm)]' : 'text-[var(--text-2)] hover:text-[var(--text)]'}`}
           >
-            Signup
+            {p.authTabSignup}
           </button>
         </div>
 
@@ -73,8 +75,8 @@ export default function LoginPage() {
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Nom"
-              className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]"
+              placeholder={p.authName}
+              className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10"
             />
           )}
           <input
@@ -82,20 +84,25 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             type="email"
             required
-            placeholder="email@site.com"
-            className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]"
+            placeholder={p.authEmail}
+            dir="ltr"
+            className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10"
           />
-          <input
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            required
-            minLength={8}
-            placeholder="Mot de passe"
-            className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]"
-          />
+          <div>
+            <input
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              type="password"
+              required
+              minLength={8}
+              placeholder={p.authPassword}
+              dir="ltr"
+              className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10"
+            />
+            {mode === 'signup' && <p className="mt-1.5 text-xs text-[var(--text-3)]">{p.authPwHint}</p>}
+          </div>
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? <><Spinner /> Patiente</> : mode === 'login' ? 'Se connecter' : 'Creer le compte'}
+            {loading ? <><Spinner /> {p.authWait}</> : mode === 'login' ? p.signIn : p.authSignupBtn}
           </Button>
         </form>
 

@@ -21,6 +21,7 @@ export function AnimatedNumber({
   })
   useEffect(() => {
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync to final value, no animation
       setN(value)
       return
     }
@@ -130,6 +131,7 @@ export function Onboarding({
   const [show, setShow] = useState(false)
   useEffect(() => {
     try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage only exists client-side
       setShow(!localStorage.getItem(storageKey))
     } catch {
       setShow(true)

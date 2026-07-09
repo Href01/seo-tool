@@ -43,11 +43,12 @@ export default function SerpPage() {
   }
 
   const insights = useMemo(() => {
+    const rows = data?.organic ?? []
     if (!data) return null
-    const domains = new Set(organic.map((r) => norm(r.domain)))
-    const platforms = organic.filter((r) => MEGA_PLATFORMS.has(norm(r.domain))).length
-    return { uniqueDomains: domains.size, platforms, realCompetitors: organic.length - platforms }
-  }, [data, organic])
+    const domains = new Set(rows.map((r) => norm(r.domain)))
+    const platforms = rows.filter((r) => MEGA_PLATFORMS.has(norm(r.domain))).length
+    return { uniqueDomains: domains.size, platforms, realCompetitors: rows.length - platforms }
+  }, [data])
 
   function posClass(pos: number | null) {
     if ((pos ?? 99) <= 3) return 'bg-[var(--up-bg)] text-[var(--up)]'

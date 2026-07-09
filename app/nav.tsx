@@ -135,12 +135,13 @@ export default function Nav() {
                   key={ii}
                   href={item.href}
                   title={p[HELP_KEY[item.href]] ?? undefined}
-                  className={`flex items-center gap-[11px] rounded-[11px] px-3 py-2 text-[13px] transition-colors ${
+                  className={`relative flex items-center gap-[11px] rounded-[11px] px-3 py-2 text-[13px] transition-colors ${
                     active
                       ? 'bg-[var(--crimson)]/8 font-semibold text-[var(--crimson)]'
                       : 'font-medium text-[#52525b] hover:bg-[var(--subtle)] hover:text-[var(--text)]'
                   }`}
                 >
+                  {active && <span className="brand-grad absolute inset-y-1.5 start-0 w-[3px] rounded-full" />}
                   <Icon name={item.icon} />
                   {t[item.key]}
                 </Link>

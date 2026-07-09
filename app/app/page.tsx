@@ -31,14 +31,14 @@ export default function AppPage() {
   async function create(e: React.FormEvent) {
     e.preventDefault()
     if (!name.trim() || !domain.trim()) return
-    setLoading(true)
+    setLoading(true); setError('')
     try {
       const res = await fetch('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, domain }) })
       const data = await res.json()
-      if (!res.ok) { alert(data.error || 'Erreur'); return }
+      if (!res.ok) throw new Error(data.error || 'Erreur')
       setName(''); setDomain('')
       setTimeout(() => load(), 100)
-    } catch (e: unknown) { alert(errorMessage(e)) } finally { setLoading(false) }
+    } catch (e: unknown) { setError(errorMessage(e)) } finally { setLoading(false) }
   }
   async function remove(id: string) {
     await fetch('/api/projects', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) })

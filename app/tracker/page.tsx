@@ -252,10 +252,10 @@ export default function Tracker() {
                     <div className="mt-0.5 text-[11px] text-[var(--text-3)]">/100</div>
                   </div>
                 </div>
-                <Mini label={t.total} value={stats.total} />
+                <Mini label={t.total} value={stats.total} tone="var(--blue)" />
                 <Mini label={t.top3} value={stats.top3} color="#16a34a" border />
-                <Mini label={t.top10} value={stats.top10} />
-                <Mini label={t.avgPos} value={stats.avg} />
+                <Mini label={t.top10} value={stats.top10} tone="var(--teal)" />
+                <Mini label={t.avgPos} value={stats.avg} tone="var(--violet)" />
                 <div className="rounded-[14px] border border-[var(--line)] bg-[var(--card)] px-3.5 py-3">
                   <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{t.gainsLosses}</div>
                   <div className="mt-1 text-xl font-bold tnum"><span className="text-[#16a34a]">↑{stats.gains}</span> <span className="text-[#e11d48]">↓{stats.losses}</span></div>
@@ -392,10 +392,14 @@ export default function Tracker() {
   )
 }
 
-function Mini({ label, value, color, border }: { label: string; value: React.ReactNode; color?: string; border?: boolean }) {
+function Mini({ label, value, color, border, tone }: { label: string; value: React.ReactNode; color?: string; border?: boolean; tone?: string }) {
   return (
-    <div className="rounded-[14px] border bg-[var(--card)] px-3.5 py-3" style={{ borderColor: border ? '#16a34a' : 'var(--line)' }}>
-      <div className="truncate text-[11px] font-medium text-[var(--text-2)]">{label}</div>
+    <div className="relative overflow-hidden rounded-[14px] border bg-gradient-to-br from-white to-[#fafafb] px-3.5 py-3 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]" style={{ borderColor: border ? '#16a34a' : 'var(--line)' }}>
+      {tone && <span className="absolute inset-x-0 top-0 h-0.5" style={{ background: tone }} />}
+      <div className="flex items-center text-[11px] font-medium text-[var(--text-2)]">
+        {tone && <span className="me-1.5 inline-block h-1.5 w-1.5 rounded-full" style={{ background: tone }} />}
+        <span className="truncate">{label}</span>
+      </div>
       <div className="mt-1 text-xl font-bold tnum" style={{ color }}>{value}</div>
     </div>
   )

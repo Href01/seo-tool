@@ -100,12 +100,12 @@ lib/
   useMode.ts                  toggle User/Admin
 
 components/
-  ui.tsx                      design system
-  LocationSelector.tsx        selecteurs pays/appareil/langue
+  ui.tsx                      design system (voir section 10)
+  LocationSelector.tsx        selecteurs pays/ville/appareil/langue
   KeywordTable.tsx            table mots-cles
 
 scripts/
-  warmup.mjs + warmup-seeds.txt  pre-remplissage de 50 seeds (non execute)
+  warmup.mjs + warmup-seeds.txt  50 seeds Maroc (execute une fois, throttle 3s)
 ```
 
 ---
@@ -226,19 +226,71 @@ Deploy : push sur `main` -> Vercel build & deploy auto.
 
 ---
 
-## 9. Limites connues & feuille de route
+## 9. Limites connues
 
 - OAuth Google/Auth.js et verification email non integres.
-- Les anciennes lignes `rank_tracking` sans user explicite sont migrees sur `demo-user`.
-- Difficulte maison : `null` (terrain libre) quand le top 10 est 100 % plateformes,
-  affiche en vert "Terrain libre / opportunite" dans l'Explorer.
-- Appareil : le selecteur n'apparait plus que dans la vue Paysage SERP (ou il
-  agit vraiment) ; les volumes restent independants de l'appareil.
-- Ciblage ville (SERP page + Paysage SERP de l'Explorer) via coordonnees GPS.
-  Les volumes DataForSEO n'existent qu'au niveau pays -> la ville n'affine que la
-  SERP et la difficulte. Le suivi de positions reste au niveau pays (ajouter une
-  colonne coordonnee a `rank_tracking` pour l'etendre).
-- Bank quasi vide tant que le warmup n'est pas lance.
+- Difficulte maison : `null` (terrain libre) quand le top 10 est 100 % plateformes.
+- Volumes DataForSEO au niveau pays uniquement : la ville n'affine que SERP +
+  difficulte ; le suivi de positions reste au niveau pays.
 - GSC non integre (donnees exactes du propre domaine).
+- Bank encore modeste (50 seeds Maroc warmes).
 
-Derniere mise a jour : 2026-07-08.
+---
+
+## 10. Design system (`components/ui.tsx`)
+
+Identite : **clair + vibrant multicolore**. Tokens dans `app/globals.css`.
+
+- Marque : `--crimson #ec0b43`, degrade signature `--brand-grad`
+  (crimson -> magenta -> corail), classes `.brand-grad` / `.brand-anim` (sheen).
+- Accents decoratifs (tuiles, non-data) : `--violet --teal --blue --pink --indigo`.
+  **Distincts** des couleurs de statut reservees aux donnees : `--up` (vert),
+  amber, `--down` (rouge). Ne jamais utiliser un accent decoratif pour un statut.
+- Profondeur : `--shadow-sm/md/lg`, fond page legerement teinte.
+- Mouvement : `.animate-in` (reveal), `.grow-bar`, count-up `AnimatedNumber`,
+  hover-lift. Tout respecte `prefers-reduced-motion`.
+
+Primitives : `Card`, `StatCard` (props `tone` + `num`/`format` count-up +
+`spark`), `RingGauge` (score 0-max), `Sparkline`, `DistributionBar` (separateur
+2px), `TrendPill`, `Pill`, `Button` (degrade), `WorkspaceHeader`, `EmptyState`,
+`Callout` (guidage), `InfoTip` (glossaire "?"), `Onboarding` (3 etapes), `Page`,
+`CacheMeta`, `ErrorBox` (CTA login auto sur erreur d'auth), `SectionTitle`,
+`Segmented`. Toutes bilingues + RTL.
+
+Regles data-viz (voir skill dataviz) : couleurs de statut reservees + label,
+1 seul axe, categorielles en ordre fixe jamais cyclees, texte en encre jamais
+en couleur de serie.
+
+---
+
+## 11. Audit & plan de travail (2026-07-09)
+
+Etat apres passage architecte / engineer / UX.
+
+**Corrige (P0) :**
+- Tendance = 12 mois les plus recents (etait les plus vieux, `slice(-12)` sans tri).
+- Position = rang organique `rank_group` (etait `rank_absolute`, gonfle).
+- SERP : features exposees (snippet, PAA, pack local, related, ads) — deja payees.
+- Lint : `set-state-in-effect` (AnimatedNumber, Onboarding), dep `useMemo` (SERP).
+- Login : bilingue FR/AR + identite (etait FR/EN code en dur).
+- Projets : erreurs inline (etait `alert()`).
+
+**A faire — P1 (visuel / coherence, 0 credit) :**
+- Uniformiser les tuiles `tone` partout (Tracker minis encore neutres).
+- Standardiser les couleurs de statut : remplacer les `amber-100/700` Tailwind
+  epars par des tokens (`--warn`?).
+- InfoTip : eviter le clignotement en bord d'ecran (clamp position).
+- Verifier le RTL fin (separateurs physiques `inset -2px`, ordre des barres de
+  tendance en arabe).
+
+**A faire — P2 (architecture / dette) :**
+- Typer `PT` (aujourd'hui `Record<string,string>` : une cle mal ecrite rend
+  une chaine vide sans erreur). Passer a un type strict comme `T`.
+- Centraliser les helpers de couleur de statut (`posClass`, `diffCfg`,
+  `spamLevel`, `posBadge` dupliques sur plusieurs pages).
+- Dedupliquer `MEGA_PLATFORMS` (defini dans `dataforseo.ts` ET les pages).
+- Utilitaire de format locale-aware (aujourd'hui `toLocaleString('fr')` en dur).
+- Etendre le ciblage ville au suivi (colonne coordonnee sur `rank_tracking`).
+- GSC (donnees exactes du domaine), OAuth, reset password.
+
+Derniere mise a jour : 2026-07-09.
