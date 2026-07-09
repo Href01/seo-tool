@@ -243,20 +243,19 @@ export interface SerpResult {
   description: string
 }
 
-/** Top organic results (google.com with geo-targeting) for a keyword. */
-export async function serpOrganic(
-  keyword: string,
-  opts: {
-    location?: number
-    language?: string
-    depth?: number
-    device?: string
-    stopOnDomain?: string
-    // "latitude,longitude" for city-level targeting. When set, it replaces the
-    // country location_code (DataForSEO takes exactly one location parameter).
-    coordinate?: string
-  } = {}
-): Promise<SerpResult[]> {
+interface SerpOpts {
+  location?: number
+  language?: string
+  depth?: number
+  device?: string
+  stopOnDomain?: string
+  // "latitude,longitude" for city-level targeting. When set, it replaces the
+  // country location_code (DataForSEO takes exactly one location parameter).
+  coordinate?: string
+}
+
+/** Build the SERP task and return every raw SERP item (all types). */
+async function serpItems(keyword: string, opts: SerpOpts = {}): Promise<JsonRecord[]> {
   // Google SERP supports desktop/mobile; tablet falls back to mobile.
   const device = opts.device === 'mobile' || opts.device === 'tablet' ? 'mobile' : 'desktop'
   const task: JsonRecord = {
@@ -274,13 +273,14 @@ export async function serpOrganic(
   }
   const stopOnDomain = opts.stopOnDomain ? cleanDomain(opts.stopOnDomain) : ''
   if (stopOnDomain) {
-    task.stop_crawl_on_match = [
-      { match_value: stopOnDomain, match_type: 'with_subdomains' },
-    ]
+    task.stop_crawl_on_match = [{ match_value: stopOnDomain, match_type: 'with_subdomains' }]
   }
-
   const data = await dfs('/serp/google/organic/live/advanced', [task])
   return firstTaskItems(data)
+}
+
+function organicFrom(items: JsonRecord[]): SerpResult[] {
+  return items
     .filter((it) => it.type === 'organic')
     .map((it) => ({
       // Organic rank (rank_group), NOT rank_absolute — the latter counts ads /
@@ -292,6 +292,69 @@ export async function serpOrganic(
       domain: asString(it.domain),
       description: asString(it.description),
     }))
+}
+
+/** Top organic results (google.com with geo-targeting) for a keyword. */
+export async function serpOrganic(keyword: string, opts: SerpOpts = {}): Promise<SerpResult[]> {
+  return organicFrom(await serpItems(keyword, opts))
+}
+
+export interface SerpPage {
+  organic: SerpResult[]
+  featuredSnippet: { title: string; description: string; url: string; domain: string } | null
+  peopleAlsoAsk: string[]
+  localPack: { title: string; rating: number | null; address: string }[]
+  relatedSearches: string[]
+  ads: { title: string; domain: string; url: string }[]
+}
+
+/** Full SERP: organic results PLUS the features Google shows around them
+ * (featured snippet, People-Also-Ask, local pack, related searches, ads).
+ * Same single paid call as serpOrganic — we were discarding the rest. */
+export async function serpPage(keyword: string, opts: SerpOpts = {}): Promise<SerpPage> {
+  const items = await serpItems(keyword, { ...opts, stopOnDomain: undefined })
+
+  const fs = items.find((it) => it.type === 'featured_snippet')
+  const featuredSnippet = fs
+    ? { title: asString(fs.title), description: asString(fs.description), url: asString(fs.url), domain: asString(fs.domain) }
+    : null
+
+  const paa = new Set<string>()
+  for (const it of items.filter((x) => x.type === 'people_also_ask')) {
+    for (const q of records(it.items)) {
+      const question = asString(q.title) || asString(q.seed_question)
+      if (question) paa.add(question)
+    }
+  }
+
+  const localPack = items
+    .filter((it) => it.type === 'local_pack')
+    .map((it) => ({ title: asString(it.title), rating: asNumber(child(it, 'rating').value), address: asString(it.address) }))
+    .filter((l) => l.title)
+
+  const related = new Set<string>()
+  for (const it of items.filter((x) => x.type === 'related_searches')) {
+    if (Array.isArray(it.items)) {
+      for (const s of it.items) {
+        if (typeof s === 'string' && s.trim()) related.add(s.trim())
+        else if (isRecord(s) && asString(s.title)) related.add(asString(s.title))
+      }
+    }
+  }
+
+  const ads = items
+    .filter((it) => it.type === 'paid')
+    .map((it) => ({ title: asString(it.title), domain: asString(it.domain), url: asString(it.url) }))
+    .filter((a) => a.title)
+
+  return {
+    organic: organicFrom(items),
+    featuredSnippet,
+    peopleAlsoAsk: [...paa],
+    localPack,
+    relatedSearches: [...related],
+    ads,
+  }
 }
 
 export interface KeywordOverview {

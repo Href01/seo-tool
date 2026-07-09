@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { guard } from '@/lib/guard'
-import { serpOrganic, LOCATION_MOROCCO } from '@/lib/dataforseo'
+import { serpPage, LOCATION_MOROCCO } from '@/lib/dataforseo'
 import { getCityById } from '@/lib/locations'
 import { getCachedMeta, setCached, cacheKey } from '@/lib/cache'
 import { jsonError, numberParam, readJson, stringParam } from '@/lib/api'
@@ -28,19 +28,19 @@ export async function POST(req: Request) {
   }
 
   // gcom: SERP is pinned to se_domain=google.com. Geo part = city coord or country.
-  // rg: positions are organic rank (rank_group), not absolute.
+  // feat: payload now includes organic (rank_group) + SERP features.
   const geo = coordinate ? `c:${city!.id}` : location
-  const key = cacheKey('serp', 'gcom', 'rg', keyword, geo, language, serpDevice)
+  const key = cacheKey('serp', 'gcom', 'feat', keyword, geo, language, serpDevice)
 
   const hit = await getCachedMeta(key, TTL_DAYS)
   if (hit) {
-    return NextResponse.json({ cached: true, fetchedAt: hit.fetchedAt, keyword, results: hit.payload })
+    return NextResponse.json({ cached: true, fetchedAt: hit.fetchedAt, keyword, result: hit.payload })
   }
 
   try {
-    const results = await serpOrganic(keyword, { location, language, device: serpDevice, coordinate })
-    await setCached(key, results)
-    return NextResponse.json({ cached: false, fetchedAt: new Date().toISOString(), keyword, results })
+    const result = await serpPage(keyword, { location, language, device: serpDevice, coordinate })
+    await setCached(key, result)
+    return NextResponse.json({ cached: false, fetchedAt: new Date().toISOString(), keyword, result })
   } catch (e: unknown) {
     return jsonError(e, 500, 'Erreur DataForSEO')
   }

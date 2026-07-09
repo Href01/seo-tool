@@ -6,9 +6,17 @@ import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
 import { LocationSelector, CitySelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
-import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill, Callout, DistributionBar } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill, Callout, DistributionBar, SectionTitle } from '@/components/ui'
 
 interface SerpResult { position: number | null; title: string; url: string; domain: string; description: string }
+interface SerpPage {
+  organic: SerpResult[]
+  featuredSnippet: { title: string; description: string; url: string; domain: string } | null
+  peopleAlsoAsk: string[]
+  localPack: { title: string; rating: number | null; address: string }[]
+  relatedSearches: string[]
+  ads: { title: string; domain: string; url: string }[]
+}
 
 const MEGA_PLATFORMS = new Set(['instagram.com', 'facebook.com', 'youtube.com', 'pinterest.com', 'tiktok.com', 'twitter.com', 'x.com', 'linkedin.com', 'wikipedia.org', 'reddit.com'])
 const norm = (d: string) => d.toLowerCase().replace(/^www\./, '')
@@ -21,20 +29,25 @@ export default function SerpPage() {
   const [city, setCity] = useState('')
   const [device, setDevice] = useState(DEFAULT_DEVICE.id)
   const [language, setLanguage] = useState(DEFAULT_LANGUAGE.code)
-  const { loading, error, cached, fetchedAt, data, run } = useSeoQuery<SerpResult[]>('/api/serp')
+  const { loading, error, cached, fetchedAt, data, run } = useSeoQuery<SerpPage>('/api/serp')
+  const organic = data?.organic ?? []
 
   function search(e: React.FormEvent) {
     e.preventDefault()
     if (!keyword.trim()) return
     run({ keyword, location, language, device, city })
   }
+  function searchFor(kw: string) {
+    setKeyword(kw)
+    run({ keyword: kw, location, language, device, city })
+  }
 
   const insights = useMemo(() => {
     if (!data) return null
-    const domains = new Set(data.map((r) => norm(r.domain)))
-    const platforms = data.filter((r) => MEGA_PLATFORMS.has(norm(r.domain))).length
-    return { uniqueDomains: domains.size, platforms, realCompetitors: data.length - platforms }
-  }, [data])
+    const domains = new Set(organic.map((r) => norm(r.domain)))
+    const platforms = organic.filter((r) => MEGA_PLATFORMS.has(norm(r.domain))).length
+    return { uniqueDomains: domains.size, platforms, realCompetitors: organic.length - platforms }
+  }, [data, organic])
 
   function posClass(pos: number | null) {
     if ((pos ?? 99) <= 3) return 'bg-[var(--up-bg)] text-[var(--up)]'
@@ -64,7 +77,7 @@ export default function SerpPage() {
         </form>
         {cached !== null && !error && data && (
           <div className="mt-4 border-t border-[var(--line)] pt-3">
-            <CacheMeta cached={cached} fetchedAt={fetchedAt} timeAgo={timeAgo} extra={`${data.length} ${p.results}`} />
+            <CacheMeta cached={cached} fetchedAt={fetchedAt} timeAgo={timeAgo} extra={`${organic.length} ${p.results}`} />
           </div>
         )}
       </Card>
@@ -74,9 +87,9 @@ export default function SerpPage() {
       {data && insights && (
         <>
           <div className="mb-4 grid gap-3 sm:grid-cols-3">
-            <StatCard label={p.uniqueDomains} value={insights.uniqueDomains} sub={`${p.onN} ${data.length} ${p.results}`} />
-            <StatCard label={p.realComp} value={insights.realCompetitors} accent />
-            <StatCard label={p.platformsStat} value={insights.platforms} />
+            <StatCard label={p.uniqueDomains} value="—" num={insights.uniqueDomains} sub={`${p.onN} ${organic.length} ${p.results}`} tone="blue" />
+            <StatCard label={p.realComp} value="—" num={insights.realCompetitors} tone="teal" />
+            <StatCard label={p.platformsStat} value="—" num={insights.platforms} tone="violet" />
           </div>
           {insights.realCompetitors + insights.platforms > 0 && (
             <Card className="mb-6">
@@ -90,9 +103,75 @@ export default function SerpPage() {
         </>
       )}
 
-      {data && data.length > 0 && (
+      {data && (data.featuredSnippet || data.peopleAlsoAsk.length > 0 || data.localPack.length > 0 || data.relatedSearches.length > 0 || data.ads.length > 0) && (
+        <div className="mb-6 space-y-3">
+          <SectionTitle>{p.serpFeaturesTitle}</SectionTitle>
+
+          {data.featuredSnippet && (
+            <Card>
+              <div className="mb-1.5 flex items-center gap-2 text-sm font-semibold text-[var(--text)]"><span>📦</span>{p.serpFeaturedSnippet}</div>
+              <div className="text-sm text-[var(--text)]">{data.featuredSnippet.description || data.featuredSnippet.title}</div>
+              {data.featuredSnippet.domain && <div className="mt-1 font-mono text-xs text-[var(--text-3)]">{data.featuredSnippet.domain}</div>}
+              <div className="mt-2 text-xs text-[var(--text-2)]">💡 {p.serpFsHint}</div>
+            </Card>
+          )}
+
+          {data.localPack.length > 0 && (
+            <Card>
+              <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-[var(--text)]"><span>🗺️</span>{p.serpLocalPack}</div>
+              <div className="mb-2.5 text-xs text-[var(--text-2)]">💡 {p.serpLocalHint}</div>
+              <div className="space-y-1.5">
+                {data.localPack.slice(0, 3).map((l, i) => (
+                  <div key={i} className="flex items-center justify-between gap-2 text-sm">
+                    <span className="truncate text-[var(--text)]">{l.title}</span>
+                    {l.rating != null && <span className="shrink-0 text-xs font-semibold text-amber-600">★ {l.rating}</span>}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {data.peopleAlsoAsk.length > 0 && (
+            <Card>
+              <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-[var(--text)]"><span>❓</span>{p.serpPaa}</div>
+              <div className="mb-2.5 text-xs text-[var(--text-2)]">💡 {p.serpPaaHint}</div>
+              <ul className="space-y-2">
+                {data.peopleAlsoAsk.slice(0, 8).map((q, i) => (
+                  <li key={i} className="flex gap-2 text-sm text-[var(--text)]"><span className="text-[var(--crimson)]">›</span>{q}</li>
+                ))}
+              </ul>
+            </Card>
+          )}
+
+          {data.relatedSearches.length > 0 && (
+            <Card>
+              <div className="mb-2.5 flex items-center gap-2 text-sm font-semibold text-[var(--text)]"><span>🔎</span>{p.serpRelated}</div>
+              <div className="flex flex-wrap gap-2">
+                {data.relatedSearches.slice(0, 12).map((s, i) => (
+                  <button key={i} onClick={() => searchFor(s)} className="rounded-full border border-[var(--line)] bg-[var(--card)] px-3 py-1 text-xs font-medium text-[var(--text)] transition-colors hover:border-[var(--crimson)] hover:text-[var(--crimson)]">{s}</button>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          {data.ads.length > 0 && (
+            <Card>
+              <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-[var(--text)]"><span>🟨</span>{p.serpAds}</div>
+              <div className="mb-2.5 text-xs text-[var(--text-2)]">💡 {p.serpAdsHint}</div>
+              <div className="flex flex-wrap gap-2">
+                {data.ads.slice(0, 8).map((a, i) => (
+                  <span key={i} className="rounded-full bg-[var(--subtle)] px-2.5 py-1 font-mono text-xs text-[var(--text-2)]">{a.domain || a.title}</span>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {data && organic.length > 0 && (
         <div className="space-y-2.5">
-          {data.map((r, i) => {
+          <SectionTitle>{p.serpOrganicTitle}</SectionTitle>
+          {organic.map((r, i) => {
             const isPlatform = MEGA_PLATFORMS.has(norm(r.domain))
             return (
               <div key={i} className={`rounded-2xl border bg-[var(--card)] p-4 transition-colors ${isPlatform ? 'border-[var(--line)] opacity-70' : 'border-[var(--line)] hover:border-[var(--text-3)]'}`}>
