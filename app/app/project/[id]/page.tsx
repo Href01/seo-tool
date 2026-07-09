@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { usePT, useT } from '@/lib/i18n'
 import { DEFAULT_LANGUAGE, DEFAULT_LOCATION, getLanguageByCode, getLocationByCode, locName } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
-import { Page, Card, Button, Spinner, EmptyState, StatCard, SectionTitle, DistributionBar, visibilityScore, Callout, InfoTip, ErrorBox } from '@/components/ui'
+import { Page, Card, Button, Spinner, EmptyState, StatCard, SectionTitle, DistributionBar, visibilityScore, Callout, InfoTip, ErrorBox, RingGauge } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 
 interface Project { id: string; name: string; domain: string; createdAt?: string }
@@ -30,6 +30,8 @@ function posBadge(position: number | null) {
   return { label: `#${position}`, c: 'text-[var(--text-2)]', b: 'bg-[var(--subtle)]' }
 }
 const norm = (d: string) => d.toLowerCase().replace(/^www\./, '')
+// Score color: high visibility is good (green), low is weak (crimson).
+const scoreColor = (v: number) => (v >= 60 ? 'var(--up)' : v >= 30 ? '#d97706' : 'var(--crimson)')
 const clamp = (p: number | null) => (p == null ? CLAMP : Math.min(p, CLAMP))
 function marketLabel(location: number, language: string, uiLang: string) {
   const loc = getLocationByCode(location) ?? DEFAULT_LOCATION
@@ -159,9 +161,9 @@ export default function ProjectDetailPage() {
               )}
             </div>
           </div>
-          <div className="text-end">
+          <div className="flex flex-col items-end gap-2">
             <div className="text-[11px] font-medium uppercase tracking-[0.06em] text-[var(--text-3)]">{p.visibility}<InfoTip text={p.gVisibility} /></div>
-            <div className="mt-0.5 flex items-baseline justify-end gap-1 text-4xl font-bold text-[var(--crimson)] tnum">{stats.vis}<span className="text-sm font-medium text-[var(--text-3)]">/100</span></div>
+            <RingGauge value={stats.vis} size={96} stroke={9} color={scoreColor(stats.vis)} sub="/100" />
           </div>
         </div>
         <div className="border-t border-[var(--line)] px-6 py-4">

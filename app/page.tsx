@@ -5,7 +5,7 @@ import { useSeoQuery } from '@/lib/useSeoQuery'
 import { useT, usePT, intentLabel, competitionLabel } from '@/lib/i18n'
 import { LOCATIONS, DEVICES, LANGUAGES, DEFAULT_LOCATION, DEFAULT_DEVICE, getLocationByCode, locName, deviceName, citiesForCountry, cityName } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
-import { InfoTip, Onboarding, Sparkline } from '@/components/ui'
+import { InfoTip, Onboarding, Sparkline, RingGauge } from '@/components/ui'
 
 interface KeywordResult {
   keyword: string
@@ -479,10 +479,7 @@ export default function Explorer() {
                     </div>
                   ) : (
                     <div className="mt-3 flex items-center gap-3.5">
-                      <div className="flex h-[66px] w-[66px] shrink-0 flex-col items-center justify-center rounded-2xl" style={{ color: diffCfg(kdForFocus.difficulty, t).c, background: diffCfg(kdForFocus.difficulty, t).bg }}>
-                        <div className="text-2xl font-bold leading-none tnum">{kdForFocus.difficulty}</div>
-                        <div className="text-[9px] opacity-60">/100</div>
-                      </div>
+                      <RingGauge value={kdForFocus.difficulty} size={66} stroke={7} color={diffCfg(kdForFocus.difficulty, t).c} sub="/100" />
                       <div>
                         <div className="text-sm font-bold" style={{ color: diffCfg(kdForFocus.difficulty, t).c }}>{diffCfg(kdForFocus.difficulty, t).l}</div>
                         <div className="mt-0.5 text-[11.5px] text-[var(--text-2)]">{t.diffFromPre}{counted.length}{t.diffFromPost}</div>

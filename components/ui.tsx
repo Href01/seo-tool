@@ -183,6 +183,59 @@ export function Card({
   )
 }
 
+/* RingGauge — a circular 0–max progress dial for scores (difficulty,
+   visibility, on-page…). Center shows the value (or custom children). */
+export function RingGauge({
+  value,
+  max = 100,
+  size = 68,
+  stroke = 7,
+  color = 'var(--crimson)',
+  track = 'var(--line)',
+  children,
+  sub,
+}: {
+  value: number | null
+  max?: number
+  size?: number
+  stroke?: number
+  color?: string
+  track?: string
+  children?: ReactNode
+  sub?: string
+}) {
+  const r = (size - stroke) / 2
+  const circ = 2 * Math.PI * r
+  const pct = value == null ? 0 : Math.max(0, Math.min(1, value / max))
+  return (
+    <div className="relative inline-flex shrink-0 items-center justify-center" style={{ width: size, height: size }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="-rotate-90">
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track} strokeWidth={stroke} />
+        <circle
+          cx={size / 2}
+          cy={size / 2}
+          r={r}
+          fill="none"
+          stroke={color}
+          strokeWidth={stroke}
+          strokeLinecap="round"
+          strokeDasharray={circ}
+          strokeDashoffset={circ * (1 - pct)}
+          style={{ transition: 'stroke-dashoffset 0.6s cubic-bezier(0.22,1,0.36,1)' }}
+        />
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center leading-none">
+        {children ?? (
+          <span className="text-lg font-bold tnum" style={{ color }}>
+            {value == null ? '—' : value}
+          </span>
+        )}
+        {sub && <span className="mt-0.5 text-[9px] font-medium text-[var(--text-3)]">{sub}</span>}
+      </div>
+    </div>
+  )
+}
+
 /* Sparkline — a tiny inline trend line with a soft gradient area fill. */
 export function Sparkline({
   data,

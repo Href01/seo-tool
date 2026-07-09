@@ -13,7 +13,7 @@ import {
   deviceName,
 } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
-import { DistributionBar, visibilityScore, InfoTip, ErrorBox } from '@/components/ui'
+import { DistributionBar, visibilityScore, InfoTip, ErrorBox, RingGauge } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 
 interface HistPoint { position: number | null; checkedAt: string }
@@ -245,9 +245,12 @@ export default function Tracker() {
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-7 pt-5">
               <div className="mb-4 grid gap-2.5 [grid-template-columns:repeat(auto-fit,minmax(112px,1fr))]">
-                <div className="rounded-[14px] border border-[var(--crimson)] bg-[var(--card)] px-3.5 py-3">
-                  <div className="flex items-center text-[11px] font-medium text-[var(--text-2)]"><span className="truncate">{p.visibility}</span><InfoTip text={p.gVisibility} /></div>
-                  <div className="mt-1 flex items-baseline gap-1 text-xl font-bold text-[var(--crimson)] tnum">{stats.vis}<span className="text-[11px] font-medium text-[var(--text-3)]">/100</span></div>
+                <div className="flex items-center gap-3 rounded-[14px] border border-[var(--crimson)]/40 bg-gradient-to-br from-[var(--crimson)]/[0.06] to-[var(--card)] px-3.5 py-3 shadow-[var(--shadow-sm)]">
+                  <RingGauge value={stats.vis} size={48} stroke={5.5} color="var(--crimson)" />
+                  <div className="min-w-0">
+                    <div className="flex items-center text-[11px] font-medium text-[var(--text-2)]"><span className="truncate">{p.visibility}</span><InfoTip text={p.gVisibility} /></div>
+                    <div className="mt-0.5 text-[11px] text-[var(--text-3)]">/100</div>
+                  </div>
                 </div>
                 <Mini label={t.total} value={stats.total} />
                 <Mini label={t.top3} value={stats.top3} color="#16a34a" border />
