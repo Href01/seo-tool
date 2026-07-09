@@ -5,6 +5,7 @@ import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
+import { MEGA_PLATFORMS } from '@/lib/platforms'
 import { LocationSelector, CitySelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
 import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill, Callout, DistributionBar, SectionTitle } from '@/components/ui'
 
@@ -18,7 +19,6 @@ interface SerpPage {
   ads: { title: string; domain: string; url: string }[]
 }
 
-const MEGA_PLATFORMS = new Set(['instagram.com', 'facebook.com', 'youtube.com', 'pinterest.com', 'tiktok.com', 'twitter.com', 'x.com', 'linkedin.com', 'wikipedia.org', 'reddit.com'])
 const norm = (d: string) => d.toLowerCase().replace(/^www\./, '')
 
 export default function SerpPage() {

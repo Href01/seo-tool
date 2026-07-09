@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useMode } from '@/lib/useMode'
-import { useT, usePT } from '@/lib/i18n'
+import { useT, usePT, type PtKey } from '@/lib/i18n'
 
 interface SessionUser {
   id: string
@@ -72,7 +72,7 @@ const adminNav: Section[] = [
 ]
 
 // Plain-language tooltip per destination (reuses the page-guidance strings).
-const HELP_KEY: Record<string, string> = {
+const HELP_KEY: Record<string, PtKey> = {
   '/': 'helpExplorer',
   '/app': 'helpProjects',
   '/serp': 'helpSerp',

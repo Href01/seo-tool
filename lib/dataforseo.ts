@@ -2,6 +2,7 @@
 // DataForSEO task status codes and logs reported API cost for every non-free hit.
 
 import { recordDfsUsage } from './usage'
+import { MEGA_PLATFORMS } from './platforms'
 
 const BASE = 'https://api.dataforseo.com/v3'
 
@@ -594,19 +595,6 @@ export interface DifficultyResult {
   competitors: { position: number | null; domain: string; rank: number | null; counted: boolean }[]
 }
 
-const MEGA_PLATFORMS = new Set([
-  'instagram.com',
-  'facebook.com',
-  'youtube.com',
-  'pinterest.com',
-  'pinterest.fr',
-  'tiktok.com',
-  'twitter.com',
-  'x.com',
-  'linkedin.com',
-  'wikipedia.org',
-  'reddit.com',
-])
 
 /** Backlink authority rank (0-1000) for many domains in a single call. */
 async function bulkBacklinkRanks(domains: string[]): Promise<Record<string, number>> {

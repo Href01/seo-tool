@@ -325,8 +325,7 @@ export function useT(): { lang: Lang; setLang: (l: Lang) => void; t: Dict; dir: 
 }
 
 /* Page-level strings (loosely typed to avoid bloating the strict Dict). */
-export const PT: Record<Lang, Record<string, string>> = {
-  fr: {
+const PT_FR = {
     analyze: 'Analyser', analyzing: 'Analyse…', cacheFree: '⚡ Cache · 0 $', apiCall: '💳 API DataForSEO', maj: 'maj',
     // SERP
     serpTitle: 'Analyse SERP', serpSub: 'Qui domine le top des résultats · détection des plateformes',
@@ -423,8 +422,11 @@ export const PT: Record<Lang, Record<string, string>> = {
     serpPaa: 'Questions posées par les internautes', serpPaaHint: 'Autant d\'idées de contenu à traiter dans tes pages pour capter ces recherches.',
     serpRelated: 'Recherches associées', serpAds: 'Annonceurs sur ce mot-clé', serpAdsHint: 'Des marques paient pour ce mot-clé : signe d\'une vraie valeur commerciale.',
     recent: 'Dernières recherches', visitSite: 'Visiter', fullTracking: 'Suivi complet', examples: 'Exemples à essayer',
-  },
-  ar: {
+}
+
+// Typed against FR's keys: a missing or misspelled Arabic key is now a compile
+// error (was a silent empty string), which mattered most in the primary AR UI.
+const PT_AR: Record<keyof typeof PT_FR, string> = {
     analyze: 'تحليل', analyzing: 'جارٍ التحليل…', cacheFree: '⚡ من الذاكرة · 0 $', apiCall: '💳 واجهة DataForSEO', maj: 'حُدّث',
     serpTitle: 'تحليل نتائج البحث', serpSub: 'من يتصدّر النتائج · كشف المنصّات',
     kwLabel: 'الكلمة المفتاحية', kwPh: 'مثال: صبغة الشعر',
@@ -513,10 +515,12 @@ export const PT: Record<Lang, Record<string, string>> = {
     serpPaa: 'أسئلة يطرحها الباحثون', serpPaaHint: 'أفكار محتوى جاهزة لمعالجتها في صفحاتك لالتقاط هذه العمليات.',
     serpRelated: 'عمليات بحث ذات صلة', serpAds: 'المعلنون على هذه الكلمة', serpAdsHint: 'علامات تدفع مقابل هذه الكلمة: مؤشّر على قيمة تجارية حقيقية.',
     recent: 'عمليات بحث أخيرة', visitSite: 'زيارة', fullTracking: 'التتبّع الكامل', examples: 'أمثلة للتجربة',
-  },
 }
 
-export function usePT(): Record<string, string> {
+export type PtKey = keyof typeof PT_FR
+export const PT: Record<Lang, Record<PtKey, string>> = { fr: PT_FR, ar: PT_AR }
+
+export function usePT(): Record<PtKey, string> {
   const [lang] = useLang()
   return PT[lang]
 }

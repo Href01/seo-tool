@@ -283,12 +283,16 @@ Etat apres passage architecte / engineer / UX.
 - Verifier le RTL fin (separateurs physiques `inset -2px`, ordre des barres de
   tendance en arabe).
 
-**A faire — P2 (architecture / dette) :**
-- Typer `PT` (aujourd'hui `Record<string,string>` : une cle mal ecrite rend
-  une chaine vide sans erreur). Passer a un type strict comme `T`.
+**Fait — P2 (architecture / dette) :**
+- `PT` est desormais **type strictement** (`PtKey` = cles de `PT_FR` ; `PT_AR`
+  typé `Record<keyof PT_FR, string>`). Une cle AR manquante/mal ecrite = erreur
+  de compilation. Le typecheck a confirme 0 cle manquante dans toute l'app.
+- `MEGA_PLATFORMS` centralise dans `lib/platforms.ts` (client-safe), importe par
+  la difficulte (serveur) et la page SERP (client).
+
+**A faire — P2 (reste) :**
 - Centraliser les helpers de couleur de statut (`posClass`, `diffCfg`,
   `spamLevel`, `posBadge` dupliques sur plusieurs pages).
-- Dedupliquer `MEGA_PLATFORMS` (defini dans `dataforseo.ts` ET les pages).
 - Utilitaire de format locale-aware (aujourd'hui `toLocaleString('fr')` en dur).
 - Etendre le ciblage ville au suivi (colonne coordonnee sur `rank_tracking`).
 - GSC (donnees exactes du domaine), OAuth, reset password.
