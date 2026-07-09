@@ -230,8 +230,8 @@ Deploy : push sur `main` -> Vercel build & deploy auto.
 
 - OAuth Google/Auth.js et verification email non integres.
 - Difficulte maison : `null` (terrain libre) quand le top 10 est 100 % plateformes.
-- Volumes DataForSEO au niveau pays uniquement : la ville n'affine que SERP +
-  difficulte ; le suivi de positions reste au niveau pays.
+- Volumes DataForSEO au niveau pays uniquement : la ville n'affine que SERP,
+  difficulte et suivi (les volumes restent pays).
 - GSC non integre (donnees exactes du propre domaine).
 - Bank encore modeste (50 seeds Maroc warmes).
 
@@ -297,9 +297,14 @@ Etat apres passage architecte / engineer / UX.
   Tracker, Projet, Base, Backlinks. Les badges de position ont maintenant les
   memes 4 paliers partout (etaient 3 sur SERP/Domaine).
 
+**Fait — feature :**
+- Ciblage ville etendu au **suivi de positions** : colonne `city` sur
+  `rank_tracking` (`''` = pays), incluse dans l'index unique ; selecteur ville
+  sur le tracker global + le detail projet ; `findPosition` utilise la
+  coordonnee de la ville. Le libelle de marche affiche la ville.
+
 **A faire — P2 (reste) :**
 - Utilitaire de format locale-aware (aujourd'hui `toLocaleString('fr')` en dur).
-- Etendre le ciblage ville au suivi (colonne coordonnee sur `rank_tracking`).
 - GSC (donnees exactes du domaine), OAuth, reset password.
 
 Derniere mise a jour : 2026-07-09.

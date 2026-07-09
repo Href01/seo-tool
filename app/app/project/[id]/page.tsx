@@ -4,8 +4,8 @@ import { useEffect, useState, useMemo } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { usePT, useT } from '@/lib/i18n'
-import { DEFAULT_LANGUAGE, DEFAULT_LOCATION, getLanguageByCode, getLocationByCode, locName } from '@/lib/locations'
-import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
+import { DEFAULT_LANGUAGE, DEFAULT_LOCATION, getCityById, getLanguageByCode, getLocationByCode, cityName, locName } from '@/lib/locations'
+import { LocationSelector, CitySelector, LanguageSelector } from '@/components/LocationSelector'
 import { Page, Card, Button, Spinner, EmptyState, StatCard, SectionTitle, DistributionBar, visibilityScore, Callout, InfoTip, ErrorBox, RingGauge } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 import { positionTone } from '@/lib/status'
@@ -17,6 +17,7 @@ interface TrackedKeyword {
   domain: string
   location: number
   language: string
+  city: string
   position: number | null
   checkedAt: string | null
   history: { position: number | null; checkedAt: string }[]
@@ -31,10 +32,12 @@ const norm = (d: string) => d.toLowerCase().replace(/^www\./, '')
 // Score color: high visibility is good (green), low is weak (crimson).
 const scoreColor = (v: number) => (v >= 60 ? 'var(--up)' : v >= 30 ? '#d97706' : 'var(--crimson)')
 const clamp = (p: number | null) => (p == null ? CLAMP : Math.min(p, CLAMP))
-function marketLabel(location: number, language: string, uiLang: string) {
+function marketLabel(location: number, language: string, uiLang: string, city = '') {
   const loc = getLocationByCode(location) ?? DEFAULT_LOCATION
   const searchLang = getLanguageByCode(language) ?? DEFAULT_LANGUAGE
-  return `${loc.flag} ${locName(loc, uiLang)} · ${searchLang.name}`
+  const c = city ? getCityById(city) : undefined
+  const place = c ? `${loc.flag} ${cityName(c, uiLang)}` : `${loc.flag} ${locName(loc, uiLang)}`
+  return `${place} · ${searchLang.name}`
 }
 
 export default function ProjectDetailPage() {
@@ -47,6 +50,7 @@ export default function ProjectDetailPage() {
   const [tracked, setTracked] = useState<TrackedKeyword[]>([])
   const [keyword, setKeyword] = useState('')
   const [location, setLocation] = useState(DEFAULT_LOCATION.code)
+  const [city, setCity] = useState('')
   const [searchLang, setSearchLang] = useState(DEFAULT_LANGUAGE.code)
   const [loading, setLoading] = useState(false)
   const [busyId, setBusyId] = useState<number | null>(null)
@@ -85,7 +89,7 @@ export default function ProjectDetailPage() {
     if (!keyword.trim() || !project) return
     setLoading(true); setError('')
     try {
-      const res = await fetch('/api/rank', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyword, domain: project.domain, location, language: searchLang }) })
+      const res = await fetch('/api/rank', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyword, domain: project.domain, location, language: searchLang, city }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur')
       setKeyword('')
@@ -191,11 +195,16 @@ export default function ProjectDetailPage() {
       <Card className="mb-6">
         <h2 className="mb-1 text-sm font-semibold text-[var(--text)]">{p.trackForSite}</h2>
         <p className="mb-3 text-xs text-[var(--text-3)]">💸 {p.helpTrackFree}</p>
-        <form onSubmit={addKeyword} className="grid gap-3 lg:grid-cols-[minmax(220px,1fr)_180px_180px_auto]">
-          <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t.kwPlaceholder} className="self-end rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none focus:border-[var(--crimson)]" />
-          <LocationSelector value={location} onChange={setLocation} />
-          <LanguageSelector value={searchLang} onChange={setSearchLang} />
-          <Button type="submit" disabled={loading || !project} className="self-end">{loading ? <><Spinner /> …</> : t.add}</Button>
+        <form onSubmit={addKeyword} className="space-y-3">
+          <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t.kwPlaceholder} className="w-full rounded-xl border border-[var(--line)] bg-[var(--card)] px-4 py-2.5 text-sm outline-none transition-colors focus:border-[var(--crimson)] focus:ring-2 focus:ring-[var(--crimson)]/10" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
+            <LocationSelector value={location} onChange={(c) => { setLocation(c); setCity('') }} />
+            <CitySelector country={location} value={city} onChange={setCity} />
+            <LanguageSelector value={searchLang} onChange={setSearchLang} />
+            <div className="flex items-end">
+              <Button type="submit" disabled={loading || !project} className="w-full lg:w-auto">{loading ? <><Spinner /> …</> : t.add}</Button>
+            </div>
+          </div>
         </form>
         {error && <div className="mt-3"><ErrorBox message={error} /></div>}
       </Card>
@@ -221,7 +230,7 @@ export default function ProjectDetailPage() {
                   <div className="flex flex-wrap items-center gap-3">
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-medium text-[var(--text)]">{it.keyword}</div>
-                      <div className="text-xs text-[var(--text-3)]">{marketLabel(it.location, it.language, lang)}</div>
+                      <div className="text-xs text-[var(--text-3)]">{marketLabel(it.location, it.language, lang, it.city)}</div>
                       {it.checkedAt && <div className="text-xs text-[var(--text-3)]">{new Date(it.checkedAt).toLocaleDateString('fr')}</div>}
                     </div>
                     <svg width="56" height="22" viewBox="0 0 56 22" fill="none" className="shrink-0"><polyline points={spark || '0,11 56,11'} stroke={dcol} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>

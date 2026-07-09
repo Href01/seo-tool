@@ -124,12 +124,16 @@ export function ready(): Promise<void> {
         );
         ALTER TABLE rank_tracking ADD COLUMN IF NOT EXISTS project_id text;
         ALTER TABLE rank_tracking ADD COLUMN IF NOT EXISTS user_id text NOT NULL DEFAULT 'demo-user';
+        ALTER TABLE rank_tracking ADD COLUMN IF NOT EXISTS city text NOT NULL DEFAULT '';
         ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
         ALTER TABLE projects DROP CONSTRAINT IF EXISTS projects_user_id_fkey;
         ALTER TABLE rank_tracking DROP CONSTRAINT IF EXISTS rank_tracking_project_id_fkey;
         ALTER TABLE rank_tracking DROP CONSTRAINT IF EXISTS rank_tracking_keyword_domain_location_language_key;
-        CREATE UNIQUE INDEX IF NOT EXISTS rank_tracking_user_keyword_domain_location_language_idx
-          ON rank_tracking (user_id, keyword, domain, location, language);
+        -- city ('' = country-level) is part of the identity: a keyword can be
+        -- tracked nationally and per-city as separate rows.
+        DROP INDEX IF EXISTS rank_tracking_user_keyword_domain_location_language_idx;
+        CREATE UNIQUE INDEX IF NOT EXISTS rank_tracking_user_kw_dom_loc_lang_city_idx
+          ON rank_tracking (user_id, keyword, domain, location, language, city);
         CREATE INDEX IF NOT EXISTS rank_tracking_user_idx ON rank_tracking (user_id);
         CREATE INDEX IF NOT EXISTS rank_history_tracking_checked_idx ON rank_history (tracking_id, checked_at DESC);
         CREATE INDEX IF NOT EXISTS projects_user_idx ON projects (user_id);

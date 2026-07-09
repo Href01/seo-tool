@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { guard } from '@/lib/guard'
 import { addTracking, listTracking, deleteTracking } from '@/lib/tracking'
 import { cleanDomain } from '@/lib/dataforseo'
-import { DEFAULT_LANGUAGE, DEFAULT_LOCATION, getLanguageByCode, getLocationByCode } from '@/lib/locations'
+import { DEFAULT_LANGUAGE, DEFAULT_LOCATION, getCityById, getLanguageByCode, getLocationByCode } from '@/lib/locations'
 import { jsonError, numberParam, positiveIntParam, readJson, stringParam } from '@/lib/api'
 import { authJsonError, requireUser } from '@/lib/auth'
 
@@ -46,9 +46,12 @@ export async function POST(req: Request) {
         { status: 400 }
       )
     }
+    // Optional city; only kept if it belongs to the selected country.
+    const cityObj = getCityById(stringParam(body, 'city'))
+    const city = cityObj && cityObj.countryCode === location ? cityObj.id : ''
 
-    const id = await addTracking(user.id, keyword, domain, location, language)
-    return NextResponse.json({ id, position: null, checked: false, location, language })
+    const id = await addTracking(user.id, keyword, domain, location, language, city)
+    return NextResponse.json({ id, position: null, checked: false, location, language, city })
   } catch (e: unknown) {
     if (e instanceof Error && e.name === 'AuthError') return authJsonError(e)
     return jsonError(e)

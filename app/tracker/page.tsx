@@ -7,12 +7,14 @@ import {
   DEFAULT_DEVICE,
   DEFAULT_LANGUAGE,
   DEFAULT_LOCATION,
+  getCityById,
   getLanguageByCode,
   getLocationByCode,
+  cityName,
   locName,
   deviceName,
 } from '@/lib/locations'
-import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
+import { LocationSelector, CitySelector, LanguageSelector } from '@/components/LocationSelector'
 import { DistributionBar, visibilityScore, InfoTip, ErrorBox, RingGauge } from '@/components/ui'
 import { positionTone } from '@/lib/status'
 import { errorMessage } from '@/lib/errors'
@@ -24,6 +26,7 @@ interface Tracked {
   domain: string
   location: number
   language: string
+  city: string
   position: number | null
   checkedAt: string | null
   history: HistPoint[]
@@ -35,10 +38,12 @@ const CLAMP = 30
 const posCfg = positionTone
 const clamp = (p: number | null) => (p == null ? CLAMP : Math.min(p, CLAMP))
 const dfmt = (s: string | null) => (s ? new Date(s).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' }) : '—')
-function marketLabel(location: number, language: string, uiLang: string) {
+function marketLabel(location: number, language: string, uiLang: string, city = '') {
   const loc = getLocationByCode(location) ?? DEFAULT_LOCATION
   const searchLang = getLanguageByCode(language) ?? DEFAULT_LANGUAGE
-  return `${loc.flag} ${locName(loc, uiLang)} · ${searchLang.name}`
+  const c = city ? getCityById(city) : undefined
+  const place = c ? `${loc.flag} ${cityName(c, uiLang)}` : `${loc.flag} ${locName(loc, uiLang)}`
+  return `${place} · ${searchLang.name}`
 }
 
 export default function Tracker() {
@@ -49,6 +54,7 @@ export default function Tracker() {
   const [keyword, setKeyword] = useState('')
   const [domain, setDomain] = useState('')
   const [location, setLocation] = useState(DEFAULT_LOCATION.code)
+  const [city, setCity] = useState('')
   const [searchLang, setSearchLang] = useState(DEFAULT_LANGUAGE.code)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -73,7 +79,7 @@ export default function Tracker() {
 
   /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
-    if (focus) kd.run({ keyword: focus.keyword, location: focus.location, language: focus.language })
+    if (focus) kd.run({ keyword: focus.keyword, location: focus.location, language: focus.language, city: focus.city })
   }, [focusId])
   /* eslint-enable react-hooks/exhaustive-deps */
 
@@ -82,7 +88,7 @@ export default function Tracker() {
     if (!keyword.trim() || !domain.trim()) return
     setBusy(true); setError('')
     try {
-      const res = await fetch('/api/rank', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyword, domain, location, language: searchLang }) })
+      const res = await fetch('/api/rank', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ keyword, domain, location, language: searchLang, city }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Erreur')
       setKeyword(''); setDomain('')
@@ -108,7 +114,7 @@ export default function Tracker() {
     } catch (e: unknown) { setError(errorMessage(e)) } finally { setBusy(false) }
   }
   function exportCSV() {
-    const rows = items.map((it) => [it.keyword, it.domain, marketLabel(it.location, it.language, lang), it.position ?? '> 100', dfmt(it.checkedAt)])
+    const rows = items.map((it) => [it.keyword, it.domain, marketLabel(it.location, it.language, lang, it.city), it.position ?? '> 100', dfmt(it.checkedAt)])
     const csv = [['Mot-clé', 'Domaine', 'Marche', 'Position', 'Vérif'], ...rows].map((r) => r.join(',')).join('\n')
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }))
     const a = document.createElement('a'); a.href = url; a.download = `tracker-${Date.now()}.csv`; a.click()
@@ -176,9 +182,10 @@ export default function Tracker() {
           <form onSubmit={add} className="flex flex-col gap-1.5">
             <input value={keyword} onChange={(e) => setKeyword(e.target.value)} placeholder={t.kwPlaceholder} className="rounded-[10px] border border-[var(--line)] bg-[var(--subtle)] px-3 py-2 text-[12.5px] outline-none focus:border-[var(--crimson)]" />
             <div className="grid grid-cols-2 gap-1.5">
-              <LocationSelector value={location} onChange={setLocation} />
+              <LocationSelector value={location} onChange={(c) => { setLocation(c); setCity('') }} />
               <LanguageSelector value={searchLang} onChange={setSearchLang} />
             </div>
+            <CitySelector country={location} value={city} onChange={setCity} />
             <div className="flex gap-1.5">
               <input value={domain} onChange={(e) => setDomain(e.target.value)} placeholder={t.domainPlaceholder} className="min-w-0 flex-1 rounded-[10px] border border-[var(--line)] bg-[var(--subtle)] px-3 py-2 text-[12.5px] outline-none focus:border-[var(--crimson)]" />
               <button disabled={busy} className="shrink-0 rounded-[10px] bg-[var(--crimson)] px-3 py-2 text-[12.5px] font-semibold text-white disabled:opacity-50">{t.add}</button>
@@ -204,7 +211,7 @@ export default function Tracker() {
                 <div className="flex items-center gap-2.5">
                   <div className="min-w-0 flex-1">
                     <div className="truncate text-[13.5px] font-semibold tracking-[-0.01em]">{it.keyword}</div>
-                    <div className="mt-0.5 truncate font-mono text-[10.5px] text-[var(--text-3)]">{it.domain} · {marketLabel(it.location, it.language, lang)}</div>
+                    <div className="mt-0.5 truncate font-mono text-[10.5px] text-[var(--text-3)]">{it.domain} · {marketLabel(it.location, it.language, lang, it.city)}</div>
                   </div>
                   <svg width="56" height="22" viewBox="0 0 56 22" fill="none" className="shrink-0"><polyline points={spark || '0,11 56,11'} stroke={dcol} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" /></svg>
                   <span className="flex shrink-0 items-center justify-center rounded-lg px-2 py-[3px] text-[12.5px] font-bold tnum" style={{ color: pc.c, background: pc.bg }}>{it.position != null ? `#${it.position}` : '>100'}</span>
@@ -227,7 +234,7 @@ export default function Tracker() {
                   {fcfg && <span className="inline-flex shrink-0 items-center rounded-lg px-2.5 py-[3px] text-[13px] font-bold tnum" style={{ color: fcfg.c, background: fcfg.bg }}>{focus.position != null ? `#${focus.position}` : '> 100'}</span>}
                   {chart && <span className="shrink-0 text-xs font-bold" style={{ color: tdCol }}>{td > 0 ? '↑' : td < 0 ? '↓' : '–'} {Math.abs(td)} {t.records}</span>}
                 </div>
-                <div className="mt-1 truncate font-mono text-xs text-[var(--text-3)]">{focus.domain} · {marketLabel(focus.location, focus.language, lang)} · {deviceName(DEFAULT_DEVICE, lang)}</div>
+                <div className="mt-1 truncate font-mono text-xs text-[var(--text-3)]">{focus.domain} · {marketLabel(focus.location, focus.language, lang, focus.city)} · {deviceName(DEFAULT_DEVICE, lang)}</div>
               </div>
               <button
                 onClick={() => setDetailOpen((v) => !v)}

@@ -3,6 +3,7 @@
 
 import { getPool, ready } from './db'
 import { serpOrganic, cleanDomain, LOCATION_MOROCCO } from './dataforseo'
+import { getCityById } from './locations'
 
 export interface TrackedKeyword {
   id: number
@@ -10,6 +11,7 @@ export interface TrackedKeyword {
   domain: string
   location: number
   language: string
+  city: string // '' = country-level, else a city id (see lib/locations CITIES)
   position: number | null
   checkedAt: string | null
   history: { position: number | null; checkedAt: string }[]
@@ -37,18 +39,19 @@ export async function addTracking(
   keyword: string,
   domain: string,
   location: number = LOCATION_MOROCCO,
-  language = 'fr'
+  language = 'fr',
+  city = ''
 ): Promise<number> {
   const p = getPool()
   if (!p) throw new Error(NO_DB)
   await ready()
   const r = await p.query<{ id: number }>(
-    `INSERT INTO rank_tracking (user_id, keyword, domain, location, language)
-     VALUES ($1, $2, $3, $4, $5)
-     ON CONFLICT (user_id, keyword, domain, location, language)
+    `INSERT INTO rank_tracking (user_id, keyword, domain, location, language, city)
+     VALUES ($1, $2, $3, $4, $5, $6)
+     ON CONFLICT (user_id, keyword, domain, location, language, city)
        DO UPDATE SET keyword = EXCLUDED.keyword
      RETURNING id`,
-    [userId, keyword, domain, location, language]
+    [userId, keyword, domain, location, language, city]
   )
   return r.rows[0].id
 }
@@ -60,6 +63,7 @@ async function rowsToTracked(
     domain: string
     location: number
     language: string
+    city: string
   }[]
 ): Promise<TrackedKeyword[]> {
   const p = getPool()
@@ -91,6 +95,7 @@ async function rowsToTracked(
       domain: r.domain,
       location: r.location,
       language: r.language,
+      city: r.city ?? '',
       position: last?.position ?? null,
       checkedAt: last?.checkedAt ?? null,
       history,
@@ -109,8 +114,9 @@ export async function listTracking(userId: string): Promise<TrackedKeyword[]> {
     domain: string
     location: number
     language: string
+    city: string
   }>(
-    `SELECT id, keyword, domain, location, language
+    `SELECT id, keyword, domain, location, language, city
      FROM rank_tracking
      WHERE user_id = $1
      ORDER BY created_at DESC`,
@@ -129,7 +135,8 @@ async function listAllTracking(): Promise<TrackedKeyword[]> {
     domain: string
     location: number
     language: string
-  }>(`SELECT id, keyword, domain, location, language FROM rank_tracking ORDER BY created_at DESC`)
+    city: string
+  }>(`SELECT id, keyword, domain, location, language, city FROM rank_tracking ORDER BY created_at DESC`)
   return rowsToTracked(t.rows)
 }
 
@@ -145,13 +152,17 @@ async function findPosition(
   keyword: string,
   domain: string,
   location: number,
-  language: string
+  language: string,
+  city = ''
 ): Promise<number | null> {
+  const c = city ? getCityById(city) : undefined
+  const coordinate = c && c.countryCode === location ? c.coordinate : undefined
   const serp = await serpOrganic(keyword, {
     location,
     language,
     depth: 100,
     stopOnDomain: domain,
+    coordinate,
   })
   const target = cleanDomain(domain)
   const hit = serp.find((s) => {
@@ -174,8 +185,9 @@ export async function checkRank(
     domain: string
     location: number
     language: string
+    city: string
   }>(
-    `SELECT keyword, domain, location, language
+    `SELECT keyword, domain, location, language, city
      FROM rank_tracking
      WHERE id = $1 AND ($2::text IS NULL OR user_id = $2)`,
     [id, opts.userId ?? null]
@@ -195,7 +207,7 @@ export async function checkRank(
     return { position: last.position, checked: false, checkedAt }
   }
 
-  const position = await findPosition(row.keyword, row.domain, row.location, row.language)
+  const position = await findPosition(row.keyword, row.domain, row.location, row.language, row.city ?? '')
   const inserted = await p.query<{ checked_at: Date | string }>(
     `INSERT INTO rank_history (tracking_id, position) VALUES ($1, $2)
      RETURNING checked_at`,
