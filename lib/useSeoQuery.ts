@@ -2,16 +2,12 @@
 
 import { useState } from 'react'
 import { errorMessage } from './errors'
+import { formatRelative } from './format'
+import type { Lang } from './i18n'
 
 /** Human freshness label for a cache timestamp, e.g. "il y a 3 jours". */
-export function timeAgo(iso: string | null): string {
-  if (!iso) return ''
-  const t = new Date(iso).getTime()
-  if (isNaN(t)) return ''
-  const days = Math.floor((Date.now() - t) / 86_400_000)
-  if (days <= 0) return "aujourd'hui"
-  if (days === 1) return 'il y a 1 jour'
-  return `il y a ${days} jours`
+export function timeAgo(iso: string | null, lang: Lang = 'fr'): string {
+  return formatRelative(iso, lang)
 }
 
 /**

@@ -303,8 +303,16 @@ Etat apres passage architecte / engineer / UX.
   sur le tracker global + le detail projet ; `findPosition` utilise la
   coordonnee de la ville. Le libelle de marche affiche la ville.
 
-**A faire — P2 (reste) :**
-- Utilitaire de format locale-aware (aujourd'hui `toLocaleString('fr')` en dur).
+**Fait — P2 :**
+- `lib/format.ts` locale-aware (`formatNumber`/`formatDate`/`formatRelative`) :
+  FR = `fr-FR`, AR = `ar-MA` (chiffres latins au Maghreb). Cable dans
+  `AnimatedNumber` (tous les chiffres animes) et `CacheMeta` (le "maj il y a N
+  jours" etait toujours en francais -> maintenant bilingue). Reste : quelques
+  `toLocaleString('fr')` dans les cellules de tableaux (chiffres latins, faible
+  impact).
+
+**A faire (features) :**
 - GSC (donnees exactes du domaine), OAuth, reset password.
+- Apercu SERP-features dans l'Explorer.
 
 Derniere mise a jour : 2026-07-09.

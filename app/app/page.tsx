@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePT } from '@/lib/i18n'
+import { usePT, useLang } from '@/lib/i18n'
+import { formatDate } from '@/lib/format'
 import { Page, WorkspaceHeader, Card, Button, Spinner, EmptyState, ErrorBox, Callout } from '@/components/ui'
 import { errorMessage } from '@/lib/errors'
 
@@ -10,6 +11,7 @@ interface Project { id: string; name: string; domain: string; createdAt?: string
 
 export default function AppPage() {
   const p = usePT()
+  const [lang] = useLang()
   const [projects, setProjects] = useState<Project[]>([])
   const [name, setName] = useState('')
   const [domain, setDomain] = useState('')
@@ -72,7 +74,7 @@ export default function AppPage() {
                     <div className="font-mono text-xs text-[var(--text-2)]">{proj.domain}</div>
                   </div>
                 </div>
-                {proj.createdAt && <div className="text-xs text-[var(--text-3)]">{new Date(proj.createdAt).toLocaleDateString('fr')}</div>}
+                {proj.createdAt && <div className="text-xs text-[var(--text-3)]">{formatDate(proj.createdAt, lang)}</div>}
               </div>
               <div className="flex gap-2">
                 <Link href={`/app/project/${proj.id}`} className="flex-1 rounded-xl border border-[var(--line)] px-4 py-2 text-center text-sm font-medium text-[var(--text)] transition-colors hover:border-[var(--crimson)] hover:text-[var(--crimson)]">{p.open}</Link>

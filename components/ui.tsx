@@ -2,7 +2,8 @@
 
 import { ReactNode, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { usePT } from '@/lib/i18n'
+import { usePT, useLang, type Lang } from '@/lib/i18n'
+import { formatNumber } from '@/lib/format'
 
 /* AnimatedNumber — counts up from 0 to value on mount (motivating micro-motion).
    Renders the final value instantly under prefers-reduced-motion. */
@@ -15,6 +16,7 @@ export function AnimatedNumber({
   format?: (n: number) => string
   duration?: number
 }) {
+  const [lang] = useLang()
   const [n, setN] = useState(() => {
     if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return value
     return 0
@@ -36,7 +38,7 @@ export function AnimatedNumber({
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
   }, [value, duration])
-  return <span className="tnum">{format ? format(n) : Math.round(n).toLocaleString('fr')}</span>
+  return <span className="tnum">{format ? format(n) : formatNumber(Math.round(n), lang)}</span>
 }
 
 /* WorkspaceHeader — page identity: gradient icon tile + title + subtitle + actions */
@@ -567,10 +569,11 @@ export function CacheMeta({
 }: {
   cached: boolean
   fetchedAt: string | null
-  timeAgo: (s: string) => string
+  timeAgo: (s: string, lang?: Lang) => string
   extra?: string
 }) {
   const p = usePT()
+  const [lang] = useLang()
   return (
     <div className="flex flex-wrap items-center gap-2 text-xs text-[var(--text-2)]">
       {cached ? (
@@ -582,7 +585,7 @@ export function CacheMeta({
           {p.apiCall}
         </span>
       )}
-      {cached && fetchedAt && <span className="text-[var(--text-3)]">{p.maj} {timeAgo(fetchedAt)}</span>}
+      {cached && fetchedAt && <span className="text-[var(--text-3)]">{p.maj} {timeAgo(fetchedAt, lang)}</span>}
       {extra && <span className="text-[var(--text-3)]">· {extra}</span>}
     </div>
   )
