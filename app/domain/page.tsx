@@ -6,7 +6,7 @@ import { usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { LocationSelector, LanguageSelector } from '@/components/LocationSelector'
 import { DOMAIN_EXAMPLES } from '@/lib/examples'
-import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle, Callout } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle, Callout, DistributionBar } from '@/components/ui'
 
 interface DomainKeyword { keyword: string; position: number | null; volume: number | null; traffic: number | null; url: string }
 interface DomainOverview { domain: string; organicKeywords: number | null; estimatedTraffic: number | null; keywords: DomainKeyword[] }
@@ -30,6 +30,16 @@ export default function DomainPage() {
     if (!domain.trim()) return
     run({ domain, location, language })
   }
+
+  const ks = data?.keywords ?? []
+  const dist = ks.length
+    ? {
+        t3: ks.filter((k) => k.position != null && k.position <= 3).length,
+        t10: ks.filter((k) => k.position != null && k.position > 3 && k.position <= 10).length,
+        t20: ks.filter((k) => k.position != null && k.position > 10 && k.position <= 20).length,
+        beyond: ks.filter((k) => k.position == null || k.position > 20).length,
+      }
+    : null
 
   return (
     <Page>
@@ -64,6 +74,18 @@ export default function DomainPage() {
             <StatCard label={p.orgKeywords} value={data.organicKeywords?.toLocaleString('fr') ?? '—'} sub={p.orgKeywordsSub} />
             <StatCard label={p.estTraffic} value={data.estimatedTraffic?.toLocaleString('fr') ?? '—'} sub={p.estTrafficSub} info={p.gTraffic} accent />
           </div>
+
+          {dist && (
+            <Card>
+              <SectionTitle>{p.posDistribution}</SectionTitle>
+              <DistributionBar segments={[
+                { label: p.rng1_3, value: dist.t3, color: '#16a34a' },
+                { label: p.rng4_10, value: dist.t10, color: '#d97706' },
+                { label: p.rng11_20, value: dist.t20, color: '#ec0b43' },
+                { label: p.rng21p, value: dist.beyond, color: '#d4d4d8' },
+              ]} />
+            </Card>
+          )}
 
           {data.keywords.length > 0 && (
             <div>

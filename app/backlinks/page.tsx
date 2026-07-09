@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSeoQuery, timeAgo } from '@/lib/useSeoQuery'
 import { usePT } from '@/lib/i18n'
-import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle, Callout } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, SectionTitle, Callout, DistributionBar } from '@/components/ui'
 import { DOMAIN_EXAMPLES } from '@/lib/examples'
 
 interface BacklinksSummary {
@@ -93,16 +93,14 @@ export default function BacklinksPage() {
             {dofollowPct != null && (
               <Card>
                 <SectionTitle>{p.dofollowRatio}</SectionTitle>
-                <div className="flex items-center gap-5">
-                  <div className="text-4xl font-bold text-[var(--up)] tnum">{dofollowPct.toFixed(0)}%</div>
-                  <div className="text-sm text-[var(--text-2)]">
-                    <div><span className="text-[var(--up)]">●</span> {fmt(data.dofollow)} {p.dofollow}</div>
-                    <div><span className="text-[var(--text-3)]">●</span> {fmt(data.nofollow)} {p.nofollow}</div>
-                  </div>
+                <div className="mb-4 flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-[var(--up)] tnum">{dofollowPct.toFixed(0)}%</span>
+                  <span className="text-sm text-[var(--text-3)]">{p.dofollow}</span>
                 </div>
-                <div className="mt-4 flex h-2.5 overflow-hidden rounded-full bg-[var(--subtle)]">
-                  <div className="h-full bg-[var(--up)]" style={{ width: `${dofollowPct}%` }} />
-                </div>
+                <DistributionBar segments={[
+                  { label: p.dofollow, value: data.dofollow ?? 0, color: '#16a34a' },
+                  { label: p.nofollow, value: data.nofollow ?? 0, color: '#d4d4d8' },
+                ]} />
               </Card>
             )}
           </div>

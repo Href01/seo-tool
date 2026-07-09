@@ -6,7 +6,7 @@ import { useT, usePT } from '@/lib/i18n'
 import { DEFAULT_LOCATION, DEFAULT_DEVICE, DEFAULT_LANGUAGE } from '@/lib/locations'
 import { KW_EXAMPLES } from '@/lib/examples'
 import { LocationSelector, CitySelector, DeviceSelector, LanguageSelector } from '@/components/LocationSelector'
-import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill, Callout } from '@/components/ui'
+import { Page, WorkspaceHeader, Card, Button, Spinner, CacheMeta, ErrorBox, EmptyState, StatCard, Pill, Callout, DistributionBar } from '@/components/ui'
 
 interface SerpResult { position: number | null; title: string; url: string; domain: string; description: string }
 
@@ -72,11 +72,22 @@ export default function SerpPage() {
       {error && <div className="mb-6"><ErrorBox message={error} /></div>}
 
       {data && insights && (
-        <div className="mb-6 grid gap-3 sm:grid-cols-3">
-          <StatCard label={p.uniqueDomains} value={insights.uniqueDomains} sub={`${p.onN} ${data.length} ${p.results}`} />
-          <StatCard label={p.realComp} value={insights.realCompetitors} accent />
-          <StatCard label={p.platformsStat} value={insights.platforms} />
-        </div>
+        <>
+          <div className="mb-4 grid gap-3 sm:grid-cols-3">
+            <StatCard label={p.uniqueDomains} value={insights.uniqueDomains} sub={`${p.onN} ${data.length} ${p.results}`} />
+            <StatCard label={p.realComp} value={insights.realCompetitors} accent />
+            <StatCard label={p.platformsStat} value={insights.platforms} />
+          </div>
+          {insights.realCompetitors + insights.platforms > 0 && (
+            <Card className="mb-6">
+              <div className="mb-3 text-sm font-semibold text-[var(--text)]">{p.serpMakeup}</div>
+              <DistributionBar segments={[
+                { label: p.realComp, value: insights.realCompetitors, color: '#16a34a' },
+                { label: p.platformsStat, value: insights.platforms, color: '#d4d4d8' },
+              ]} />
+            </Card>
+          )}
+        </>
       )}
 
       {data && data.length > 0 && (

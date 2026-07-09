@@ -136,12 +136,22 @@ export function Onboarding({
 /* DistributionBar — a stacked ratio bar with legend (position spread, etc.) */
 export function DistributionBar({ segments }: { segments: { label: string; value: number; color: string }[] }) {
   const total = segments.reduce((s, x) => s + x.value, 0) || 1
+  const visible = segments.filter((s) => s.value > 0)
   return (
     <div>
       <div className="flex h-3 overflow-hidden rounded-full bg-[var(--subtle)]">
-        {segments.map((s, i) =>
-          s.value > 0 ? <div key={i} style={{ width: `${(s.value / total) * 100}%`, background: s.color }} title={`${s.label}: ${s.value}`} /> : null
-        )}
+        {visible.map((s, i) => (
+          // 2px surface separator between adjacent fills (data-viz mark spec).
+          <div
+            key={i}
+            style={{
+              width: `${(s.value / total) * 100}%`,
+              background: s.color,
+              boxShadow: i < visible.length - 1 ? 'inset -2px 0 0 var(--card)' : undefined,
+            }}
+            title={`${s.label}: ${s.value}`}
+          />
+        ))}
       </div>
       <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-[var(--text-2)]">
         {segments.map((s, i) => (
