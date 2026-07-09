@@ -133,13 +133,16 @@ export default function Explorer() {
   const ov = overview.data
   const loc = getLocationByCode(location) ?? DEFAULT_LOCATION
 
-  // Focus difficulty (from overview or computed)
+  // Focus difficulty. Prefer OUR difficulté maison (the proprietary metric) once
+  // the SERP landscape is computed; the Labs keyword_difficulty is only a fallback
+  // and is often 0 for niche keywords (no Labs data), which contradicted the
+  // maison score shown just below.
   const kdForFocus = kd.data?.keyword === focus ? kd.data : null
-  const focusKd = ov?.difficulty ?? kdForFocus?.difficulty ?? null
+  const focusKd = kdForFocus?.difficulty ?? ov?.difficulty ?? null
   const dcfg = focusKd != null ? diffCfg(focusKd, t) : null
-  // Uncontested: our SERP difficulty was computed and came back null (top 10 is
-  // 100% mega-platforms) and the overview offers no number either -> "terrain libre".
-  const focusUncontested = ov?.difficulty == null && kdForFocus != null && kdForFocus.difficulty == null
+  // Uncontested ("terrain libre"): the maison SERP came back null (top 10 = 100%
+  // mega-platforms). The maison verdict wins over the Labs number.
+  const focusUncontested = kdForFocus != null && kdForFocus.difficulty == null
 
   // Trend
   const maxTrend = ov?.trend.length ? Math.max(...ov.trend.map((x) => x.volume)) : 1
@@ -267,6 +270,9 @@ export default function Explorer() {
                 ))}
               </div>
             </div>
+          )}
+          {kdForFocus && kdForFocus.peopleAlsoAsk.length === 0 && kdForFocus.relatedSearches.length === 0 && (
+            <div className="border-t border-[var(--line)] px-4 py-3 text-[11.5px] leading-snug text-[var(--text-3)]">ℹ️ {p.paaNone}</div>
           )}
 
           {!suggestions.data && !suggestions.loading && (

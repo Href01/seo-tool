@@ -309,12 +309,13 @@ export interface SerpPage {
   ads: { title: string; domain: string; url: string }[]
 }
 
-/** People-Also-Ask questions from raw SERP items. */
+/** People-Also-Ask questions from raw SERP items. DataForSEO nests the
+ * questions under items[].title; be defensive about field naming. */
 function paaFrom(items: JsonRecord[]): string[] {
   const set = new Set<string>()
   for (const it of items.filter((x) => x.type === 'people_also_ask')) {
     for (const q of records(it.items)) {
-      const question = asString(q.title) || asString(q.seed_question)
+      const question = asString(q.title) || asString(q.question) || asString(q.seed_question)
       if (question) set.add(question)
     }
   }
