@@ -389,24 +389,31 @@ export async function keywordOverview(
   const location = opts.location ?? LOCATION_MOROCCO
   const language = opts.language ?? 'fr'
 
-  const data = await dfs('/dataforseo_labs/google/keyword_overview/live', [
-    { keywords: [keyword], location_code: location, language_code: language },
-  ])
-  const it = firstTaskItems(data)[0]
-  if (it) {
-    const info = child(it, 'keyword_info')
-    const props = child(it, 'keyword_properties')
-    const searchIntent = child(it, 'search_intent_info')
-    return {
-      keyword: asString(it.keyword) || keyword,
-      volume: asNumber(info.search_volume),
-      cpc: asNumber(info.cpc),
-      competition: asNumber(info.competition),
-      difficulty: asNumber(props.keyword_difficulty),
-      intent: asString(searchIntent.main_intent) || null,
-      source: 'labs',
-      trend: trend12(info.monthly_searches),
+  // Labs first (richest: intent + difficulty). If it errors (DataForSEO has been
+  // rejecting `language_code` on this endpoint) OR returns nothing, fall back to
+  // Google Ads volume — so the overview never dies on the Labs call alone.
+  try {
+    const data = await dfs('/dataforseo_labs/google/keyword_overview/live', [
+      { keywords: [keyword], location_code: location, language_code: language },
+    ])
+    const it = firstTaskItems(data)[0]
+    if (it) {
+      const info = child(it, 'keyword_info')
+      const props = child(it, 'keyword_properties')
+      const searchIntent = child(it, 'search_intent_info')
+      return {
+        keyword: asString(it.keyword) || keyword,
+        volume: asNumber(info.search_volume),
+        cpc: asNumber(info.cpc),
+        competition: asNumber(info.competition),
+        difficulty: asNumber(props.keyword_difficulty),
+        intent: asString(searchIntent.main_intent) || null,
+        source: 'labs',
+        trend: trend12(info.monthly_searches),
+      }
     }
+  } catch (e) {
+    console.error('[overview] Labs keyword_overview failed, falling back to Google Ads:', e)
   }
 
   return googleAdsVolume(keyword, { location, language })
