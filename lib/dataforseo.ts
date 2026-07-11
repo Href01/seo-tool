@@ -389,12 +389,12 @@ export async function keywordOverview(
   const location = opts.location ?? LOCATION_MOROCCO
   const language = opts.language ?? 'fr'
 
-  // Labs first (richest: intent + difficulty). If it errors (DataForSEO has been
-  // rejecting `language_code` on this endpoint) OR returns nothing, fall back to
-  // Google Ads volume — so the overview never dies on the Labs call alone.
+  // Labs first (richest: intent + difficulty). DataForSEO changed the param from
+  // language_code to language_name ('fr' not a code). If Labs errors OR returns
+  // nothing, fall back to Google Ads volume — so the overview never dies on Labs alone.
   try {
     const data = await dfs('/dataforseo_labs/google/keyword_overview/live', [
-      { keywords: [keyword], location_code: location, language_code: language },
+      { keywords: [keyword], location_code: location, language_name: language },
     ])
     const it = firstTaskItems(data)[0]
     if (it) {

@@ -22,8 +22,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'keyword requis' }, { status: 400 })
   }
 
-  // v2: trend now sorts to the 12 most-recent months (was showing oldest).
-  const key = cacheKey('kwov', 'v2', keyword, location, language)
+  // v3: Labs language_name param (DataForSEO breaking change from language_code).
+  const key = cacheKey('kwov', 'v3', keyword, location, language)
 
   const hit = await getCachedMeta(key, TTL_DAYS)
   if (hit) {
